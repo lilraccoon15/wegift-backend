@@ -2,36 +2,19 @@ import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database';
 
 class User extends Model {
-  public id!: number;
-  public firstName!: string;
-  public lastName!: string;
-  public birthDate!: Date;
+  public id!: string;
   public email!: string;
   public password!: string;
   public acceptedTerms!: boolean;
   public newsletter!: boolean;
-  public createdAt!: Date;
-  public updatedAt!: Date;
 }
 
 User.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
-    },
-    firstName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    lastName: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    birthDate: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
     },
     email: {
       type: DataTypes.STRING,
@@ -55,7 +38,7 @@ User.init(
   {
     sequelize,
     tableName: 'users',
-    timestamps: true,
+    timestamps: false,
   }
 );
 

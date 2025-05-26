@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../app'; 
+import app from '../../src/app'; 
 
 describe('POST /register', () => {
   it('should register a new user successfully', async () => {
@@ -14,7 +14,7 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/users/register')
+      .post('/api/auth/register')
       .send(newUser);
       
     expect(response.status).toBe(201);
@@ -34,7 +34,7 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/users/register')
+      .post('/api/auth/register')
       .send(newUser);
 
     expect(response.status).toBe(400);
@@ -53,7 +53,7 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/users/register')
+      .post('/api/auth/register')
       .send(newUser);
 
     expect(response.status).toBe(400);
@@ -72,7 +72,7 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/users/register')
+      .post('/api/auth/register')
       .send(newUser);
 
     expect(response.status).toBe(400);

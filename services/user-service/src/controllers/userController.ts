@@ -1,65 +1,64 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser } from '../services/userService';
-import { loginSchema, registerSchema } from '../schemas/userSchema';
+import UserProfile from '../models/UserProfile';
 
-export const me = (req: Request, res: Response) => {
-  const user = (req as any).user;
+export const me = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
 
-  if (!user) {
-    res.status(401).json({ message: 'Non authentifié' });
-    return;
-  }
-
-  res.json({ id: user.id, email: user.email });
-};
-
-export const register = async (req: Request, res: Response) => {
-  const parseResult = registerSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ message: parseResult.error.issues[0].message });
+  if (!userId) {
+    res.status(401).json({ message: "Non authentifié" });
     return;
   }
 
   try {
-    const user = await registerUser(parseResult.data);
-    res.status(201).json({ message: "Utilisateur créé avec succès", userId: user.id });
-  } catch (error: any) {
-    const message = error.message || "Erreur serveur lors de l'inscription.";
-    res.status(400).json({ message });
+    const profile = await UserProfile.findOne({ where: { userId } });
+
+    if (!profile) {
+      res.status(404).json({ message: "Profil non trouvé" });
+      return;
+    }
+
+    res.json(profile);
+    return;
+  } catch (error) {
+    res.status(500).json({ message: "Erreur serveur" });
+    return;
   }
 };
 
-export const login = async (req: Request, res: Response) => {
-  const parseResult = loginSchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ message: parseResult.error.issues[0].message });
+export const createProfile = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ message: "Non authentifié" });
     return;
   }
 
-  const { email, password } = parseResult.data;
-  const { token, error } = await loginUser(email, password);
+  const { firstName, lastName, birthDate } = req.body;
 
-  if (error) {
-    res.status(401).json({ message: error });
+  if (!userId || !firstName || !lastName || !birthDate) {
+    res.status(400).json({ message: "Champs manquants" });
     return;
   }
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 3600000,
-  });
+  try {
+    const existingProfile = await UserProfile.findOne({ where: { userId } });
+    if (existingProfile) {
+      res.status(409).json({ message: "Profil déjà existant" });
+      return;
+    }
 
-  res.json({ message: "Connexion réussie", token });
-};
+    const profile = await UserProfile.create({
+      userId,
+      firstName,
+      lastName,
+      birthDate,
+    });
 
-export const logout = async (_req: Request, res: Response) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
-
-  res.json({ message: "Déconnexion réussie" });
+    res.status(201).json({ message: "Profil créé", profile });
+    return;
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur serveur" });
+    return;
+  }
 };

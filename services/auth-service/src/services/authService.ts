@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import User from '../models/User';
 import jwt from "jsonwebtoken";
-import { RegisterData } from '../schemas/userSchema';
+import { RegisterData } from '../schemas/authSchema';
+import axios from 'axios';
 
 class ValidationError extends Error {
   statusCode: number;
@@ -37,14 +38,41 @@ export const registerUser = async (data: RegisterData) => {
   const hashedPassword = await bcrypt.hash(password, 10);  
 
   const user = await User.create({
-    firstName,
-    lastName,
-    birthDate: birth,
     email,
     password: hashedPassword,
     acceptedTerms,
     newsletter,
   });
+
+  const token = jwt.sign(
+    { id: user.id, email: user.email },
+    SECRET,
+    {
+      expiresIn: "1h",
+      audience: AUDIENCE,
+      issuer: ISSUER,
+    }
+  );
+
+  try {
+    await axios.post('http://localhost:3003/api/users/profile', 
+      {
+      userId: user.id,
+      firstName,
+      lastName,
+      birthDate: birth,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+  );
+  } catch (error) {
+    const err = error as any;
+    console.error("Erreur création profil :", err.response?.data || err.message || err);    await User.destroy({ where: { id: user.id } });
+    throw new Error("Erreur lors de la création du profil utilisateur.");
+  }
 
   return user;
 };

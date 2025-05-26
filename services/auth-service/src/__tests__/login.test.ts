@@ -1,6 +1,6 @@
 import request from 'supertest';
-import app from '../app';
-import sequelize from '../config/database';
+import app from '../../src/app';
+import sequelize from '../../src/config/database';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
 
@@ -15,9 +15,9 @@ beforeAll(async () => {
   await User.create({
     email: 'utilisateur@test.com',
     password: hashedPassword,
-    firstName: 'Camille',           // 🟢 correction ici
-    lastName: 'Test',               // 🟢 correction ici
-    birthDate: new Date('1990-01-01'), // 🟢 correction ici
+    firstName: 'Camille',
+    lastName: 'Test',
+    birthDate: new Date('1990-01-01'),
     acceptedTerms: true,
   });
 });
@@ -29,7 +29,7 @@ afterAll(async () => {
 describe('POST /login', () => {
   it('devrait connecter un utilisateur avec des identifiants valides', async () => {
     const response = await request(app)
-      .post('/api/users/login')
+      .post('/api/auth/login')
       .send({
         email: 'utilisateur@test.com',
         password: 'MotDePasse123!',
@@ -42,7 +42,7 @@ describe('POST /login', () => {
 
   it('devrait échouer avec un email invalide', async () => {
     const response = await request(app)
-      .post('/api/users/login')
+      .post('/api/auth/login')
       .send({
         email: 'mauvais.email',
         password: 'MotDePasse123!',
@@ -54,7 +54,7 @@ describe('POST /login', () => {
 
   it('devrait échouer avec un mauvais mot de passe', async () => {
     const response = await request(app)
-      .post('/api/users/login')
+      .post('/api/auth/login')
       .send({
         email: 'utilisateur@test.com',
         password: 'mauvaisMotDePasse',
