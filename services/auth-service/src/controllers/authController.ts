@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { registerUser, loginUser } from '../services/authService';
 import { loginSchema, registerSchema } from '../schemas/authSchema';
+import jwt from 'jsonwebtoken';
+import User from '../models/User';
 
 export const register = async (req: Request, res: Response) => {
   const parseResult = registerSchema.safeParse(req.body);
@@ -51,4 +53,37 @@ export const logout = async (_req: Request, res: Response) => {
   });
 
   res.json({ message: "Déconnexion réussie" });
+};
+
+export const activateUser = async (req: Request, res: Response) => {
+  console.log("ActivateUser called");
+  const { token } = req.query;
+
+  if (!token) {
+    res.status(400).json({ message: "Token manquant" });
+    return;
+  }
+
+  try {
+    const decoded: any = jwt.verify(token as string, process.env.JWT_SECRET!);
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      res.status(404).json({ message: "Utilisateur non trouvé" });
+      return;
+    }
+
+    if (user.isActive) {
+      res.status(400).json({ message: "Compte déjà activé" });
+      return;
+    }
+    
+    user.isActive = true;
+    await user.save();
+
+    res.json({ message: "Compte activé avec succès !" });
+  } catch (error) {
+    console.log("Entré dans le catch");
+    console.error("Erreur activation :", error);
+    res.status(400).json({ message: "Token invalide ou expiré" });
+  }
 };

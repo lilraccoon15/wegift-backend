@@ -7,6 +7,7 @@ class User extends Model {
   public password!: string;
   public acceptedTerms!: boolean;
   public newsletter!: boolean;
+  public isActive!: boolean;
 }
 
 User.init(
@@ -33,7 +34,11 @@ User.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
-    }   
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN, 
+      defaultValue: false 
+    }, 
   },
   {
     sequelize,
