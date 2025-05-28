@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, activateUser } from '../controllers/authController';
+import { register, login, logout, activateUser, resetPassword } from '../controllers/authController';
 import { authLimiter } from '../middlewares/rateLimit';
 import { loginSchema, registerSchema } from '../schemas/authSchema';
 import { validateBody } from "../middlewares/validateBody";
@@ -23,5 +23,7 @@ router.post(
 router.post('/logout', logout);
 
 router.get('/activate', activateUser);
+
+router.get('/forgot-password', resetPassword);
 
 export default router;

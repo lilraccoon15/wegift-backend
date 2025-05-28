@@ -56,7 +56,6 @@ export const logout = async (_req: Request, res: Response) => {
 };
 
 export const activateUser = async (req: Request, res: Response) => {
-  console.log("ActivateUser called");
   const { token } = req.query;
 
   if (!token) {
@@ -82,8 +81,42 @@ export const activateUser = async (req: Request, res: Response) => {
 
     res.json({ message: "Compte activé avec succès !" });
   } catch (error) {
-    console.log("Entré dans le catch");
     console.error("Erreur activation :", error);
     res.status(400).json({ message: "Token invalide ou expiré" });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({email});
+
+  if (!user) {
+    res.status(200).json({ message: "Si cet email existe, un lien a été envoyé." });
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(user);
+    res.status(200).json({ message: "Si cet email existe, un lien a été envoyé." });
+    return;
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erreur serveur lors de l'envoi de l'email." });
+    return;
+  }
+
+};
+
+export const confirmPasswordReset = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    await resetUserPassword(token, newPassword);
+    res.json({ message: "Mot de passe réinitialisé avec succès." });
+    return;
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || "Token invalide ou expiré." });
+    return;
   }
 };

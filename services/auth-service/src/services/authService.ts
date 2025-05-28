@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { RegisterData } from '../schemas/authSchema';
 import axios from 'axios';
 import { sendActivationEmail } from './emailService';
+import PasswordResetToken from '../models/PasswordResetToken';
 
 class ValidationError extends Error {
   statusCode: number;
@@ -16,8 +17,7 @@ class ValidationError extends Error {
 const SECRET = process.env.JWT_SECRET || "default_secret";
 const AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
 const ISSUER = process.env.JWT_ISSUER || "your-api";
-
-
+const TOKEN_EXPIRATION = 60 * 60 * 1000;
 
 export const registerUser = async (data: RegisterData) => {
   const { firstName, lastName, birthDate, email, password, acceptedTerms, newsletter } = data;
@@ -113,3 +113,35 @@ export const loginUser = async (email: string, password: string): Promise<{ toke
 
   return { token };
 };
+
+export const sendPasswordResetEmail = async (user: any) => {
+  const token = crypto.randomBytes(32).toString('hex');
+
+  await PasswordResetToken.upsert({
+    userId: user.id,
+    token,
+    expiresAt: new Date(Date.now() + TOKEN_EXPIRATION),
+  });
+
+  await sendResetPasswordEmail(user.email, token);
+}
+
+export const resetUserPassword = async ( token: string, newPassword: string ) => {
+  const tokenEntry = await PasswordResetToken.findOne({ where: { token } });
+
+  if (!tokenEntry) throw new Error("Token invalide.");
+
+  if (tokenEntry.expiresAt < new Date()) {
+    await PasswordResetToken.destroy({ where: { token } });
+    throw new Error("Token expiré.");
+  }
+
+  const user = await User.findByPk(tokenEntry.userId);
+  if (!user) throw new Error("Utilisateur non trouvé.");
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  await user.save();
+
+  await PasswordResetToken.destroy({ where: { token } });
+}
