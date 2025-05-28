@@ -1,5 +1,6 @@
-import { Request, Response } from 'express';
-import UserProfile from '../models/UserProfile';
+import { Request, Response } from "express";
+import UserProfile from "../models/UserProfile";
+import logger from '../utils/logger';
 
 export const me = async (req: Request, res: Response) => {
   const userId = req.user?.id;
@@ -57,7 +58,7 @@ export const createProfile = async (req: Request, res: Response) => {
     res.status(201).json({ message: "Profil créé", profile });
     return;
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ message: "Erreur serveur" });
     return;
   }

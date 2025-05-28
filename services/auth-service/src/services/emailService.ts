@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
+import logger from '../utils/logger';
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAILTRAP_HOST,
@@ -6,7 +7,7 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.MAILTRAP_USER,
     pass: process.env.MAILTRAP_PASS,
-  }
+  },
 });
 
 export const sendActivationEmail = async (email: string, token: string) => {
@@ -22,7 +23,7 @@ export const sendActivationEmail = async (email: string, token: string) => {
             <a href="${activationLink}">${activationLink}</a>`,
     });
   } catch (error) {
-    console.error("Erreur envoi mail d'activation de compte :", error);
+    logger.error("Erreur envoi mail d'activation de compte :", error);
     throw new Error("Impossible d'envoyer le mail d'activation.");
   }
 };
@@ -40,7 +41,7 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
             <a href="${resetLink}">${resetLink}</a>`,
     });
   } catch (error) {
-    console.error("Erreur envoi mail réinitialisation mdp :", error);
+    logger.error("Erreur envoi mail réinitialisation mdp :", error);
     throw new Error("Impossible d'envoyer le mail de réinitialisation.");
   }
 };

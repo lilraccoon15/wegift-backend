@@ -1,17 +1,18 @@
-import app from './app';
-import sequelize from './config/database';
+import app from "./app";
+import sequelize from "./config/database";
+import logger from './utils/logger';
 
 const PORT = process.env.PORT || 3003;
 
 (async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Connexion DB réussie !');
+    logger.info("Connexion DB réussie");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+      logger.info(`Serveur lancé sur http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error('❌ Impossible de se connecter à la DB :', err);
+    logger.error("Impossible de se connecter à la DB :", err);
   }
 })();

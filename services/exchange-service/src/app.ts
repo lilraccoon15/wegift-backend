@@ -6,7 +6,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import userRoutes from "./routes/userRoutes";
+import exchangeRoutes from "./routes/exchangeRoutes";
 
 dotenv.config();
 
@@ -22,10 +22,10 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.use("/api/users", userRoutes);
+app.use("/api/exchange", exchangeRoutes);
 
 app.get("/", (_req, res) => {
-  res.send("User service is running!");
+  res.send("Exchange service is running!");
 });
 
 export default app;

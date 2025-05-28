@@ -1,5 +1,5 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
+import { Sequelize } from "sequelize";
+import dotenv from "dotenv";
 dotenv.config();
 
 const sequelize = new Sequelize(
@@ -9,20 +9,21 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
-    dialect: 'mysql',
+    dialect: "mysql",
     logging: false,
     define: {
-      charset: 'utf8mb4',
-      collate: 'utf8mb4_unicode_ci',
+      charset: "utf8mb4",
+      collate: "utf8mb4_unicode_ci",
     },
     dialectOptions: {
-      charset: 'utf8mb4',
-      ssl: process.env.DB_SSL === 'true'
-        ? {
-            require: true,
-            rejectUnauthorized: false,
-          }
-        : undefined,
+      charset: "utf8mb4",
+      ssl:
+        process.env.DB_SSL === "true"
+          ? {
+              require: true,
+              rejectUnauthorized: false,
+            }
+          : undefined,
     },
   }
 );

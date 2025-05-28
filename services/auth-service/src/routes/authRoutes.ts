@@ -1,29 +1,37 @@
-import { Router } from 'express';
-import { register, login, logout, activateUser, resetPassword } from '../controllers/authController';
-import { authLimiter } from '../middlewares/rateLimit';
-import { loginSchema, registerSchema } from '../schemas/authSchema';
+import { Router } from "express";
+import {
+  register,
+  login,
+  logout,
+  activateUser,
+  resetPassword,
+  confirmPasswordReset,
+} from "../controllers/authController";
+import { authLimiter } from "../middlewares/rateLimit";
+import {
+  emailSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
+} from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
 
 const router = Router();
 
-router.post(
-  "/register",
-  authLimiter,
-  validateBody(registerSchema),
-  register
-);
+router.post("/register", authLimiter, validateBody(registerSchema), register);
+
+router.post("/login", authLimiter, validateBody(loginSchema), login);
+
+router.post("/logout", logout);
+
+router.get("/activate", activateUser);
+
+router.post("/forgot-password", validateBody(emailSchema), resetPassword);
 
 router.post(
-  "/login",
-  authLimiter,
-  validateBody(loginSchema),
-  login
+  "/reset-password",
+  validateBody(resetPasswordSchema),
+  confirmPasswordReset
 );
-
-router.post('/logout', logout);
-
-router.get('/activate', activateUser);
-
-router.get('/forgot-password', resetPassword);
 
 export default router;

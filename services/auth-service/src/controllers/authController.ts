@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
-import { registerUser, loginUser } from '../services/authService';
-import { loginSchema, registerSchema } from '../schemas/authSchema';
-import jwt from 'jsonwebtoken';
-import User from '../models/User';
+import { Request, Response } from "express";
+import { registerUser, loginUser } from "../services/authService";
+import { loginSchema, registerSchema } from "../schemas/authSchema";
+import jwt from "jsonwebtoken";
+import User from "../models/User";
+import logger from '../utils/logger';
 
 export const register = async (req: Request, res: Response) => {
   const parseResult = registerSchema.safeParse(req.body);
@@ -13,7 +14,9 @@ export const register = async (req: Request, res: Response) => {
 
   try {
     const user = await registerUser(parseResult.data);
-    res.status(201).json({ message: "Utilisateur créé avec succès", userId: user.id });
+    res
+      .status(201)
+      .json({ message: "Utilisateur créé avec succès", userId: user.id });
   } catch (error: any) {
     const message = error.message || "Erreur serveur lors de l'inscription.";
     res.status(400).json({ message });
@@ -75,13 +78,13 @@ export const activateUser = async (req: Request, res: Response) => {
       res.status(400).json({ message: "Compte déjà activé" });
       return;
     }
-    
+
     user.isActive = true;
     await user.save();
 
     res.json({ message: "Compte activé avec succès !" });
   } catch (error) {
-    console.error("Erreur activation :", error);
+    logger.error("Erreur activation :", error);
     res.status(400).json({ message: "Token invalide ou expiré" });
   }
 };
@@ -89,23 +92,28 @@ export const activateUser = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
-  const user = await User.findOne({email});
+  const user = await User.findOne({ email });
 
   if (!user) {
-    res.status(200).json({ message: "Si cet email existe, un lien a été envoyé." });
+    res
+      .status(200)
+      .json({ message: "Si cet email existe, un lien a été envoyé." });
     return;
   }
 
   try {
     await sendPasswordResetEmail(user);
-    res.status(200).json({ message: "Si cet email existe, un lien a été envoyé." });
+    res
+      .status(200)
+      .json({ message: "Si cet email existe, un lien a été envoyé." });
     return;
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Erreur serveur lors de l'envoi de l'email." });
+    logger.error(error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de l'envoi de l'email." });
     return;
   }
-
 };
 
 export const confirmPasswordReset = async (req: Request, res: Response) => {
@@ -116,7 +124,9 @@ export const confirmPasswordReset = async (req: Request, res: Response) => {
     res.json({ message: "Mot de passe réinitialisé avec succès." });
     return;
   } catch (error: any) {
-    res.status(400).json({ message: error.message || "Token invalide ou expiré." });
+    res
+      .status(400)
+      .json({ message: error.message || "Token invalide ou expiré." });
     return;
   }
 };

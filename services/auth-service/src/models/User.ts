@@ -1,5 +1,5 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/database';
+import { DataTypes, Model } from "sequelize";
+import sequelize from "../config/database";
 
 class User extends Model {
   public id!: string;
@@ -36,13 +36,13 @@ User.init(
       defaultValue: false,
     },
     isActive: {
-      type: DataTypes.BOOLEAN, 
-      defaultValue: false 
-    }, 
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   },
   {
     sequelize,
-    tableName: 'users',
+    tableName: "users",
     timestamps: false,
   }
 );

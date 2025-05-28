@@ -1,10 +1,11 @@
-import bcrypt from 'bcrypt';
-import User from '../models/User';
+import bcrypt from "bcrypt";
+import User from "../models/User";
 import jwt from "jsonwebtoken";
-import { RegisterData } from '../schemas/authSchema';
-import axios from 'axios';
-import { sendActivationEmail } from './emailService';
-import PasswordResetToken from '../models/PasswordResetToken';
+import { RegisterData } from "../schemas/authSchema";
+import axios from "axios";
+import { sendActivationEmail } from "./emailService";
+import PasswordResetToken from "../models/PasswordResetToken";
+import logger from '../utils/logger';
 
 class ValidationError extends Error {
   statusCode: number;
@@ -20,15 +21,27 @@ const ISSUER = process.env.JWT_ISSUER || "your-api";
 const TOKEN_EXPIRATION = 60 * 60 * 1000;
 
 export const registerUser = async (data: RegisterData) => {
-  const { firstName, lastName, birthDate, email, password, acceptedTerms, newsletter } = data;
+  const {
+    firstName,
+    lastName,
+    birthDate,
+    email,
+    password,
+    acceptedTerms,
+    newsletter,
+  } = data;
 
   const birth = new Date(birthDate);
   if (birth > new Date()) {
-    throw new ValidationError("La date de naissance ne peut pas être dans le futur.");
+    throw new ValidationError(
+      "La date de naissance ne peut pas être dans le futur."
+    );
   }
 
   if (!acceptedTerms) {
-    throw new Error("Vous devez accepter les conditions générales d'utilisation.");
+    throw new Error(
+      "Vous devez accepter les conditions générales d'utilisation."
+    );
   }
 
   const existingUser = await User.findOne({ where: { email } });
@@ -36,7 +49,7 @@ export const registerUser = async (data: RegisterData) => {
     throw new Error("Cet email est déjà enregistré.");
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);  
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     email,
@@ -45,77 +58,76 @@ export const registerUser = async (data: RegisterData) => {
     newsletter,
   });
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    SECRET,
-    {
-      expiresIn: "1h",
-      audience: AUDIENCE,
-      issuer: ISSUER,
-    }
-  );
+  const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
+    expiresIn: "1h",
+    audience: AUDIENCE,
+    issuer: ISSUER,
+  });
 
-  const activationToken = jwt.sign(
-    { id: user.id, email: user.email },
-    SECRET,
-    { expiresIn: "24h" }
-  );
+  const activationToken = jwt.sign({ id: user.id, email: user.email }, SECRET, {
+    expiresIn: "24h",
+  });
 
   try {
     await sendActivationEmail(email, activationToken);
   } catch (error) {
-    console.error("Erreur envoi mail d'activation :", error);
+    logger.error("Erreur envoi mail d'activation :", error);
     throw new Error("Impossible d'envoyer le mail d'activation.");
   }
 
   try {
-    await axios.post('http://localhost:3003/api/users/profile', 
+    await axios.post(
+      "http://localhost:3003/api/users/profile",
       {
-      userId: user.id,
-      firstName,
-      lastName,
-      birthDate: birth,
+        userId: user.id,
+        firstName,
+        lastName,
+        birthDate: birth,
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }
-  );
+    );
   } catch (error) {
     const err = error as any;
-    console.error("Erreur création profil :", err.response?.data || err.message || err);    await User.destroy({ where: { id: user.id } });
+    logger.error(
+      "Erreur création profil :",
+      err.response?.data || err.message || err
+    );
+    await User.destroy({ where: { id: user.id } });
     throw new Error("Erreur lors de la création du profil utilisateur.");
   }
 
   return user;
 };
 
-export const loginUser = async (email: string, password: string): Promise<{ token?: string; error?: string }> => {
+export const loginUser = async (
+  email: string,
+  password: string
+): Promise<{ token?: string; error?: string }> => {
   const user = await User.findOne({ where: { email } });
 
   if (!user) return { error: "Email ou mot de passe invalide." };
 
-  if (!user.isActive) return { error: "Compte non activé. Merci de vérifier votre email." };
+  if (!user.isActive)
+    return { error: "Compte non activé. Merci de vérifier votre email." };
 
   const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) return { error: "Email ou mot de passe invalide." };
 
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    SECRET,
-    {
-      expiresIn: "1h",
-      audience: AUDIENCE,
-      issuer: ISSUER,
-    }
-  );
+  const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
+    expiresIn: "1h",
+    audience: AUDIENCE,
+    issuer: ISSUER,
+  });
 
   return { token };
 };
 
 export const sendPasswordResetEmail = async (user: any) => {
-  const token = crypto.randomBytes(32).toString('hex');
+  const token = crypto.randomBytes(32).toString("hex");
 
   await PasswordResetToken.upsert({
     userId: user.id,
@@ -124,9 +136,9 @@ export const sendPasswordResetEmail = async (user: any) => {
   });
 
   await sendResetPasswordEmail(user.email, token);
-}
+};
 
-export const resetUserPassword = async ( token: string, newPassword: string ) => {
+export const resetUserPassword = async (token: string, newPassword: string) => {
   const tokenEntry = await PasswordResetToken.findOne({ where: { token } });
 
   if (!tokenEntry) throw new Error("Token invalide.");
@@ -144,4 +156,4 @@ export const resetUserPassword = async ( token: string, newPassword: string ) =>
   await user.save();
 
   await PasswordResetToken.destroy({ where: { token } });
-}
+};
