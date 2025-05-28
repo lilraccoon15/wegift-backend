@@ -3,9 +3,10 @@ import User from "../models/User";
 import jwt from "jsonwebtoken";
 import { RegisterData } from "../schemas/authSchema";
 import axios from "axios";
-import { sendActivationEmail } from "./emailService";
+import { sendActivationEmail, sendResetPasswordEmail } from "./emailService";
 import PasswordResetToken from "../models/PasswordResetToken";
 import logger from '../utils/logger';
+import * as crypto from 'crypto';
 
 class ValidationError extends Error {
   statusCode: number;

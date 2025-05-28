@@ -1,7 +1,17 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 
-class PasswordResetToken extends Model {}
+interface PasswordResetTokenAttributes {
+  userId: string;
+  token: string;
+  expiresAt: Date;
+}
+
+class PasswordResetToken extends Model<PasswordResetTokenAttributes> implements PasswordResetTokenAttributes {
+  public userId!: string;
+  public token!: string;
+  public expiresAt!: Date;
+}
 
 PasswordResetToken.init(
   {

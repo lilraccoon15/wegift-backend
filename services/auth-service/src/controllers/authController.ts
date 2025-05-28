@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { registerUser, loginUser } from "../services/authService";
+import { registerUser, loginUser, sendPasswordResetEmail, resetUserPassword } from "../services/authService";
 import { loginSchema, registerSchema } from "../schemas/authSchema";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
@@ -92,7 +92,7 @@ export const activateUser = async (req: Request, res: Response) => {
 export const resetPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne(email);
 
   if (!user) {
     res
