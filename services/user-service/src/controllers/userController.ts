@@ -1,28 +1,26 @@
 import { Request, Response } from "express";
-import UserProfile from "../models/UserProfile";
 import logger from '../utils/logger';
+import sendError from "../utils/sendError";
+import sendSuccess from "../utils/sendSuccess";
+import { createProfileService, getProfileService } from "../services/userService";
 
 export const me = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   if (!userId) {
-    res.status(401).json({ message: "Non authentifié" });
-    return;
+    return sendError(res, "Non authentifié", 401);
   }
 
   try {
-    const profile = await UserProfile.findOne({ where: { userId } });
+    const profile = await getProfileService(userId);
 
     if (!profile) {
-      res.status(404).json({ message: "Profil non trouvé" });
-      return;
+      return sendError(res, "Profil non trouvé", 404);
     }
 
-    res.json(profile);
-    return;
+    return sendSuccess(res, "Profil récupéré", profile);
   } catch (error) {
-    res.status(500).json({ message: "Erreur serveur" });
-    return;
+    return sendError(res, "Erreur serveur", 500);
   }
 };
 
@@ -30,36 +28,19 @@ export const createProfile = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
   if (!userId) {
-    res.status(401).json({ message: "Non authentifié" });
-    return;
+    return sendError(res, "Non authentifié", 401);
   }
 
   const { firstName, lastName, birthDate } = req.body;
 
-  if (!userId || !firstName || !lastName || !birthDate) {
-    res.status(400).json({ message: "Champs manquants" });
-    return;
-  }
-
   try {
-    const existingProfile = await UserProfile.findOne({ where: { userId } });
-    if (existingProfile) {
-      res.status(409).json({ message: "Profil déjà existant" });
-      return;
+    const profile = await createProfileService(userId, firstName, lastName, birthDate);
+
+    return sendSuccess(res, "Profil créé", profile);
+  } catch (error: any) {
+    if (error.message === "Profil déjà existant") {
+      return sendError(res, error.message, 409);
     }
-
-    const profile = await UserProfile.create({
-      userId,
-      firstName,
-      lastName,
-      birthDate,
-    });
-
-    res.status(201).json({ message: "Profil créé", profile });
-    return;
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ message: "Erreur serveur" });
-    return;
+    return sendError(res, "Erreur serveur", 500);
   }
 };

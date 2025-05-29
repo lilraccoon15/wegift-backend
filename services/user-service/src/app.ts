@@ -7,6 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes";
+import { errorHandler } from "./middlewares/errorHandler";
 
 dotenv.config();
 
@@ -21,8 +22,9 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use(errorHandler);
 
-app.use("/api/users", userRoutes);
+app.use(userRoutes);
 
 app.get("/", (_req, res) => {
   res.send("User service is running!");

@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const emailSchema = z.string().email("Email invalide.");
 
+export const emailObjectSchema = z.object({
+  email: emailSchema,
+});
+
 export const passwordSchema = z
   .string()
   .refine(

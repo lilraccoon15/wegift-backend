@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import User from "../models/User";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions, Secret } from "jsonwebtoken";
 import { RegisterData } from "../schemas/authSchema";
 import axios from "axios";
 import { sendActivationEmail, sendResetPasswordEmail } from "./emailService";
@@ -16,7 +16,8 @@ class ValidationError extends Error {
   }
 }
 
-const SECRET = process.env.JWT_SECRET || "default_secret";
+const SECRET: Secret = process.env.JWT_SECRET || "default_secret";
+
 const AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
 const ISSUER = process.env.JWT_ISSUER || "your-api";
 const TOKEN_EXPIRATION = 60 * 60 * 1000;
@@ -59,11 +60,13 @@ export const registerUser = async (data: RegisterData) => {
     newsletter,
   });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
+  const jwtOptions: SignOptions = {
     expiresIn: "1h",
     audience: AUDIENCE,
     issuer: ISSUER,
-  });
+  };
+
+  const token = jwt.sign({ id: user.id, email: user.email }, SECRET, jwtOptions);
 
   const activationToken = jwt.sign({ id: user.id, email: user.email }, SECRET, {
     expiresIn: "24h",

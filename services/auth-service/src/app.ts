@@ -7,6 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes";
+import { errorHandler } from "./middlewares/errorHandler";
 
 dotenv.config();
 
@@ -22,7 +23,9 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.use("/api/auth", authRoutes);
+app.use(authRoutes);
+
+app.use(errorHandler);
 
 app.get("/", (_req, res) => {
   res.send("Auth service is running!");

@@ -9,7 +9,7 @@ import {
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
-  emailSchema,
+  emailObjectSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
@@ -26,7 +26,7 @@ router.post("/logout", logout);
 
 router.get("/activate", activateUser);
 
-router.post("/forgot-password", validateBody(emailSchema), resetPassword);
+router.post("/forgot-password", validateBody(emailObjectSchema), resetPassword);
 
 router.post(
   "/reset-password",
