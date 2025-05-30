@@ -6,6 +6,7 @@ import {
   activateUser,
   resetPassword,
   confirmPasswordReset,
+  setup2FA,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
@@ -15,6 +16,7 @@ import {
   resetPasswordSchema,
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
+import { verifyTokenMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -33,5 +35,7 @@ router.post(
   validateBody(resetPasswordSchema),
   confirmPasswordReset
 );
+
+router.post('/2fa/setup', verifyTokenMiddleware, setup2FA);
 
 export default router;

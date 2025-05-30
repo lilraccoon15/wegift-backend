@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { registerUser, loginUser, sendPasswordResetEmail, resetUserPassword } from "../services/authService";
+import { registerUser, loginUser, sendPasswordResetEmail, resetUserPassword, setupTwoFactor } from "../services/authService";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 import logger from '../utils/logger';
 import sendSuccess from "../utils/sendSuccess";
 import sendError from "../utils/sendError";
+import { AuthenticatedRequest } from "../middlewares/authMiddleware";
 
 interface DecodedToken {
   id: number;
@@ -24,13 +25,21 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const { token, error } = await loginUser(email, password);
 
-    if (error) {
-      return sendError(res, error, 401);
+    const result = await loginUser(email, password);
+
+    if ("error" in result) {
+      return sendError(res, result.error, 401);
     }
 
-    res.cookie("token", token, {
+    if ("requires2FA" in result) {
+      return sendSuccess(res, "Double authentification requise", {
+        requires2FA: true,
+        tempToken: result.tempToken,
+      });
+    }
+
+    res.cookie("token", result.token!, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -110,3 +119,18 @@ export const confirmPasswordReset = async (req: Request, res: Response, next: Ne
     next(error);
   }
 };
+
+export const setup2FA = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return sendError(res, "Non autorisé", 401);
+    }
+
+    const { qrCodeDataURL, otpauthUrl, secret } = await setupTwoFactor(userId);
+    return sendSuccess(res, "2FA configurée avec succès", { qrCodeDataURL, otpauthUrl, secret });
+  } catch (err) {
+    return sendError(res, "Erreur lors de la configuration 2FA", 500);
+  }
+};
+

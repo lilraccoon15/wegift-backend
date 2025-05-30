@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { boolean, z } from "zod";
 
 export const emailSchema = z.string().email("Email invalide.");
 
@@ -26,7 +26,7 @@ export const registerSchema = z.object({
     }),
   email: emailSchema,
   password: passwordSchema,
-  acceptedTerms: z.literal(true),
+  acceptedTerms: z.boolean(),
   newsletter: z.boolean(),
 });
 

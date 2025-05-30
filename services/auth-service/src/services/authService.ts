@@ -7,6 +7,8 @@ import { sendActivationEmail, sendResetPasswordEmail } from "./emailService";
 import PasswordResetToken from "../models/PasswordResetToken";
 import logger from '../utils/logger';
 import * as crypto from 'crypto';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 
 class ValidationError extends Error {
   statusCode: number;
@@ -15,6 +17,11 @@ class ValidationError extends Error {
     this.statusCode = 400;
   }
 }
+
+type LoginResponse =
+  | { token: string }
+  | { requires2FA: true; tempToken: string }
+  | { error: string };
 
 const SECRET: Secret = process.env.JWT_SECRET || "default_secret";
 
@@ -110,7 +117,7 @@ export const registerUser = async (data: RegisterData) => {
 export const loginUser = async (
   email: string,
   password: string
-): Promise<{ token?: string; error?: string }> => {
+): Promise<LoginResponse> => {
   const user = await User.findOne({ where: { email } });
 
   if (!user) return { error: "Email ou mot de passe invalide." };
@@ -120,6 +127,16 @@ export const loginUser = async (
 
   const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) return { error: "Email ou mot de passe invalide." };
+
+  if (user.twoFactorEnabled) {
+    const tempToken = jwt.sign(
+      { id: user.id, email: user.email, twoFA: true },
+      SECRET,
+      { expiresIn: "5m" }
+    );
+
+    return { requires2FA: true, tempToken };
+  }
 
   const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
     expiresIn: "1h",
@@ -160,4 +177,28 @@ export const resetUserPassword = async (token: string, newPassword: string) => {
   await user.save();
 
   await PasswordResetToken.destroy({ where: { token } });
+};
+
+export const setupTwoFactor = async (userId: number) => {
+  const user = await User.findByPk(userId);
+  if (!user) throw new Error('Utilisateur non trouvé');
+
+  const secret = speakeasy.generateSecret({
+    name: `WeGift (${user.email})`,
+  });
+
+  user.twoFactorSecret = secret.base32;
+  await user.save();
+
+  if (!secret.otpauth_url) {
+    throw new Error("L'URL otpauth est manquante");
+  }
+
+  const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
+
+  return {
+    qrCodeDataURL,
+    otpauthUrl: secret.otpauth_url,
+    secret: secret.base32,
+  };
 };

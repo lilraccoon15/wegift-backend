@@ -8,6 +8,8 @@ class User extends Model {
   public acceptedTerms!: boolean;
   public newsletter!: boolean;
   public isActive!: boolean;
+  public twoFactorEnabled!: boolean;
+  public twoFactorSecret!: string | null;
 }
 
 User.init(
@@ -38,6 +40,14 @@ User.init(
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+    },
+    twoFactorEnabled: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    },
+    twoFactorSecret: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
