@@ -81,7 +81,7 @@ export const registerUser = async (data: RegisterData) => {
 
   try {
     await axios.post(
-      "http://localhost:3003/api/users/profile",
+      "http://localhost:3003/profile",
       {
         userId: user.id,
         firstName,

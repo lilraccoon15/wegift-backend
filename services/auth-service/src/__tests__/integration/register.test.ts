@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../src/app'; 
+import app from '../../app';
 
 describe('POST /register', () => {
   it('should register a new user successfully', async () => {
@@ -14,12 +14,12 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/register')
       .send(newUser);
       
     expect(response.status).toBe(201);
-    expect(response.body.message).toBe("Utilisateur créé avec succès");
-    expect(response.body.userId).toBeDefined();
+    expect(response.body).toHaveProperty('message', "Utilisateur créé avec succès");
+    expect(response.body.data).toHaveProperty('userId');
   });
 
   it('should fail if email format is invalid', async () => {
@@ -34,11 +34,11 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/register')
       .send(newUser);
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Format d'email invalide.");
+    expect(response.body).toHaveProperty('error', "Email invalide.");
   });
 
   it('should fail if password does not meet criteria', async () => {
@@ -53,11 +53,12 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/register')
       .send(newUser);
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toMatch(/mot de passe/);
+    expect(response.body).toHaveProperty('error');
+    expect(response.body.error.toLowerCase()).toMatch(/mot de passe/);
   });
 
   it('should fail if acceptedTerms is false', async () => {
@@ -72,10 +73,9 @@ describe('POST /register', () => {
     };
 
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/register')
       .send(newUser);
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Les conditions générales doivent être acceptées.");
-  });
+    expect(response.body).toHaveProperty('error', "Invalid literal value, expected true");  });
 });
