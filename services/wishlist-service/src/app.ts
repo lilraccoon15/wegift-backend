@@ -8,9 +8,9 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import wishlistRoutes from "./routes/wishlistRoutes";
 
-dotenv.config({
-  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-});
+if (process.env.NODE_ENV !== 'test') {
+  dotenv.config();
+}
 
 const app = express();
 
