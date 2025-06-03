@@ -104,7 +104,7 @@ export const activateUser = async (
 
         if (!user) return sendError(res, "Utilisateur non trouvé", 404);
 
-        if (user.isActive) return sendError(res, "Compte déjà activé", 400);
+        if (user.isActive) return sendSuccess(res, "Compte déjà activé", 200);
 
         user.isActive = true;
         await user.save();
