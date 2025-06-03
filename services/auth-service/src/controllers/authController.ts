@@ -35,6 +35,9 @@ export const register = async (
             201
         );
     } catch (error: any) {
+        if (error.statusCode) {
+            return sendError(res, error.message, error.statusCode);
+        }
         next(error);
     }
 };

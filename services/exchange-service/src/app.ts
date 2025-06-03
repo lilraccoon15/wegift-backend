@@ -8,7 +8,9 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import exchangeRoutes from "./routes/exchangeRoutes";
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+});
 
 const app = express();
 

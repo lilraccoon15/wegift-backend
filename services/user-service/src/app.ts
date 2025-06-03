@@ -9,7 +9,9 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes";
 import { errorHandler } from "./middlewares/errorHandler";
 
-dotenv.config();
+dotenv.config({
+  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
+});
 
 const app = express();
 
