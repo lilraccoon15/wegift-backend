@@ -14,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
@@ -22,7 +22,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
-app.use("/api/wishlist", wishlistRoutes);
+app.use('/', wishlistRoutes);
 
 app.get("/", (_req, res) => {
   res.send("Wishlist service is running!");

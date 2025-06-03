@@ -23,10 +23,10 @@ type LoginResponse =
   | { requires2FA: true; tempToken: string }
   | { error: string };
 
-const SECRET: Secret = process.env.JWT_SECRET || "default_secret";
+export const SECRET: Secret = process.env.JWT_SECRET || "default_secret";
 
-const AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
-const ISSUER = process.env.JWT_ISSUER || "your-api";
+export const AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
+export const ISSUER = process.env.JWT_ISSUER || "your-api";
 const TOKEN_EXPIRATION = 60 * 60 * 1000;
 
 export const registerUser = async (data: RegisterData) => {
@@ -201,4 +201,25 @@ export const setupTwoFactor = async (userId: number) => {
     otpauthUrl: secret.otpauth_url,
     secret: secret.base32,
   };
+};
+
+export const verifyTwoFactorCode = async (userId: number, code: string): Promise<boolean> => {
+  const user = await User.findByPk(userId);
+  if (!user || !user.twoFactorSecret) {
+    throw new Error("Utilisateur ou secret 2FA introuvable");
+  }
+
+  const verified = speakeasy.totp.verify({
+    secret: user.twoFactorSecret,
+    encoding: "base32",
+    token: code,
+    window: 1,
+  });
+
+  if (verified && !user.twoFactorEnabled) {
+    user.twoFactorEnabled = true;
+    await user.save();
+  }
+
+  return verified;
 };

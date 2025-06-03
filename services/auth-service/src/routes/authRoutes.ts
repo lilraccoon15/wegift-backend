@@ -7,6 +7,10 @@ import {
   resetPassword,
   confirmPasswordReset,
   setup2FA,
+  enable2FA,
+  verifyTwoFactorCodeHandler,
+  status2FA,
+  disable2FA,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
@@ -36,6 +40,14 @@ router.post(
   confirmPasswordReset
 );
 
-router.post('/2fa/setup', verifyTokenMiddleware, setup2FA);
+router.get("/generate-2fa", verifyTokenMiddleware, setup2FA);
+
+router.post("/enable-2fa", verifyTokenMiddleware, enable2FA);
+
+router.post("/verify-2fa", verifyTokenMiddleware, verifyTwoFactorCodeHandler)
+
+router.get("/2fa-status", verifyTokenMiddleware, status2FA)
+
+router.post("/disable-2fa", verifyTokenMiddleware, disable2FA)
 
 export default router;

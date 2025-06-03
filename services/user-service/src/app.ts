@@ -15,7 +15,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(errorHandler);
 
-app.use(userRoutes);
+app.use('/', userRoutes);
 
 app.get("/", (_req, res) => {
   res.send("User service is running!");

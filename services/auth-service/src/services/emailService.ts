@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendActivationEmail = async (email: string, token: string) => {
-  const activationLink = `http://localhost:5173/activate?token=${token}`;
+  const activationLink = `http://localhost:3000/activate?token=${token}`;
 
   try {
     await transporter.sendMail({
@@ -29,7 +29,7 @@ export const sendActivationEmail = async (email: string, token: string) => {
 };
 
 export const sendResetPasswordEmail = async (email: string, token: string) => {
-  const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+  const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
   try {
     await transporter.sendMail({
