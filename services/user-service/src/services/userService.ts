@@ -21,7 +21,27 @@ export const createProfileService = async (
   return profile;
 };
 
-export const getProfileService = async (userId: number) => {
+export const updateProfileService = async (
+  userId: number,
+  firstName: string,
+  lastName: string,
+  birthDate: string,
+  picture?: string,
+  description?: string
+) => {
   const profile = await UserProfile.findOne({ where: { userId } });
+
+  if (!profile) {
+    throw new Error("Profil non trouvé");
+  }
+
+  profile.firstName = firstName;
+  profile.lastName = lastName;
+  profile.birthDate = new Date(birthDate);
+  if (picture !== undefined) profile.picture = picture;
+  if (description !== undefined) profile.description = description;
+
+  await profile.save();
+
   return profile;
 };
