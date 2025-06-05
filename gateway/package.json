@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node index.ts",
-    "build": "tsc",
     "start": "node dist/index.js"
   },
   "keywords": [],
@@ -20,11 +21,16 @@
     "http-proxy-middleware": "^3.0.5"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/http-proxy-middleware": "^1.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^1.4.12",
     "@types/node": "^22.15.24",
+    "@types/supertest": "^6.0.3",
+    "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

@@ -12,8 +12,10 @@ import User from "../models/User";
 import logger from "../utils/logger";
 import sendSuccess from "../utils/sendSuccess";
 import sendError from "../utils/sendError";
-import { AuthenticatedRequest } from "../middlewares/authMiddleware";
+import { AuthenticatedRequest } from 'shared';
 import { SECRET, AUDIENCE, ISSUER } from "../services/authService";
+import bcrypt from "bcrypt";
+import { sendActivationEmail } from "../services/emailService";
 
 interface DecodedToken {
     id: number;
@@ -155,9 +157,8 @@ export const confirmPasswordReset = async (
 
 export const setup2FA = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
-
-        if (!userId) return sendError(res, "Non autorisé", 401);
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
 
         const { qrCodeDataURL, otpauthUrl, secret } = await setupTwoFactor(
             userId
@@ -175,10 +176,10 @@ export const setup2FA = async (req: AuthenticatedRequest, res: Response) => {
 
 export const enable2FA = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
         const { code } = req.body;
 
-        if (!userId) return sendError(res, "Non autorisé", 401);
         if (!code) return sendError(res, "Code 2FA requis", 400);
 
         const isValid = await verifyTwoFactorCode(userId, code);
@@ -196,10 +197,10 @@ export const verifyTwoFactorCodeHandler = async (
     res: Response
 ) => {
     try {
-        const userId = req.user?.id;
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
         const { code } = req.body;
 
-        if (!userId) return sendError(res, "Utilisateur non authentifié", 401);
         if (!code) return sendError(res, "Code 2FA manquant", 400);
 
         const isValid = await verifyTwoFactorCode(userId, code);
@@ -227,7 +228,8 @@ export const verifyTwoFactorCodeHandler = async (
 
 export const status2FA = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
         const user = await User.findByPk(userId);
 
         if (!user) return sendError(res, "Utilisateur non trouvé", 404);
@@ -247,7 +249,8 @@ export const status2FA = async (req: AuthenticatedRequest, res: Response) => {
 
 export const disable2FA = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
         const user = await User.findByPk(userId);
 
         if (!user) return sendError(res, "Utilisateur non trouvé", 404);
@@ -259,5 +262,80 @@ export const disable2FA = async (req: AuthenticatedRequest, res: Response) => {
         sendSuccess(res, "2FA désactivée avec succès", 200);
     } catch (err: any) {
         sendError(res, "Erreur serveur", 500);
+    }
+};
+
+export const getAccount = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
+
+        const user = await User.findOne({
+            where: { id: userId },
+            attributes: [
+                "id",
+                "email",
+                "acceptedTerms",
+                "newsletter",
+                "twoFactorEnabled",
+            ],
+        });
+
+        if (!user) return sendError(res, "Utilisateur non trouvé", 404);
+
+        sendSuccess(res, "Utilisateur trouvé", { account: user }, 200);
+    } catch (error) {
+        return sendError(res, "Erreur serveur", 500);
+    }
+};
+
+export const updateEmail = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        if (!req.user?.id) return sendError(res, "Non autorisé", 401);
+        const userId = req.user.id;
+        const { currentPassword, newEmail } = req.body;
+
+        if (!userId) return sendError(res, "Non autorisé", 401);
+        if (!currentPassword || !newEmail)
+            return sendError(
+                res,
+                "Mot de passe actuel et nouvel email requis",
+                400
+            );
+
+        const user = await User.findByPk(userId);
+
+        if (!user) return sendError(res, "Utilisateur non trouvé", 404);
+
+        const isPasswordValid = await bcrypt.compare(
+            currentPassword,
+            user.password
+        );
+        if (!isPasswordValid)
+            return sendError(res, "Mot de passe incorrect", 401);
+
+        const emailInUse = await User.findOne({ where: { email: newEmail } });
+        if (emailInUse)
+            return sendError(res, "Cet email est déjà utilisé", 409);
+
+        user.email = newEmail;
+        user.isActive = false;
+
+        const activationToken = jwt.sign(
+            { id: user.id, email: user.email },
+            SECRET,
+            { expiresIn: "24h" }
+        );
+        await sendActivationEmail(newEmail, activationToken);
+
+        await user.save();
+
+        sendSuccess(
+            res,
+            "Email mis à jour avec succès. Veuillez réactiver votre compte.",
+            200
+        );
+    } catch (error) {
+        return sendError(res, "Erreur lors de la mise à jour de l'email", 500);
     }
 };

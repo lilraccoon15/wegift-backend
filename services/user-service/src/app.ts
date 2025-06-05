@@ -24,6 +24,9 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+
+app.use("/uploads", express.static("public/uploads"));
+
 app.use(errorHandler);
 
 app.use('/', userRoutes);

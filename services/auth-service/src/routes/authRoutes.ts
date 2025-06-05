@@ -11,6 +11,8 @@ import {
   verifyTwoFactorCodeHandler,
   status2FA,
   disable2FA,
+  getAccount,
+  updateEmail,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
@@ -20,7 +22,9 @@ import {
   resetPasswordSchema,
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
-import { verifyTokenMiddleware } from "../middlewares/authMiddleware";
+import { verifyTokenMiddleware } from 'shared';
+// import { verifyTokenMiddleware } from "../../../../shared/middlewares/verifyTokenMiddleware";
+// import { verifyTokenMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -44,10 +48,14 @@ router.get("/generate-2fa", verifyTokenMiddleware, setup2FA);
 
 router.post("/enable-2fa", verifyTokenMiddleware, enable2FA);
 
-router.post("/verify-2fa", verifyTokenMiddleware, verifyTwoFactorCodeHandler)
+router.post("/verify-2fa", verifyTokenMiddleware, verifyTwoFactorCodeHandler);
 
-router.get("/2fa-status", verifyTokenMiddleware, status2FA)
+router.get("/2fa-status", verifyTokenMiddleware, status2FA);
 
-router.post("/disable-2fa", verifyTokenMiddleware, disable2FA)
+router.post("/disable-2fa", verifyTokenMiddleware, disable2FA);
+
+router.get("/get-account", verifyTokenMiddleware, getAccount);
+
+router.get("/update-email", verifyTokenMiddleware, updateEmail);
 
 export default router;

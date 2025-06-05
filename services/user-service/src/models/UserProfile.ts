@@ -7,6 +7,8 @@ class UserProfile extends Model {
   public firstName!: string;
   public lastName!: string;
   public birthDate!: Date;
+  public picture!: string | null;
+  public description!: string | null;
 }
 
 UserProfile.init(
@@ -33,6 +35,14 @@ UserProfile.init(
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
+    picture: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    }
   },
   {
     sequelize,

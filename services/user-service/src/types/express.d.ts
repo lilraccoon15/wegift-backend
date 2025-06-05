@@ -1,12 +1,12 @@
-import * as express from "express";
+// import * as express from "express";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: number;
-        email: string;
-      };
-    }
-  }
-}
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       user?: {
+//         id: number;
+//         email: string;
+//       };
+//     }
+//   }
+// }
