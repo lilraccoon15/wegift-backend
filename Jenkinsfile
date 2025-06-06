@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker/compose:1.29.2'  // Image officielle avec docker + docker-compose
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            image 'camille/jenkins-dind-compose:latest'
+            args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
     environment {
@@ -14,13 +14,11 @@ pipeline {
                 checkout scm
             }
         }
-        
         stage('Build services') {
             steps {
                 sh 'docker-compose build'
             }
         }
-        
         stage('Test services') {
             parallel {
                 stage('Test auth-service') {
@@ -65,7 +63,6 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy') {
             steps {
                 sh '''
