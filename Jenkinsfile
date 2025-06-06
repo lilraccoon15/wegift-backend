@@ -79,13 +79,6 @@ pipeline {
             }
         }
 
-        stage('Start services') {
-            steps {
-                bat 'docker compose up -d'
-                bat 'timeout /t 10'
-            }
-        }
-
         stage('Test services') {
             parallel {
                 stage('Test auth-service') {
@@ -116,15 +109,17 @@ pipeline {
             }
         }
 
-        stage('Stop services') {
+        stage('Start services') {
             steps {
                 bat 'docker compose down'
+                bat 'docker compose up -d'
             }
         }
 
         stage('Deploy') {
             steps {
                 bat '''
+                docker compose down
                 docker compose up -d
                 '''
             }
