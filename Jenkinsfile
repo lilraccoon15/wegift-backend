@@ -21,20 +21,28 @@ pipeline {
         stage('Prepare env files') {
             steps {
                 bat '''
-                echo DB_USER=%DB_USER% > services\\auth-service\\.env
-                echo DB_PASS=%DB_PASS% >> services\\auth-service\\.env
+                echo DB_USER=%DB_USER%> services\\auth-service\\.env
+                echo DB_PASS=%DB_PASS%>> services\\auth-service\\.env
+                echo DB_HOST=%DB_HOST%>> services\\auth-service\\.env
+                echo DB_PORT=%DB_PORT%>> services\\auth-service\\.env
 
-                echo DB_USER=%DB_USER% > services\\user-service\\.env
-                echo DB_PASS=%DB_PASS% >> services\\user-service\\.env
+                echo DB_USER=%DB_USER%> services\\user-service\\.env
+                echo DB_PASS=%DB_PASS%>> services\\user-service\\.env
+                echo DB_HOST=%DB_HOST%>> services\\user-service\\.env
+                echo DB_PORT=%DB_PORT%>> services\\user-service\\.env
 
-                echo DB_USER=%DB_USER% > services\\wishlist-service\\.env
-                echo DB_PASS=%DB_PASS% >> services\\wishlist-service\\.env
+                echo DB_USER=%DB_USER%> services\\wishlist-service\\.env
+                echo DB_PASS=%DB_PASS%>> services\\wishlist-service\\.env
+                echo DB_HOST=%DB_HOST%>> services\\wishlist-service\\.env
+                echo DB_PORT=%DB_PORT%>> services\\wishlist-service\\.env
 
-                echo DB_USER=%DB_USER% > services\\exchange-service\\.env
-                echo DB_PASS=%DB_PASS% >> services\\exchange-service\\.env
+                echo DB_USER=%DB_USER%> services\\exchange-service\\.env
+                echo DB_PASS=%DB_PASS%>> services\\exchange-service\\.env
+                echo DB_HOST=%DB_HOST%>> services\\exchange-service\\.env
+                echo DB_PORT=%DB_PORT%>> services\\exchange-service\\.env
 
-                echo DB_HOST=%DB_HOST% > gateway\\.env.docker
-                echo DB_PORT=%DB_PORT% >> gateway\\.env.docker
+                echo DB_HOST=%DB_HOST%> gateway\\.env.docker
+                echo DB_PORT=%DB_PORT%>> gateway\\.env.docker
                 '''
             }
         }
@@ -45,46 +53,61 @@ pipeline {
             }
         }
 
+        stage('Install dependencies') {
+            parallel {
+                stage('Install auth-service') {
+                    steps {
+                        bat 'docker compose run --rm auth-service npm install --production'
+                    }
+                }
+                stage('Install user-service') {
+                    steps {
+                        bat 'docker compose run --rm user-service npm install --production'
+                    }
+                }
+                stage('Install wishlist-service') {
+                    steps {
+                        bat 'docker compose run --rm wishlist-service npm install --production'
+                    }
+                }
+                stage('Install exchange-service') {
+                    steps {
+                        bat 'docker compose run --rm exchange-service npm install --production'
+                    }
+                }
+                stage('Install gateway') {
+                    steps {
+                        bat 'docker compose run --rm gateway npm install --production'
+                    }
+                }
+            }
+        }
+
         stage('Test services') {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat '''
-                        docker compose run --rm auth-service npm install
-                        docker compose run --rm auth-service npm test
-                        '''
+                        bat 'docker compose run --rm auth-service npm test'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat '''
-                        docker compose run --rm user-service npm install
-                        docker compose run --rm user-service npm test
-                        '''
+                        bat 'docker compose run --rm user-service npm test'
                     }
                 }
                 stage('Test wishlist-service') {
                     steps {
-                        bat '''
-                        docker compose run --rm wishlist-service npm install
-                        docker compose run --rm wishlist-service npm test
-                        '''
+                        bat 'docker compose run --rm wishlist-service npm test'
                     }
                 }
                 stage('Test exchange-service') {
                     steps {
-                        bat '''
-                        docker compose run --rm exchange-service npm install
-                        docker compose run --rm exchange-service npm test
-                        '''
+                        bat 'docker compose run --rm exchange-service npm test'
                     }
                 }
                 stage('Test gateway') {
                     steps {
-                        bat '''
-                        docker compose run --rm gateway npm install
-                        docker compose run --rm gateway npm test
-                        '''
+                        bat 'docker compose run --rm gateway npm test'
                     }
                 }
             }
