@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test-local": "cross-env NODE_ENV=test-local jest",
-    "test-docker": "cross-env NODE_ENV=test-docker jest",
+    "test-local": "cross-env NODE_ENV=test-local jest --detectOpenHandles --forceExit",
+    "test-docker": "cross-env NODE_ENV=test-docker jest --detectOpenHandles --forceExit",
     "test:unit": "cross-env NODE_ENV=test jest src/__tests__/unit",
     "test:functional": "cross-env NODE_ENV=test jest src/__tests__/functional",
     "test:integration": "cross-env NODE_ENV=test jest src/__tests__/integration",
