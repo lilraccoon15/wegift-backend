@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'camille/jenkins-dind-compose:latest'
+            image 'docker:24-dind'
             args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
