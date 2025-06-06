@@ -20,7 +20,7 @@ pipeline {
                     file(credentialsId: 'wegift-env-user', variable: 'USER_ENV'),
                     file(credentialsId: 'wegift-env-wishlist', variable: 'WISHLIST_ENV'),
                     file(credentialsId: 'wegift-env-exchange', variable: 'EXCHANGE_ENV'),
-                    file(credentialsId: 'wegift-env-gateway', variable: 'GATEWAY_ENV'),
+                    file(credentialsId: 'wegift-env-gateway-docker', variable: 'GATEWAY_ENV'),
 
                     file(credentialsId: 'wegift-env-auth-test', variable: 'AUTH_ENV_TEST'),
                     file(credentialsId: 'wegift-env-user-test', variable: 'USER_ENV_TEST'),
