@@ -1,25 +1,24 @@
-FROM node:20-alpine AS build
+FROM node:18-alpine AS builder
 
-WORKDIR /index
+WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm config set progress=false
-RUN npm config set cache /tmp/npm-cache --global
 
 RUN npm install
 
 COPY . .
 
-RUN npm run build   
+RUN npm run build
 
-FROM node:20-alpine
+FROM node:18-alpine
 
-WORKDIR /index
+WORKDIR /app
 
-COPY --from=build /index/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 
-COPY --from=build /index/dist ./dist  
+COPY --from=builder /app/dist ./dist
+
+COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 4000
 

@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  gateway:
+    build:
+      context: ./gateway
+    container_name: wegift-gateway
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+    env_file:
+      - ./gateway/.env
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: wegift-auth-service
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    env_file:
+      - ./services/auth-service/.env
+
+  user-service:
+    build:
+      context: ./services/user-service
+    container_name: wegift-user-service
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    env_file:
+      - ./services/user-service/.env
+
+  wishlist-service:
+    build:
+      context: ./services/wishlist-service
+    container_name: wegift-wishlist-service
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+    env_file:
+      - ./services/wishlist-service/.env
+
+  exchange-service:
+    build:
+      context: ./services/exchange-service
+    container_name: wegift-exchange-service
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+    env_file:
+      - ./services/exchange-service/.env

@@ -33,7 +33,6 @@
     "nodemailer": "^7.0.3",
     "qrcode": "^1.5.4",
     "sequelize": "^6.37.7",
-    "shared": "file:../../shared",
     "speakeasy": "^2.0.0",
     "winston": "^3.17.0",
     "zod": "^3.25.51"

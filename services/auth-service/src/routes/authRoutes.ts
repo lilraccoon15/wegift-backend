@@ -22,7 +22,7 @@ import {
   resetPasswordSchema,
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
-import { verifyTokenMiddleware } from 'shared';
+import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 
 const router = Router();
 

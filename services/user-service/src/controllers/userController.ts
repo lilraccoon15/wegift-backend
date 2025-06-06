@@ -7,7 +7,7 @@ import {
     getProfileService,
     updateProfileService,
 } from "../services/userService";
-import { AuthenticatedRequest } from 'shared';
+import { AuthenticatedRequest } from '../middlewares/verifyTokenMiddleware';
 
 import UserProfile from "../models/UserProfile";
 import path from "path";

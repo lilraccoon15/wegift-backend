@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { createProfile, getCurrentUser, me, updateProfile } from "../controllers/userController";
-import { verifyTokenMiddleware } from 'shared';
-// import { verifyTokenMiddleware } from "../../../../shared/middlewares/verifyTokenMiddleware";
-// import { verifyTokenMiddleware } from "../middlewares/userMiddleware";
+import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 import { validateBody } from "../middlewares/validateBody";
 import { createProfileSchema } from "../schemas/userSchema";
 import { upload } from "../middlewares/upload";

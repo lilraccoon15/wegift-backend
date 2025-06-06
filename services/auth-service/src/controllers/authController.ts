@@ -12,7 +12,7 @@ import User from "../models/User";
 import logger from "../utils/logger";
 import sendSuccess from "../utils/sendSuccess";
 import sendError from "../utils/sendError";
-import { AuthenticatedRequest } from "shared";
+import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import { SECRET, AUDIENCE, ISSUER } from "../services/authService";
 import bcrypt from "bcrypt";
 import { sendActivationEmail } from "../services/emailService";

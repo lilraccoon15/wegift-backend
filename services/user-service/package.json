@@ -25,7 +25,6 @@
     "multer": "^2.0.1",
     "mysql2": "^3.14.1",
     "sequelize": "^6.37.7",
-    "shared": "file:../../shared",
     "winston": "^3.17.0",
     "zod": "^3.25.51"
   },
