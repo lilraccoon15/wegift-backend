@@ -1,8 +1,6 @@
 import dotenv from "dotenv";
 
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
+dotenv.config();
 
 export const config = {
   authServiceUrl: process.env.AUTH_SERVICE_URL || "http://localhost:3001",
