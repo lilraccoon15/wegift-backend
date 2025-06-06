@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Build services') {
             steps {
-                sh 'docker-compose build'
+                sh 'docker compose build'
             }
         }
         stage('Test services') {
@@ -24,40 +24,40 @@ pipeline {
                 stage('Test auth-service') {
                     steps {
                         sh '''
-                        docker-compose run --rm auth-service npm install
-                        docker-compose run --rm auth-service npm test
+                        docker compose run --rm auth-service npm install
+                        docker compose run --rm auth-service npm test
                         '''
                     }
                 }
                 stage('Test user-service') {
                     steps {
                         sh '''
-                        docker-compose run --rm user-service npm install
-                        docker-compose run --rm user-service npm test
+                        docker compose run --rm user-service npm install
+                        docker compose run --rm user-service npm test
                         '''
                     }
                 }
                 stage('Test wishlist-service') {
                     steps {
                         sh '''
-                        docker-compose run --rm wishlist-service npm install
-                        docker-compose run --rm wishlist-service npm test
+                        docker compose run --rm wishlist-service npm install
+                        docker compose run --rm wishlist-service npm test
                         '''
                     }
                 }
                 stage('Test exchange-service') {
                     steps {
                         sh '''
-                        docker-compose run --rm exchange-service npm install
-                        docker-compose run --rm exchange-service npm test
+                        docker compose run --rm exchange-service npm install
+                        docker compose run --rm exchange-service npm test
                         '''
                     }
                 }
                 stage('Test gateway') {
                     steps {
                         sh '''
-                        docker-compose run --rm gateway npm install
-                        docker-compose run --rm gateway npm test
+                        docker compose run --rm gateway npm install
+                        docker compose run --rm gateway npm test
                         '''
                     }
                 }
@@ -66,8 +66,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                docker-compose down
-                docker-compose up -d
+                docker compose down
+                docker compose up -d
                 '''
             }
         }
