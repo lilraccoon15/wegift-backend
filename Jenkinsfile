@@ -1,13 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:24-dind'
-            args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any 
+
     environment {
         COMPOSE_FILE = 'docker-compose.yml'
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -16,14 +13,14 @@ pipeline {
         }
         stage('Build services') {
             steps {
-                sh 'docker compose build'
+                bat 'docker compose build'
             }
         }
         stage('Test services') {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        sh '''
+                        bat '''
                         docker compose run --rm auth-service npm install
                         docker compose run --rm auth-service npm test
                         '''
@@ -31,7 +28,7 @@ pipeline {
                 }
                 stage('Test user-service') {
                     steps {
-                        sh '''
+                        bat '''
                         docker compose run --rm user-service npm install
                         docker compose run --rm user-service npm test
                         '''
@@ -39,7 +36,7 @@ pipeline {
                 }
                 stage('Test wishlist-service') {
                     steps {
-                        sh '''
+                        bat '''
                         docker compose run --rm wishlist-service npm install
                         docker compose run --rm wishlist-service npm test
                         '''
@@ -47,7 +44,7 @@ pipeline {
                 }
                 stage('Test exchange-service') {
                     steps {
-                        sh '''
+                        bat '''
                         docker compose run --rm exchange-service npm install
                         docker compose run --rm exchange-service npm test
                         '''
@@ -55,7 +52,7 @@ pipeline {
                 }
                 stage('Test gateway') {
                     steps {
-                        sh '''
+                        bat '''
                         docker compose run --rm gateway npm install
                         docker compose run --rm gateway npm test
                         '''
@@ -65,7 +62,7 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh '''
+                bat '''
                 docker compose down
                 docker compose up -d
                 '''
