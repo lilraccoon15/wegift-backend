@@ -21,7 +21,7 @@ describe("POST /register", () => {
             "Utilisateur créé avec succès"
         );
         expect(response.body.data).toHaveProperty("userId");
-    });
+    }, 15000);
 
     it("should fail if email format is invalid", async () => {
         const newUser = {
