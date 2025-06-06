@@ -12,7 +12,7 @@ import User from "../models/User";
 import logger from "../utils/logger";
 import sendSuccess from "../utils/sendSuccess";
 import sendError from "../utils/sendError";
-import { AuthenticatedRequest } from 'shared';
+import { AuthenticatedRequest } from "shared";
 import { SECRET, AUDIENCE, ISSUER } from "../services/authService";
 import bcrypt from "bcrypt";
 import { sendActivationEmail } from "../services/emailService";
@@ -293,7 +293,7 @@ export const updateEmail = async (req: AuthenticatedRequest, res: Response) => {
     try {
         if (!req.user?.id) return sendError(res, "Non autorisé", 401);
         const userId = req.user.id;
-        const { currentPassword, newEmail } = req.body;
+        const { password: currentPassword, email: newEmail } = req.body;
 
         if (!userId) return sendError(res, "Non autorisé", 401);
         if (!currentPassword || !newEmail)

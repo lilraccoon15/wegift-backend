@@ -23,8 +23,6 @@ import {
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
 import { verifyTokenMiddleware } from 'shared';
-// import { verifyTokenMiddleware } from "../../../../shared/middlewares/verifyTokenMiddleware";
-// import { verifyTokenMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -56,6 +54,6 @@ router.post("/disable-2fa", verifyTokenMiddleware, disable2FA);
 
 router.get("/get-account", verifyTokenMiddleware, getAccount);
 
-router.get("/update-email", verifyTokenMiddleware, updateEmail);
+router.put("/update-email", verifyTokenMiddleware, updateEmail);
 
 export default router;
