@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test-local": "cross-env NODE_ENV=test-local jest",
+    "test-docker": "cross-env NODE_ENV=test-docker jest",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc",

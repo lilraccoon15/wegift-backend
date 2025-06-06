@@ -14,11 +14,11 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
 COPY package*.json ./
 
 RUN npm install
+
+COPY --from=builder /app/dist ./dist
 
 EXPOSE 3003
 

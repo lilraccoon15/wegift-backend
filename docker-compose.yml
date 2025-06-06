@@ -9,7 +9,9 @@ services:
       - "4000:4000"
     restart: unless-stopped
     env_file:
-      - ./gateway/.env.docker
+      - ./gateway/.env
+    environment:
+      - NODE_ENV=docker
 
   auth-service:
     build:
@@ -20,6 +22,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./services/auth-service/.env
+    environment:
+      - NODE_ENV=docker
 
   user-service:
     build:
@@ -30,6 +34,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./services/user-service/.env
+    environment:
+      - NODE_ENV=docker
     volumes:
       - ./services/user-service/public/uploads:/app/public/uploads
 
@@ -42,6 +48,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./services/wishlist-service/.env
+    environment:
+      - NODE_ENV=docker
 
   exchange-service:
     build:
@@ -52,3 +60,5 @@ services:
     restart: unless-stopped
     env_file:
       - ./services/exchange-service/.env
+    environment:
+      - NODE_ENV=docker

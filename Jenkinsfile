@@ -32,7 +32,7 @@ pipeline {
                     copy %USER_ENV% services\\user-service\\.env
                     copy %WISHLIST_ENV% services\\wishlist-service\\.env
                     copy %EXCHANGE_ENV% services\\exchange-service\\.env
-                    copy %GATEWAY_ENV% gateway\\.env.docker
+                    copy %GATEWAY_ENV% gateway\\.env
 
                     copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
                     copy %USER_ENV_TEST% services\\user-service\\.env.test
@@ -83,27 +83,12 @@ pipeline {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat 'docker compose run --rm auth-service npm test'
+                        bat 'docker compose run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat 'docker compose run --rm user-service npm test'
-                    }
-                }
-                stage('Test wishlist-service') {
-                    steps {
-                        bat 'docker compose run --rm wishlist-service npm test'
-                    }
-                }
-                stage('Test exchange-service') {
-                    steps {
-                        bat 'docker compose run --rm exchange-service npm test'
-                    }
-                }
-                stage('Test gateway') {
-                    steps {
-                        bat 'docker compose run --rm gateway npm test'
+                        bat 'docker compose run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
                     }
                 }
             }

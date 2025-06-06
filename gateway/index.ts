@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { config } from "./config";
+import config from "./config";
 
 const app = express();
 const PORT = 4000;
@@ -33,7 +33,7 @@ app.use(cors({
 app.use(cookieParser());
 
 app.use("/api/auth", createProxyMiddleware({
-  target: config.authServiceUrl,
+  target: config.AUTH_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/auth': '' },
   onProxyRes: addCorsHeaders,
@@ -41,28 +41,28 @@ app.use("/api/auth", createProxyMiddleware({
 
 // Les autres proxys
 app.use("/api/exchange", createProxyMiddleware({
-  target: config.exchangeServiceUrl,
+  target: config.EXCHANGE_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/exchange': '' },
   onProxyRes: addCorsHeaders,
 } as any));
 
 app.use('/uploads/users', createProxyMiddleware({
-  target: config.usersServiceUrl,
+  target: config.USER_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/uploads/users': '/uploads' },
   onProxyRes: addCorsHeaders,
 } as any));
 
 app.use("/api/users", createProxyMiddleware({
-  target: config.usersServiceUrl,
+  target: config.USER_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/users': '' },
   onProxyRes: addCorsHeaders,
 } as any));
 
 app.use("/api/wishlist", createProxyMiddleware({
-  target: config.wishlistServiceUrl,
+  target: config.WISHLIST_SERVICE,
   changeOrigin: true,
   pathRewrite: { '^/api/wishlist': '' },
   onProxyRes: addCorsHeaders,

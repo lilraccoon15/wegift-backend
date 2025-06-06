@@ -9,6 +9,10 @@ import logger from "../utils/logger";
 import * as crypto from "crypto";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
+import config from "../config";
+
+console.log("NODE_ENV in auth-service:", process.env.NODE_ENV);
+console.log("USER_SERVICE URL in auth-service:", config.USER_SERVICE);
 
 class ValidationError extends Error {
     statusCode: number;
@@ -96,7 +100,7 @@ export const registerUser = async (data: RegisterData) => {
 
     try {
         await axios.post(
-            "http://localhost:3003/profile",
+            `${config.USER_SERVICE}/profile`,
             {
                 userId: user.id,
                 firstName,
