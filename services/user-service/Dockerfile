@@ -18,7 +18,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
 COPY package*.json ./
 
-RUN npm install --production
+RUN npm install
 
 EXPOSE 3003
 
