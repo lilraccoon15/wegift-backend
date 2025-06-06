@@ -83,8 +83,7 @@ pipeline {
             steps {
                 bat 'docker compose down'
                 bat 'docker compose up -d'
-                // Attente simple pour laisser les services démarrer
-                bat 'timeout /t 15 /nobreak'
+                bat 'ping -n 16 127.0.0.1 > nul'
             }
         }
 
