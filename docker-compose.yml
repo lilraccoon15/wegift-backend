@@ -26,10 +26,12 @@ services:
       context: ./services/user-service
     container_name: wegift-user-service
     ports:
-      - "3002:3002"
+      - "3003:3003"
     restart: unless-stopped
     env_file:
       - ./services/user-service/.env
+    volumes:
+      - ./services/user-service/public/uploads:/app/public/uploads
 
   wishlist-service:
     build:
@@ -46,7 +48,7 @@ services:
       context: ./services/exchange-service
     container_name: wegift-exchange-service
     ports:
-      - "3003:3003"
+      - "3002:3002"
     restart: unless-stopped
     env_file:
       - ./services/exchange-service/.env

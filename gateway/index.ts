@@ -47,6 +47,13 @@ app.use("/api/exchange", createProxyMiddleware({
   onProxyRes: addCorsHeaders,
 } as any));
 
+app.use('/uploads/users', createProxyMiddleware({
+  target: config.usersServiceUrl,
+  changeOrigin: true,
+  pathRewrite: { '^/uploads/users': '/uploads' },
+  onProxyRes: addCorsHeaders,
+} as any));
+
 app.use("/api/users", createProxyMiddleware({
   target: config.usersServiceUrl,
   changeOrigin: true,
