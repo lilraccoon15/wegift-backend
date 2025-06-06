@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'docker:24.0.5-dind'  // Image Docker avec Docker in Docker
-            args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
+            image 'docker/compose:1.29.2'  // Image officielle avec docker + docker-compose
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
     environment {
@@ -17,7 +17,6 @@ pipeline {
         
         stage('Build services') {
             steps {
-                // Build de toutes les images du docker-compose
                 sh 'docker-compose build'
             }
         }
