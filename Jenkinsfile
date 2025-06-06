@@ -1,14 +1,9 @@
 pipeline {
-    agent any 
+    agent any
 
     environment {
-        COMPOSE_FILE = 'docker-compose.yml'
-
         DB_USER = credentials('jenkins-db-user-id')
         DB_PASS = credentials('jenkins-db-pass-id')
-
-        DB_HOST = 'localhost'
-        DB_PORT = '5432'
     }
 
     stages {
@@ -18,32 +13,33 @@ pipeline {
             }
         }
 
-        stage('Prepare env files') {
+        stage('Copy env files') {
             steps {
-                bat '''
-                echo DB_USER=%DB_USER%> services\\auth-service\\.env
-                echo DB_PASS=%DB_PASS%>> services\\auth-service\\.env
-                echo DB_HOST=%DB_HOST%>> services\\auth-service\\.env
-                echo DB_PORT=%DB_PORT%>> services\\auth-service\\.env
+                withCredentials([
+                    file(credentialsId: 'wegift-env-auth', variable: 'AUTH_ENV'),
+                    file(credentialsId: 'wegift-env-user', variable: 'USER_ENV'),
+                    file(credentialsId: 'wegift-env-wishlist', variable: 'WISHLIST_ENV'),
+                    file(credentialsId: 'wegift-env-exchange', variable: 'EXCHANGE_ENV'),
+                    file(credentialsId: 'wegift-env-gateway', variable: 'GATEWAY_ENV'),
 
-                echo DB_USER=%DB_USER%> services\\user-service\\.env
-                echo DB_PASS=%DB_PASS%>> services\\user-service\\.env
-                echo DB_HOST=%DB_HOST%>> services\\user-service\\.env
-                echo DB_PORT=%DB_PORT%>> services\\user-service\\.env
+                    file(credentialsId: 'wegift-env-auth-test', variable: 'AUTH_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-user-test', variable: 'USER_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-wishlist-test', variable: 'WISHLIST_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-exchange-test', variable: 'EXCHANGE_ENV_TEST')
+                ]) {
+                    bat '''
+                    copy %AUTH_ENV% services\\auth-service\\.env
+                    copy %USER_ENV% services\\user-service\\.env
+                    copy %WISHLIST_ENV% services\\wishlist-service\\.env
+                    copy %EXCHANGE_ENV% services\\exchange-service\\.env
+                    copy %GATEWAY_ENV% gateway\\.env.docker
 
-                echo DB_USER=%DB_USER%> services\\wishlist-service\\.env
-                echo DB_PASS=%DB_PASS%>> services\\wishlist-service\\.env
-                echo DB_HOST=%DB_HOST%>> services\\wishlist-service\\.env
-                echo DB_PORT=%DB_PORT%>> services\\wishlist-service\\.env
-
-                echo DB_USER=%DB_USER%> services\\exchange-service\\.env
-                echo DB_PASS=%DB_PASS%>> services\\exchange-service\\.env
-                echo DB_HOST=%DB_HOST%>> services\\exchange-service\\.env
-                echo DB_PORT=%DB_PORT%>> services\\exchange-service\\.env
-
-                echo DB_HOST=%DB_HOST%> gateway\\.env.docker
-                echo DB_PORT=%DB_PORT%>> gateway\\.env.docker
-                '''
+                    copy %AUTH_ENV_TEST% services\\auth-service\\test\\.env.test
+                    copy %USER_ENV_TEST% services\\user-service\\test\\.env.test
+                    copy %WISHLIST_ENV_TEST% services\\wishlist-service\\test\\.env.test
+                    copy %EXCHANGE_ENV_TEST% services\\exchange-service\\test\\.env.test
+                    '''
+                }
             }
         }
 
