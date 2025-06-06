@@ -79,6 +79,15 @@ pipeline {
             }
         }
 
+        stage('Start services') {
+            steps {
+                bat 'docker compose down'
+                bat 'docker compose up -d'
+                // Attente simple pour laisser les services démarrer
+                bat 'timeout /t 15 /nobreak'
+            }
+        }
+
         stage('Test services') {
             parallel {
                 stage('Test auth-service') {
@@ -91,13 +100,6 @@ pipeline {
                         bat 'docker compose run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
                     }
                 }
-            }
-        }
-
-        stage('Start services') {
-            steps {
-                bat 'docker compose down'
-                bat 'docker compose up -d'
             }
         }
 
