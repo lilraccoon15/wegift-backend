@@ -34,10 +34,10 @@ pipeline {
                     copy %EXCHANGE_ENV% services\\exchange-service\\.env
                     copy %GATEWAY_ENV% gateway\\.env.docker
 
-                    copy %AUTH_ENV_TEST% services\\auth-service\\test\\.env.test
-                    copy %USER_ENV_TEST% services\\user-service\\test\\.env.test
-                    copy %WISHLIST_ENV_TEST% services\\wishlist-service\\test\\.env.test
-                    copy %EXCHANGE_ENV_TEST% services\\exchange-service\\test\\.env.test
+                    copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
+                    copy %USER_ENV_TEST% services\\user-service\\.env.test
+                    copy %WISHLIST_ENV_TEST% services\\wishlist-service\\.env.test
+                    copy %EXCHANGE_ENV_TEST% services\\exchange-service\\.env.test
                     '''
                 }
             }
