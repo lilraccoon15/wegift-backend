@@ -1,37 +1,77 @@
 pipeline {
-    agent any
-
+    agent {
+        docker {
+            image 'docker:24.0.5-dind'  // Image Docker avec Docker in Docker
+            args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    environment {
+        COMPOSE_FILE = 'docker-compose.yml'
+    }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Install dependencies') {
+        
+        stage('Build services') {
             steps {
-                sh 'npm install'
+                // Build de toutes les images du docker-compose
+                sh 'docker-compose build'
+            }
+        }
+        
+        stage('Test services') {
+            parallel {
+                stage('Test auth-service') {
+                    steps {
+                        sh '''
+                        docker-compose run --rm auth-service npm install
+                        docker-compose run --rm auth-service npm test
+                        '''
+                    }
+                }
+                stage('Test user-service') {
+                    steps {
+                        sh '''
+                        docker-compose run --rm user-service npm install
+                        docker-compose run --rm user-service npm test
+                        '''
+                    }
+                }
+                stage('Test wishlist-service') {
+                    steps {
+                        sh '''
+                        docker-compose run --rm wishlist-service npm install
+                        docker-compose run --rm wishlist-service npm test
+                        '''
+                    }
+                }
+                stage('Test exchange-service') {
+                    steps {
+                        sh '''
+                        docker-compose run --rm exchange-service npm install
+                        docker-compose run --rm exchange-service npm test
+                        '''
+                    }
+                }
+                stage('Test gateway') {
+                    steps {
+                        sh '''
+                        docker-compose run --rm gateway npm install
+                        docker-compose run --rm gateway npm test
+                        '''
+                    }
+                }
             }
         }
 
-        stage('Run tests') {
-            steps {
-                sh 'npm test'
-            }
-        }
-
-        stage('Build Docker image') {
-            steps {
-                sh 'docker build -t monapp-node .'
-            }
-        }
-
-        stage('Deploy Docker container') {
+        stage('Deploy') {
             steps {
                 sh '''
-                    docker stop monapp-node || true
-                    docker rm monapp-node || true
-                    docker run -d --name monapp-node -p 3000:3000 monapp-node
+                docker-compose down
+                docker-compose up -d
                 '''
             }
         }
