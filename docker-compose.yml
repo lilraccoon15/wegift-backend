@@ -4,7 +4,8 @@ services:
   gateway:
     build:
       context: ./gateway
-    container_name: wegift-gateway
+    container_name: wegift-gateway-eval
+    # container_name: wegift-gateway
     ports:
       - "4000:4000"
     restart: unless-stopped
@@ -18,7 +19,8 @@ services:
   auth-service:
     build:
       context: ./services/auth-service
-    container_name: wegift-auth-service
+    container_name: wegift-auth-service-eval
+    # container_name: wegift-auth-service
     ports:
       - "3001:3001"
     restart: unless-stopped
@@ -32,7 +34,8 @@ services:
   user-service:
     build:
       context: ./services/user-service
-    container_name: wegift-user-service
+    container_name: wegift-user-service-eval
+    # container_name: wegift-user-service
     ports:
       - "3003:3003"
     restart: unless-stopped
@@ -48,7 +51,8 @@ services:
   wishlist-service:
     build:
       context: ./services/wishlist-service
-    container_name: wegift-wishlist-service
+    container_name: wegift-wishlist-service-eval
+    # container_name: wegift-wishlist-service
     ports:
       - "3004:3004"
     restart: unless-stopped
@@ -62,7 +66,8 @@ services:
   exchange-service:
     build:
       context: ./services/exchange-service
-    container_name: wegift-exchange-service
+    container_name: wegift-exchange-service-eval
+    # container_name: wegift-exchange-service
     ports:
       - "3002:3002"
     restart: unless-stopped
