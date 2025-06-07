@@ -1,6 +1,14 @@
 import request from "supertest";
 import app from "../../app";
 
+import axios from 'axios';
+
+jest.mock('axios');
+
+beforeEach(() => {
+  (axios.post as jest.Mock).mockResolvedValue({ status: 200, data: { userId: 123 } });
+});
+
 jest.mock("../../services/emailService", () => ({
   sendActivationEmail: jest.fn().mockResolvedValue(undefined),
 }));
