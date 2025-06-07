@@ -14,17 +14,18 @@ pipeline {
       }
     }
 
+    stage('Stop existing containers') {
+      steps {
+        echo '🛑 Stopping running containers (if any)...'
+        // On arrête d'abord les conteneurs pour libérer ports/fichiers
+        bat "docker-compose -f docker-compose.yml down || exit 0"
+      }
+    }
+
     stage('Build services') {
       steps {
         echo '🛠️ Building Docker images...'
         bat "docker-compose -f docker-compose.yml build"
-      }
-    }
-
-    stage('Stop existing containers') {
-      steps {
-        echo '🛑 Stopping running containers (if any)...'
-        bat "docker-compose -f docker-compose.yml down || exit 0"
       }
     }
 
@@ -38,6 +39,7 @@ pipeline {
     stage('Check services health') {
       steps {
         echo '🔍 Waiting for services to be healthy...'
+        // On attend 30 sec environ pour que les conteneurs soient prêts
         bat '''
         timeout 30 ping -n 10 localhost >nul
         docker ps
@@ -48,8 +50,8 @@ pipeline {
     stage('Run tests') {
       steps {
         echo '🧪 Running backend tests...'
-        // Tu peux adapter selon la manière dont tu fais tourner tes tests :
-        bat "docker exec wegift-backend-auth-service npm test || exit 1"
+        // Adapte cette ligne selon le nom du container et ta commande test
+        bat "docker exec wegift-auth-service-eval npm test || exit 1"
       }
     }
 
