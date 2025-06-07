@@ -1,8 +1,6 @@
--- Création des bases
 CREATE DATABASE IF NOT EXISTS wegift_auth CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS wegift_user CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Table password_reset_tokens dans wegift_auth
 USE wegift_auth;
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -14,7 +12,6 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     INDEX (token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Table users dans wegift_auth
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(36) NOT NULL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
@@ -26,7 +23,6 @@ CREATE TABLE IF NOT EXISTS users (
     twoFactorSecret VARCHAR(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Jeu d'inserts exemple pour users
 INSERT INTO users (id, email, password, acceptedTerms, newsletter, isActive, twoFactorEnabled, twoFactorSecret) VALUES
 ('user-1-uuid-0001', 'user1@example.com', 'hashedpassword1', 1, 1, 1, 0, NULL),
 ('user-2-uuid-0002', 'user2@example.com', 'hashedpassword2', 1, 0, 1, 1, 'secret2'),
@@ -34,7 +30,6 @@ INSERT INTO users (id, email, password, acceptedTerms, newsletter, isActive, two
 ('user-4-uuid-0004', 'user4@example.com', 'hashedpassword4', 1, 0, 1, 0, NULL),
 ('user-5-uuid-0005', 'user5@example.com', 'hashedpassword5', 1, 1, 1, 1, 'secret5');
 
--- Table users_profiles dans wegift_user
 USE wegift_user;
 
 CREATE TABLE IF NOT EXISTS users_profiles (
@@ -49,10 +44,14 @@ CREATE TABLE IF NOT EXISTS users_profiles (
     description VARCHAR(250) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Jeu d'inserts exemple pour users_profiles
 INSERT INTO users_profiles (id, firstName, lastName, birthDate, createdAt, updatedAt, userId, picture, description) VALUES
 ('profile-1-uuid-0001', 'Alice', 'Dupont', '1990-01-01', NOW(), NOW(), 'user-1-uuid-0001', NULL, 'Description 1'),
 ('profile-2-uuid-0002', 'Bob', 'Martin', '1985-05-15', NOW(), NOW(), 'user-2-uuid-0002', NULL, 'Description 2'),
 ('profile-3-uuid-0003', 'Clara', 'Moreau', '1992-08-22', NOW(), NOW(), 'user-3-uuid-0003', NULL, 'Description 3'),
 ('profile-4-uuid-0004', 'David', 'Petit', '1988-03-11', NOW(), NOW(), 'user-4-uuid-0004', NULL, 'Description 4'),
 ('profile-5-uuid-0005', 'Eva', 'Lemoine', '1995-12-05', NOW(), NOW(), 'user-5-uuid-0005', NULL, 'Description 5');
+
+GRANT ALL PRIVILEGES ON wegift_auth.* TO 'user_eval'@'%';
+GRANT ALL PRIVILEGES ON wegift_user.* TO 'user_eval'@'%';
+
+FLUSH PRIVILEGES;
