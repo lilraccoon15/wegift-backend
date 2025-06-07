@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS users_profiles (
     updatedAt DATETIME NOT NULL,
     userId VARCHAR(36) NOT NULL,
     picture VARCHAR(150) DEFAULT NULL,
-    description VARCHAR(250) DEFAULT NULL
+    description VARCHAR(250) DEFAULT NULL,
+    CONSTRAINT fk_user_profile FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO users (id, email, password, acceptedTerms, newsletter, isActive, twoFactorEnabled, twoFactorSecret) VALUES
