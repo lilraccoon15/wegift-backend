@@ -51,7 +51,7 @@ pipeline {
       steps {
         echo '🧪 Running backend tests...'
         // Adapte cette ligne selon le nom du container et ta commande test
-        bat "docker exec wegift-auth-service-eval npm test || exit 1"
+        bat "docker exec wegift-auth-service-eval npm test-docker || exit 1"
       }
     }
 
