@@ -1,6 +1,10 @@
 import request from "supertest";
 import app from "../../app";
 
+jest.mock("../../services/emailService", () => ({
+  sendActivationEmail: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe("POST /register", () => {
     it("should register a new user successfully", async () => {
         const newUser = {
