@@ -1,5 +1,12 @@
+CREATE USER IF NOT EXISTS 'user_eval'@'%' IDENTIFIED BY 'ton_mdp';
+
 CREATE DATABASE IF NOT EXISTS wegift_auth CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE DATABASE IF NOT EXISTS wegift_user CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+GRANT ALL PRIVILEGES ON wegift_auth.* TO 'user_eval'@'%';
+GRANT ALL PRIVILEGES ON wegift_user.* TO 'user_eval'@'%';
+
+FLUSH PRIVILEGES;
 
 USE wegift_auth;
 
@@ -50,8 +57,3 @@ INSERT INTO users_profiles (id, firstName, lastName, birthDate, createdAt, updat
 ('profile-3-uuid-0003', 'Clara', 'Moreau', '1992-08-22', NOW(), NOW(), 'user-3-uuid-0003', NULL, 'Description 3'),
 ('profile-4-uuid-0004', 'David', 'Petit', '1988-03-11', NOW(), NOW(), 'user-4-uuid-0004', NULL, 'Description 4'),
 ('profile-5-uuid-0005', 'Eva', 'Lemoine', '1995-12-05', NOW(), NOW(), 'user-5-uuid-0005', NULL, 'Description 5');
-
-GRANT ALL PRIVILEGES ON wegift_auth.* TO 'user_eval'@'%';
-GRANT ALL PRIVILEGES ON wegift_user.* TO 'user_eval'@'%';
-
-FLUSH PRIVILEGES;

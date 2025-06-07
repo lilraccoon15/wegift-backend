@@ -58,9 +58,16 @@ pipeline {
             }
         }
 
+        stage('Remove volumes') {
+            steps {
+                bat '''
+                docker-compose -f docker-compose.yml down -v
+                '''
+            }
+        }
+
         stage('Start services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml down'
                 bat 'docker-compose -f docker-compose.yml up -d'
                 bat 'ping -n 16 127.0.0.1 > nul'
             }
@@ -91,6 +98,7 @@ pipeline {
         }
     }
 }
+
 
 
 
