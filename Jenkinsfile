@@ -1,7 +1,10 @@
-//JENKINSFILE EVALUATION 
-
 pipeline {
     agent any
+
+    environment {
+        DB_USER = credentials('jenkins-db-user-id')
+        DB_PASS = credentials('jenkins-db-pass-id')
+    }
 
     stages {
         stage('Checkout') {
@@ -10,9 +13,39 @@ pipeline {
             }
         }
 
+        stage('Copy env files') {
+            steps {
+                withCredentials([
+                    file(credentialsId: 'wegift-env-auth', variable: 'AUTH_ENV'),
+                    file(credentialsId: 'wegift-env-user', variable: 'USER_ENV'),
+                    file(credentialsId: 'wegift-env-wishlist', variable: 'WISHLIST_ENV'),
+                    file(credentialsId: 'wegift-env-exchange', variable: 'EXCHANGE_ENV'),
+                    file(credentialsId: 'wegift-env-gateway', variable: 'GATEWAY_ENV'),
+
+                    file(credentialsId: 'wegift-env-auth-test', variable: 'AUTH_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-user-test', variable: 'USER_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-wishlist-test', variable: 'WISHLIST_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-exchange-test', variable: 'EXCHANGE_ENV_TEST')
+                ]) {
+                    bat '''
+                    copy %AUTH_ENV% services\\auth-service\\.env
+                    copy %USER_ENV% services\\user-service\\.env
+                    copy %WISHLIST_ENV% services\\wishlist-service\\.env
+                    copy %EXCHANGE_ENV% services\\exchange-service\\.env
+                    copy %GATEWAY_ENV% gateway\\.env
+
+                    copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
+                    copy %USER_ENV_TEST% services\\user-service\\.env.test
+                    copy %WISHLIST_ENV_TEST% services\\wishlist-service\\.env.test
+                    copy %EXCHANGE_ENV_TEST% services\\exchange-service\\.env.test
+                    '''
+                }
+            }
+        }
+
         stage('Build services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml build'
+                bat 'docker compose build'
             }
         }
 
@@ -20,91 +53,37 @@ pipeline {
             parallel {
                 stage('Install auth-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm auth-service npm install --production'
+                        bat 'docker compose run --rm auth-service npm install --production'
                     }
                 }
                 stage('Install user-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm user-service npm install --production'
+                        bat 'docker compose run --rm user-service npm install --production'
                     }
                 }
                 stage('Install wishlist-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm wishlist-service npm install --production'
+                        bat 'docker compose run --rm wishlist-service npm install --production'
                     }
                 }
                 stage('Install exchange-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm exchange-service npm install --production'
+                        bat 'docker compose run --rm exchange-service npm install --production'
                     }
                 }
                 stage('Install gateway') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm gateway npm install --production'
+                        bat 'docker compose run --rm gateway npm install --production'
                     }
                 }
-            }
-        }
-
-        stage('Stop existing containers') {
-            steps {
-                bat '''
-                echo Stopping containers if running...
-                docker stop wegift-gateway-eval || echo Container gateway already stopped
-                docker stop wegift-auth-service-eval || echo Container auth-service already stopped
-                docker stop wegift-user-service-eval || echo Container user-service already stopped
-                docker stop wegift-wishlist-service-eval || echo Container wishlist-service already stopped
-                docker stop wegift-exchange-service-eval || echo Container exchange-service already stopped
-                docker stop wegift-mysql-eval || echo Container mysql already stopped
-                '''
-            }
-        }
-
-        stage('Remove containers and volumes') {
-            steps {
-                bat '''
-                echo Bringing down docker-compose stack and removing volumes...
-                docker-compose -f docker-compose.yml down -v
-                echo Pruning unused volumes...
-                docker volume prune -f
-                echo Listing volumes after prune:
-                docker volume ls
-                '''
             }
         }
 
         stage('Start services') {
             steps {
-                bat '''
-                echo Starting services...
-                docker-compose -f docker-compose.yml up -d
-                echo Waiting 15 seconds for services to stabilize...
-                timeout /t 15 /nobreak > nul
-                '''
-            }
-        }
-
-        stage('Wait for MySQL') {
-            steps {
-                bat '''
-                echo Waiting for MySQL on port 3307...
-                setlocal enabledelayedexpansion
-                set RETRY=10
-
-                :loop
-                powershell -Command "(new-object Net.Sockets.TcpClient).Connect('127.0.0.1', 3307)" >nul 2>&1
-                if !errorlevel! == 0 (
-                    echo MySQL is ready!
-                    exit /b 0
-                )
-                set /a RETRY-=1
-                if !RETRY! LEQ 0 (
-                    echo Timeout waiting for MySQL
-                    exit /b 1
-                )
-                timeout /t 3 >nul
-                goto loop
-                '''
+                bat 'docker compose down'
+                bat 'docker compose up -d'
+                bat 'ping -n 16 127.0.0.1 > nul'
             }
         }
 
@@ -112,12 +91,12 @@ pipeline {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
+                        bat 'docker compose run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
+                        bat 'docker compose run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
                     }
                 }
             }
@@ -126,129 +105,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                echo Deploying fresh stack...
-                docker-compose -f docker-compose.yml down
-                docker-compose -f docker-compose.yml up -d
+                docker compose down
+                docker compose up -d
                 '''
             }
         }
     }
 }
-
-
-
-//JENKINSFILE CAMILLE
-// pipeline {
-//     agent any
-
-//     environment {
-//         DB_USER = credentials('jenkins-db-user-id')
-//         DB_PASS = credentials('jenkins-db-pass-id')
-//     }
-
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
-
-//         stage('Copy env files') {
-//             steps {
-//                 withCredentials([
-//                     file(credentialsId: 'wegift-env-auth', variable: 'AUTH_ENV'),
-//                     file(credentialsId: 'wegift-env-user', variable: 'USER_ENV'),
-//                     file(credentialsId: 'wegift-env-wishlist', variable: 'WISHLIST_ENV'),
-//                     file(credentialsId: 'wegift-env-exchange', variable: 'EXCHANGE_ENV'),
-//                     file(credentialsId: 'wegift-env-gateway', variable: 'GATEWAY_ENV'),
-
-//                     file(credentialsId: 'wegift-env-auth-test', variable: 'AUTH_ENV_TEST'),
-//                     file(credentialsId: 'wegift-env-user-test', variable: 'USER_ENV_TEST'),
-//                     file(credentialsId: 'wegift-env-wishlist-test', variable: 'WISHLIST_ENV_TEST'),
-//                     file(credentialsId: 'wegift-env-exchange-test', variable: 'EXCHANGE_ENV_TEST')
-//                 ]) {
-//                     bat '''
-//                     copy %AUTH_ENV% services\\auth-service\\.env
-//                     copy %USER_ENV% services\\user-service\\.env
-//                     copy %WISHLIST_ENV% services\\wishlist-service\\.env
-//                     copy %EXCHANGE_ENV% services\\exchange-service\\.env
-//                     copy %GATEWAY_ENV% gateway\\.env
-
-//                     copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
-//                     copy %USER_ENV_TEST% services\\user-service\\.env.test
-//                     copy %WISHLIST_ENV_TEST% services\\wishlist-service\\.env.test
-//                     copy %EXCHANGE_ENV_TEST% services\\exchange-service\\.env.test
-//                     '''
-//                 }
-//             }
-//         }
-
-//         stage('Build services') {
-//             steps {
-//                 bat 'docker compose build'
-//             }
-//         }
-
-//         stage('Install dependencies') {
-//             parallel {
-//                 stage('Install auth-service') {
-//                     steps {
-//                         bat 'docker compose run --rm auth-service npm install --production'
-//                     }
-//                 }
-//                 stage('Install user-service') {
-//                     steps {
-//                         bat 'docker compose run --rm user-service npm install --production'
-//                     }
-//                 }
-//                 stage('Install wishlist-service') {
-//                     steps {
-//                         bat 'docker compose run --rm wishlist-service npm install --production'
-//                     }
-//                 }
-//                 stage('Install exchange-service') {
-//                     steps {
-//                         bat 'docker compose run --rm exchange-service npm install --production'
-//                     }
-//                 }
-//                 stage('Install gateway') {
-//                     steps {
-//                         bat 'docker compose run --rm gateway npm install --production'
-//                     }
-//                 }
-//             }
-//         }
-
-//         stage('Start services') {
-//             steps {
-//                 bat 'docker compose down'
-//                 bat 'docker compose up -d'
-//                 bat 'ping -n 16 127.0.0.1 > nul'
-//             }
-//         }
-
-//         stage('Test services') {
-//             parallel {
-//                 stage('Test auth-service') {
-//                     steps {
-//                         bat 'docker compose run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
-//                     }
-//                 }
-//                 stage('Test user-service') {
-//                     steps {
-//                         bat 'docker compose run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
-//                     }
-//                 }
-//             }
-//         }
-
-//         stage('Deploy') {
-//             steps {
-//                 bat '''
-//                 docker compose down
-//                 docker compose up -d
-//                 '''
-//             }
-//         }
-//     }
-// }

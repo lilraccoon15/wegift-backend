@@ -4,15 +4,12 @@ services:
   gateway:
     build:
       context: ./gateway
-    container_name: wegift-gateway-eval
-    # container_name: wegift-gateway
+    container_name: wegift-gateway
     ports:
       - "4000:4000"
     restart: unless-stopped
     env_file:
-      - ./gateway/.env.eval
-    # env_file:
-    #   - ./gateway/.env
+      - ./gateway/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -24,15 +21,12 @@ services:
   auth-service:
     build:
       context: ./services/auth-service
-    container_name: wegift-auth-service-eval
-    # container_name: wegift-auth-service
+    container_name: wegift-auth-service
     ports:
       - "3001:3001"
     restart: unless-stopped
     env_file:
-      - ./services/auth-service/.env.eval
-    # env_file:
-    #   - ./services/auth-service/.env
+      - ./services/auth-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -41,15 +35,12 @@ services:
   user-service:
     build:
       context: ./services/user-service
-    container_name: wegift-user-service-eval
-    # container_name: wegift-user-service
+    container_name: wegift-user-service
     ports:
       - "3003:3003"
     restart: unless-stopped
     env_file:
-      - ./services/user-service/.env.eval
-    # env_file:
-    #   - ./services/user-service/.env
+      - ./services/user-service/.env
     environment:
       - NODE_ENV=docker
     volumes:
@@ -60,15 +51,12 @@ services:
   wishlist-service:
     build:
       context: ./services/wishlist-service
-    container_name: wegift-wishlist-service-eval
-    # container_name: wegift-wishlist-service
+    container_name: wegift-wishlist-service
     ports:
       - "3004:3004"
     restart: unless-stopped
     env_file:
-      - ./services/wishlist-service/.env.eval
-    # env_file:
-    #   - ./services/wishlist-service/.env
+      - ./services/wishlist-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -77,34 +65,13 @@ services:
   exchange-service:
     build:
       context: ./services/exchange-service
-    container_name: wegift-exchange-service-eval
-    # container_name: wegift-exchange-service
+    container_name: wegift-exchange-service
     ports:
       - "3002:3002"
     restart: unless-stopped
     env_file:
-      - ./services/exchange-service/.env.eval
-    # env_file:
-    #   - ./services/exchange-service/.env
+      - ./services/exchange-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
       - mysql
-
-  mysql:
-      image: mysql:8.0
-      container_name: wegift-mysql-eval
-      environment:
-        MYSQL_ROOT_PASSWORD: root_password_eval
-        MYSQL_DATABASE: wegift_eval
-        MYSQL_USER: user_eval
-        MYSQL_PASSWORD: password_eval
-      ports:
-        - "3307:3306"
-      volumes:
-        - mysql_data:/var/lib/mysql
-        - ./mysql/init/init.mysql:/docker-entrypoint-initdb.d/init.sql:ro
-      restart: unless-stopped
-        
-volumes:
-    mysql_data:
