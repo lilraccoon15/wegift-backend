@@ -12,11 +12,6 @@ services:
       - ./gateway/.env
     environment:
       - NODE_ENV=docker
-    depends_on:
-      - auth-service
-      - user-service
-      - wishlist-service
-      - exchange-service
 
   auth-service:
     build:
@@ -29,8 +24,6 @@ services:
       - ./services/auth-service/.env
     environment:
       - NODE_ENV=docker
-    depends_on:
-      - mysql
 
   user-service:
     build:
@@ -45,8 +38,6 @@ services:
       - NODE_ENV=docker
     volumes:
       - ./services/user-service/public/uploads:/app/public/uploads
-    depends_on:
-      - mysql
 
   wishlist-service:
     build:
@@ -59,8 +50,6 @@ services:
       - ./services/wishlist-service/.env
     environment:
       - NODE_ENV=docker
-    depends_on:
-      - mysql
 
   exchange-service:
     build:
@@ -73,5 +62,3 @@ services:
       - ./services/exchange-service/.env
     environment:
       - NODE_ENV=docker
-    depends_on:
-      - mysql
