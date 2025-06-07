@@ -60,9 +60,7 @@ pipeline {
 
         stage('Remove volumes') {
             steps {
-                bat '''
-                docker-compose -f docker-compose.yml down -v
-                '''
+                bat 'docker-compose -f docker-compose.yml down -v'
             }
         }
 
@@ -70,6 +68,18 @@ pipeline {
             steps {
                 bat 'docker-compose -f docker-compose.yml up -d'
                 bat 'ping -n 16 127.0.0.1 > nul'
+            }
+        }
+
+        stage('Wait for MySQL') {
+            steps {
+                bat '''
+                echo Waiting for MySQL to be ready...
+                for /L %%i in (1,1,10) do (
+                    docker exec wegift-auth-service bash -c "nc -z mysql 3306" && exit 0
+                    timeout /T 3
+                )
+                '''
             }
         }
 
