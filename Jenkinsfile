@@ -77,7 +77,7 @@ pipeline {
                 echo Starting services...
                 docker-compose -f docker-compose.yml up -d
                 echo Waiting 15 seconds for services to stabilize...
-                timeout /t 15 /nobreak > nul
+                ping 127.0.0.1 -n 16 > nul
                 '''
             }
         }
