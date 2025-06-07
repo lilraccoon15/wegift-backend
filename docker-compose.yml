@@ -106,5 +106,5 @@ services:
         - ./mysql/init/init.mysql:/docker-entrypoint-initdb.d/init.sql:ro
       restart: unless-stopped
         
-  volumes:
+volumes:
     mysql_data:
