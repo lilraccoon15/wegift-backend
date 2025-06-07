@@ -5,6 +5,13 @@ const dockerUrls = {
   WISHLIST_SERVICE: "http://wishlist-service:3004",
 };
 
+type EnvType =
+  | "development"
+  | "docker"
+  | "test-local"
+  | "test-docker"
+  | "eval";
+
 const API_URLS = {
   development: {
     AUTH_SERVICE: "http://localhost:3001",
@@ -22,3 +29,9 @@ const API_URLS = {
   "test-docker": dockerUrls,
   eval: dockerUrls,
 };
+
+const ENV = (process.env.NODE_ENV as EnvType) || "development";
+
+const currentConfig = API_URLS[ENV] || API_URLS.development;
+
+export default currentConfig;
