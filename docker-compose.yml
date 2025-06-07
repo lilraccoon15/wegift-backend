@@ -9,7 +9,9 @@ services:
       - "4000:4000"
     restart: unless-stopped
     env_file:
-      - ./gateway/.env
+      - ./gateway/.env.eval
+    # env_file:
+    #   - ./gateway/.env
     environment:
       - NODE_ENV=docker
 
