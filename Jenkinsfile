@@ -10,44 +10,15 @@ pipeline {
 
         stage('Build services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml build'
-            }
-        }
-
-        stage('Install dependencies') {
-            parallel {
-                stage('Install auth-service') {
-                    steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm auth-service npm install --production'
-                    }
-                }
-                stage('Install user-service') {
-                    steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm user-service npm install --production'
-                    }
-                }
-                stage('Install wishlist-service') {
-                    steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm wishlist-service npm install --production'
-                    }
-                }
-                stage('Install exchange-service') {
-                    steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm exchange-service npm install --production'
-                    }
-                }
-                stage('Install gateway') {
-                    steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm gateway npm install --production'
-                    }
-                }
+                echo '🛠️ Building Docker images...'
+                bat 'docker-compose -f docker-compose.yml build || exit /b %errorlevel%'
             }
         }
 
         stage('Stop existing containers') {
             steps {
+                echo '🛑 Stopping running containers (if any)...'
                 bat '''
-                echo Stopping containers if running...
                 docker stop wegift-gateway-eval || echo Container gateway already stopped
                 docker stop wegift-auth-service-eval || echo Container auth-service already stopped
                 docker stop wegift-user-service-eval || echo Container user-service already stopped
@@ -60,12 +31,10 @@ pipeline {
 
         stage('Remove containers and volumes') {
             steps {
+                echo '🧹 Cleaning up containers and volumes...'
                 bat '''
-                echo Bringing down docker-compose stack and removing volumes...
                 docker-compose -f docker-compose.yml down -v
-                echo Pruning unused volumes...
                 docker volume prune -f
-                echo Listing volumes after prune:
                 docker volume ls
                 '''
             }
@@ -73,10 +42,9 @@ pipeline {
 
         stage('Start services') {
             steps {
+                echo '🚀 Starting services...'
                 bat '''
-                echo Starting services...
                 docker-compose -f docker-compose.yml up -d
-                echo Waiting 15 seconds for services to stabilize...
                 timeout /t 15 /nobreak > nul
                 '''
             }
@@ -84,20 +52,20 @@ pipeline {
 
         stage('Wait for MySQL') {
             steps {
+                echo '⏳ Waiting for MySQL to be ready on port 3307...'
                 bat '''
-                echo Waiting for MySQL on port 3307...
                 setlocal enabledelayedexpansion
                 set RETRY=10
 
                 :loop
                 powershell -Command "(new-object Net.Sockets.TcpClient).Connect('127.0.0.1', 3307)" >nul 2>&1
                 if !errorlevel! == 0 (
-                    echo MySQL is ready!
+                    echo ✅ MySQL is ready!
                     exit /b 0
                 )
                 set /a RETRY-=1
                 if !RETRY! LEQ 0 (
-                    echo Timeout waiting for MySQL
+                    echo ❌ Timeout waiting for MySQL
                     exit /b 1
                 )
                 timeout /t 3 >nul
@@ -110,12 +78,14 @@ pipeline {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
+                        echo '🔍 Testing auth-service...'
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker || exit /b %errorlevel%'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
+                        echo '🔍 Testing user-service...'
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker || exit /b %errorlevel%'
                     }
                 }
             }
@@ -123,8 +93,8 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                echo '📦 Deploying services...'
                 bat '''
-                echo Deploying fresh stack...
                 docker-compose -f docker-compose.yml down
                 docker-compose -f docker-compose.yml up -d
                 '''
