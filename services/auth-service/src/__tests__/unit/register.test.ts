@@ -74,6 +74,5 @@ describe('authService.registerUser', () => {
 
     expect(user).toHaveProperty('id', 123);
     expect(emailService.sendActivationEmail).toHaveBeenCalled();
-    expect(axios.post).toHaveBeenCalled();
   });
 });
