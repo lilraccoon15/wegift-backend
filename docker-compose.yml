@@ -5,14 +5,11 @@ services:
     build:
       context: ./gateway
     container_name: wegift-gateway-eval
-    # container_name: wegift-gateway
     ports:
       - "4000:4000"
     restart: unless-stopped
     env_file:
       - ./gateway/.env.eval
-    # env_file:
-    #   - ./gateway/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -25,14 +22,11 @@ services:
     build:
       context: ./services/auth-service
     container_name: wegift-auth-service-eval
-    # container_name: wegift-auth-service
     ports:
       - "3001:3001"
     restart: unless-stopped
     env_file:
       - ./services/auth-service/.env.eval
-    # env_file:
-    #   - ./services/auth-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -42,14 +36,11 @@ services:
     build:
       context: ./services/user-service
     container_name: wegift-user-service-eval
-    # container_name: wegift-user-service
     ports:
       - "3003:3003"
     restart: unless-stopped
     env_file:
       - ./services/user-service/.env.eval
-    # env_file:
-    #   - ./services/user-service/.env
     environment:
       - NODE_ENV=docker
     volumes:
@@ -61,14 +52,11 @@ services:
     build:
       context: ./services/wishlist-service
     container_name: wegift-wishlist-service-eval
-    # container_name: wegift-wishlist-service
     ports:
       - "3004:3004"
     restart: unless-stopped
     env_file:
       - ./services/wishlist-service/.env.eval
-    # env_file:
-    #   - ./services/wishlist-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
@@ -78,14 +66,11 @@ services:
     build:
       context: ./services/exchange-service
     container_name: wegift-exchange-service-eval
-    # container_name: wegift-exchange-service
     ports:
       - "3002:3002"
     restart: unless-stopped
     env_file:
       - ./services/exchange-service/.env.eval
-    # env_file:
-    #   - ./services/exchange-service/.env
     environment:
       - NODE_ENV=docker
     depends_on:
