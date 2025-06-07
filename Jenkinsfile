@@ -1,77 +1,134 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKER_BUILDKIT = 1
-    COMPOSE_DOCKER_CLI_BUILD = 1
-  }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
-  stages {
-    stage('Checkout') {
-      steps {
-        echo '📦 Clonage du dépôt...'
-        checkout scm
-      }
-    }
+        stage('Build services') {
+            steps {
+                bat 'docker-compose -f docker-compose.yml build'
+            }
+        }
 
-    stage('Stop existing containers') {
-      steps {
-        echo '🛑 Stopping running containers (if any)...'
-        // On arrête d'abord les conteneurs pour libérer ports/fichiers
-        bat "docker-compose -f docker-compose.yml down || exit 0"
-      }
-    }
+        stage('Install dependencies') {
+            parallel {
+                stage('Install auth-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm auth-service npm install --production'
+                    }
+                }
+                stage('Install user-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm user-service npm install --production'
+                    }
+                }
+                stage('Install wishlist-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm wishlist-service npm install --production'
+                    }
+                }
+                stage('Install exchange-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm exchange-service npm install --production'
+                    }
+                }
+                stage('Install gateway') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm gateway npm install --production'
+                    }
+                }
+            }
+        }
 
-    stage('Build services') {
-      steps {
-        echo '🛠️ Building Docker images...'
-        bat "docker-compose -f docker-compose.yml build"
-      }
-    }
+        stage('Stop existing containers') {
+            steps {
+                bat '''
+                echo Stopping containers if running...
+                docker stop wegift-gateway-eval || echo Container gateway already stopped
+                docker stop wegift-auth-service-eval || echo Container auth-service already stopped
+                docker stop wegift-user-service-eval || echo Container user-service already stopped
+                docker stop wegift-wishlist-service-eval || echo Container wishlist-service already stopped
+                docker stop wegift-exchange-service-eval || echo Container exchange-service already stopped
+                docker stop wegift-mysql-eval || echo Container mysql already stopped
+                '''
+            }
+        }
 
-    stage('Start containers') {
-      steps {
-        echo '🚀 Starting containers...'
-        bat "docker-compose -f docker-compose.yml up -d"
-      }
-    }
+        stage('Remove containers and volumes') {
+            steps {
+                bat '''
+                echo Bringing down docker-compose stack and removing volumes...
+                docker-compose -f docker-compose.yml down -v
+                echo Pruning unused volumes...
+                docker volume prune -f
+                echo Listing volumes after prune:
+                docker volume ls
+                '''
+            }
+        }
 
-    stage('Check services health') {
-      steps {
-        echo '🔍 Waiting for services to be healthy...'
-        // On attend 30 sec environ pour que les conteneurs soient prêts
-        bat '''
-        timeout 30 ping -n 10 localhost >nul
-        docker ps
-        '''
-      }
-    }
+        stage('Start services') {
+            steps {
+                bat '''
+                echo Starting services...
+                docker-compose -f docker-compose.yml up -d
+                echo Waiting 15 seconds for services to stabilize...
+                timeout /t 15 /nobreak > nul
+                '''
+            }
+        }
 
-    stage('Run tests') {
-      steps {
-        echo '🧪 Running backend tests...'
-        // Adapte cette ligne selon le nom du container et ta commande test
-        bat "docker exec wegift-auth-service-eval npm test-docker || exit 1"
-      }
-    }
+        stage('Wait for MySQL') {
+            steps {
+                bat '''
+                echo Waiting for MySQL on port 3307...
+                setlocal enabledelayedexpansion
+                set RETRY=10
 
-    stage('Clean up') {
-      steps {
-        echo '🧹 Cleaning up containers...'
-        bat "docker-compose -f docker-compose.yml down"
-      }
-    }
-  }
+                :loop
+                powershell -Command "(new-object Net.Sockets.TcpClient).Connect('127.0.0.1', 3307)" >nul 2>&1
+                if !errorlevel! == 0 (
+                    echo MySQL is ready!
+                    exit /b 0
+                )
+                set /a RETRY-=1
+                if !RETRY! LEQ 0 (
+                    echo Timeout waiting for MySQL
+                    exit /b 1
+                )
+                timeout /t 3 >nul
+                goto loop
+                '''
+            }
+        }
 
-  post {
-    always {
-      echo '📄 Pipeline terminé.'
+        stage('Test services') {
+            parallel {
+                stage('Test auth-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
+                    }
+                }
+                stage('Test user-service') {
+                    steps {
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                bat '''
+                echo Deploying fresh stack...
+                docker-compose -f docker-compose.yml down
+                docker-compose -f docker-compose.yml up -d
+                '''
+            }
+        }
     }
-    success {
-      echo '✅ Succès ! Tous les services sont buildés et testés.'
-    }
-    failure {
-      echo '❌ Le pipeline a échoué. Vérifiez les logs.'
-    }
-  }
 }
