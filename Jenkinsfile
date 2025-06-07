@@ -49,11 +49,12 @@ pipeline {
         stage('Stop existing containers') {
             steps {
                 bat '''
-                docker stop wegift-gateway || echo Container gateway already stopped
-                docker stop wegift-auth-service || echo Container auth-service already stopped
-                docker stop wegift-user-service || echo Container user-service already stopped
-                docker stop wegift-wishlist-service || echo Container wishlist-service already stopped
-                docker stop wegift-exchange-service || echo Container exchange-service already stopped
+                docker stop wegift-gateway-eval || echo Container gateway already stopped
+                docker stop wegift-auth-service-eval || echo Container auth-service already stopped
+                docker stop wegift-user-service-eval || echo Container user-service already stopped
+                docker stop wegift-wishlist-service-eval || echo Container wishlist-service already stopped
+                docker stop wegift-exchange-service-eval || echo Container exchange-service already stopped
+                docker stop wegift-mysql-eval || echo Container mysql already stopped
                 '''
             }
         }
@@ -74,11 +75,22 @@ pipeline {
         stage('Wait for MySQL') {
             steps {
                 bat '''
-                echo Waiting for MySQL to be ready...
-                for /L %%i in (1,1,10) do (
-                    docker exec wegift-auth-service bash -c "nc -z mysql 3306" && exit 0
-                    timeout /T 3
+                echo Waiting for MySQL to be ready on port 3307...
+                setlocal enabledelayedexpansion
+                set RETRY=10
+                :loop
+                powershell -Command "(new-object Net.Sockets.TcpClient).Connect('127.0.0.1', 3307)" >nul 2>&1
+                if !errorlevel! == 0 (
+                    echo MySQL is ready!
+                    exit /b 0
                 )
+                set /a RETRY-=1
+                if !RETRY! LEQ 0 (
+                    echo Timeout waiting for MySQL
+                    exit /b 1
+                )
+                timeout /t 3 >nul
+                goto loop
                 '''
             }
         }
