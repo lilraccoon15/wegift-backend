@@ -49,6 +49,7 @@ pipeline {
         stage('Stop existing containers') {
             steps {
                 bat '''
+                echo Stopping containers if running...
                 docker stop wegift-gateway-eval || echo Container gateway already stopped
                 docker stop wegift-auth-service-eval || echo Container auth-service already stopped
                 docker stop wegift-user-service-eval || echo Container user-service already stopped
@@ -59,25 +60,37 @@ pipeline {
             }
         }
 
-        stage('Remove volumes') {
+        stage('Remove containers and volumes') {
             steps {
-                bat 'docker-compose -f docker-compose.yml down -v'
+                bat '''
+                echo Bringing down docker-compose stack and removing volumes...
+                docker-compose -f docker-compose.yml down -v
+                echo Pruning unused volumes...
+                docker volume prune -f
+                echo Listing volumes after prune:
+                docker volume ls
+                '''
             }
         }
 
         stage('Start services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml up -d'
-                bat 'ping -n 16 127.0.0.1 > nul'
+                bat '''
+                echo Starting services...
+                docker-compose -f docker-compose.yml up -d
+                echo Waiting 15 seconds for services to stabilize...
+                timeout /t 15 /nobreak > nul
+                '''
             }
         }
 
         stage('Wait for MySQL') {
             steps {
                 bat '''
-                echo Waiting for MySQL to be ready on port 3307...
+                echo Waiting for MySQL on port 3307...
                 setlocal enabledelayedexpansion
                 set RETRY=10
+
                 :loop
                 powershell -Command "(new-object Net.Sockets.TcpClient).Connect('127.0.0.1', 3307)" >nul 2>&1
                 if !errorlevel! == 0 (
@@ -113,6 +126,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
+                echo Deploying fresh stack...
                 docker-compose -f docker-compose.yml down
                 docker-compose -f docker-compose.yml up -d
                 '''
@@ -120,7 +134,6 @@ pipeline {
         }
     }
 }
-
 
 
 
