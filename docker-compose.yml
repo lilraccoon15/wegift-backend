@@ -21,7 +21,9 @@ services:
       - "3001:3001"
     restart: unless-stopped
     env_file:
-      - ./services/auth-service/.env
+      - ./services/auth-service/.env.eval
+    # env_file:
+    #   - ./services/auth-service/.env
     environment:
       - NODE_ENV=docker
 
@@ -33,7 +35,9 @@ services:
       - "3003:3003"
     restart: unless-stopped
     env_file:
-      - ./services/user-service/.env
+      - ./services/user-service/.env.eval
+    # env_file:
+    #   - ./services/user-service/.env
     environment:
       - NODE_ENV=docker
     volumes:
@@ -47,7 +51,9 @@ services:
       - "3004:3004"
     restart: unless-stopped
     env_file:
-      - ./services/wishlist-service/.env
+      - ./services/wishlist-service/.env.eval
+    # env_file:
+    #   - ./services/wishlist-service/.env
     environment:
       - NODE_ENV=docker
 
@@ -59,6 +65,22 @@ services:
       - "3002:3002"
     restart: unless-stopped
     env_file:
-      - ./services/exchange-service/.env
+      - ./services/exchange-service/.env.eval
+    # env_file:
+    #   - ./services/exchange-service/.env
     environment:
       - NODE_ENV=docker
+
+  mysql:
+      image: mysql:8.0
+      container_name: wegift-mysql-eval
+      environment:
+        MYSQL_ROOT_PASSWORD: root_password_eval
+        MYSQL_DATABASE: wegift_eval
+        MYSQL_USER: user_eval
+        MYSQL_PASSWORD: password_eval
+      ports:
+        - "3307:3306"
+      volumes:
+        - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      restart: unless-stopped

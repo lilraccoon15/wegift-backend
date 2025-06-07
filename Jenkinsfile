@@ -12,7 +12,7 @@ pipeline {
 
         stage('Build services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml build'
+                bat 'docker-compose -f docker-compose.yml build'
             }
         }
 
@@ -20,27 +20,27 @@ pipeline {
             parallel {
                 stage('Install auth-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm auth-service npm install --production'
+                        bat 'docker-compose -f docker-compose.yml run --rm auth-service npm install --production'
                     }
                 }
                 stage('Install user-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm user-service npm install --production'
+                        bat 'docker-compose -f docker-compose.yml run --rm user-service npm install --production'
                     }
                 }
                 stage('Install wishlist-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm wishlist-service npm install --production'
+                        bat 'docker-compose -f docker-compose.yml run --rm wishlist-service npm install --production'
                     }
                 }
                 stage('Install exchange-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm exchange-service npm install --production'
+                        bat 'docker-compose -f docker-compose.yml run --rm exchange-service npm install --production'
                     }
                 }
                 stage('Install gateway') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm gateway npm install --production'
+                        bat 'docker-compose -f docker-compose.yml run --rm gateway npm install --production'
                     }
                 }
             }
@@ -48,8 +48,8 @@ pipeline {
 
         stage('Start services') {
             steps {
-                bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml down'
-                bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml up -d'
+                bat 'docker-compose -f docker-compose.yml down'
+                bat 'docker-compose -f docker-compose.yml up -d'
                 bat 'ping -n 16 127.0.0.1 > nul'
             }
         }
@@ -58,12 +58,12 @@ pipeline {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat 'docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
+                        bat 'docker-compose -f docker-compose.yml run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
                     }
                 }
             }
@@ -72,15 +72,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat '''
-                docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml down
-                docker-compose -f docker-compose.yml -f docker-compose.override.eval.yml up -d
+                docker-compose -f docker-compose.yml down
+                docker-compose -f docker-compose.yml up -d
                 '''
             }
         }
     }
 }
-
-
 
 
 //JENKINSFILE CAMILLE

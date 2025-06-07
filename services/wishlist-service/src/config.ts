@@ -31,12 +31,6 @@ const API_URLS = {
     USER_SERVICE: "http://user-service:3003",
     WISHLIST_SERVICE: "http://wishlist-service:3004",
   },
-  eval: {
-    AUTH_SERVICE: "http://auth-service:3001",
-    EXCHANGE_SERVICE: "http://exchange-service:3002",
-    USER_SERVICE: "http://user-service:3003",
-    WISHLIST_SERVICE: "http://wishlist-service:3004",
-  },
 };
 
 const currentConfig = API_URLS[ENV] || API_URLS.development;
