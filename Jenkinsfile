@@ -46,6 +46,18 @@ pipeline {
             }
         }
 
+        stage('Stop existing containers') {
+            steps {
+                bat '''
+                docker stop wegift-gateway || echo Container gateway already stopped
+                docker stop wegift-auth-service || echo Container auth-service already stopped
+                docker stop wegift-user-service || echo Container user-service already stopped
+                docker stop wegift-wishlist-service || echo Container wishlist-service already stopped
+                docker stop wegift-exchange-service || echo Container exchange-service already stopped
+                '''
+            }
+        }
+
         stage('Start services') {
             steps {
                 bat 'docker-compose -f docker-compose.yml down'
@@ -79,6 +91,7 @@ pipeline {
         }
     }
 }
+
 
 
 //JENKINSFILE CAMILLE
