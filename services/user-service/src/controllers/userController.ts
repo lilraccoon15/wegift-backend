@@ -14,7 +14,7 @@ import {
     AppError,
     ConflictError,
     NotFoundError,
-} from "src/errors/CustomErrors";
+} from "../errors/CustomErrors";
 
 export const me = async (
     req: AuthenticatedRequest,

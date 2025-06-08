@@ -4,7 +4,7 @@ import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 import { validateBody } from "../middlewares/validateBody";
 import { createProfileSchema } from "../schemas/userSchema";
 import { upload } from "../middlewares/upload";
-import { ensureAuthenticated } from "src/middlewares/ensureAuthenticated";
+import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 
 const router = Router();
 

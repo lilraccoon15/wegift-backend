@@ -1,6 +1,6 @@
 import { Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "./verifyTokenMiddleware";
-import { AuthError } from "src/errors/CustomErrors";
+import { AuthError } from "../errors/CustomErrors";
 
 export const ensureAuthenticated = (
   req: AuthenticatedRequest,

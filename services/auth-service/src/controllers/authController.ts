@@ -11,6 +11,8 @@ import {
     disableTwoFactorAuth,
     getAccountById,
     updateEmailForUser,
+    setNewPassword,
+    setNewsletter,
 } from "../services/authService";
 import User from "../models/User";
 import sendSuccess from "../utils/sendSuccess";
@@ -21,7 +23,7 @@ import {
     ConflictError,
     NotFoundError,
     ValidationError,
-} from "src/errors/CustomErrors";
+} from "../errors/CustomErrors";
 
 export const register = async (
     req: Request,
@@ -341,7 +343,45 @@ export const updatePassword = async (
             return next(
                 new ValidationError("Mot de passe actuel et nouveau requis")
             );
-    } catch (error) {
-        next(new AppError("Erreur lors de la mise à jour du mot de passe", 500));
+
+        await setNewPassword(userId, currentPassword, newPassword);
+
+        sendSuccess(res, "Mot de passe mis à jour avec succès.", 200);
+    } catch (error: any) {
+        if (error.message === "Utilisateur non trouvé")
+            return next(new NotFoundError(error.message));
+
+        if (error.message === "Mot de passe incorrect")
+            return next(new AuthError(error.message));
+
+        next(
+            new AppError("Erreur lors de la mise à jour du mot de passe", 500)
+        );
+    }
+};
+
+export const updateNewsletter = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const userId = req.user.id;
+
+        const { newsletter } = req.body;
+
+        await setNewsletter(userId, newsletter);
+
+        sendSuccess(
+            res,
+            "Préfence en newsletter mise à jour avec succès.",
+            200
+        );
+    } catch (error: any) {
+        if (error.message === "Utilisateur non trouvé")
+            return next(new NotFoundError(error.message));
+        next(
+            new AppError("Erreur lors de la mise à jour de la préférence", 500)
+        );
     }
 };

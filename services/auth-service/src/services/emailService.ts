@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import logger from '../utils/logger';
-import { AppError } from "src/errors/CustomErrors";
+import { AppError } from "../errors/CustomErrors";
 
 const transporter = nodemailer.createTransport({
   host: process.env.MAILTRAP_HOST,

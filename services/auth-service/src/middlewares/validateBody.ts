@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ValidationError } from "src/errors/CustomErrors";
+import { ValidationError } from "../errors/CustomErrors";
 import { ZodSchema } from "zod";
 
 export const validateBody =

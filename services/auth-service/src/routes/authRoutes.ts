@@ -14,6 +14,7 @@ import {
   updateEmail,
   updatePassword,
   activate,
+  updateNewsletter,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
@@ -24,7 +25,7 @@ import {
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
 import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
-import { ensureAuthenticated } from "src/middlewares/ensureAuthenticated";
+import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 
 const router = Router();
 
@@ -59,5 +60,7 @@ router.get("/get-account", verifyTokenMiddleware, ensureAuthenticated, getAccoun
 router.put("/update-email", verifyTokenMiddleware, ensureAuthenticated, updateEmail);
 
 router.put("/update-password", verifyTokenMiddleware, ensureAuthenticated, updatePassword);
+
+router.patch("/update-newsletter", verifyTokenMiddleware, ensureAuthenticated, updateNewsletter);
 
 export default router;

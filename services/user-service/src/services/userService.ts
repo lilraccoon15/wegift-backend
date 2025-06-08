@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "src/errors/CustomErrors";
+import { ConflictError, NotFoundError } from "../errors/CustomErrors";
 import UserProfile from "../models/UserProfile";
 
 export const createProfileService = async (

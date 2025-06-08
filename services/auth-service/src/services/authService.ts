@@ -10,7 +10,7 @@ import * as crypto from "crypto";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import config from "../config";
-import { ConflictError, NotFoundError } from "src/errors/CustomErrors";
+import { AuthError, ConflictError, NotFoundError } from "../errors/CustomErrors";
 
 interface DecodedToken {
     id: number;
@@ -346,3 +346,37 @@ export const updateEmailForUser = async (
 
     await sendActivationEmail(newEmail, activationToken);
 };
+
+
+export const setNewPassword = async (
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+) => {
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+    if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+
+    await user.save();
+}
+
+export const setNewsletter = async (
+    userId: number,
+    newsletter:boolean,
+) => {
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    user.newsletter = newsletter;
+    
+    await user.save();
+}
