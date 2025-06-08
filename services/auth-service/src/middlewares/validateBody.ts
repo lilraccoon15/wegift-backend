@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ValidationError } from "src/errors/CustomErrors";
 import { ZodSchema } from "zod";
 
 export const validateBody =
@@ -6,8 +7,9 @@ export const validateBody =
   (req: Request, res: Response, next: NextFunction) => {
     const validation = schema.safeParse(req.body);
     if (!validation.success) {
-      res.status(400).json({ error: validation.error.issues[0].message });
-      return;
+      return next(
+        new ValidationError(validation.error.issues[0].message)
+      );
     }
     req.body = validation.data;
     next();

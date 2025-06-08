@@ -10,9 +10,16 @@ import * as crypto from "crypto";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import config from "../config";
+import { ConflictError, NotFoundError } from "src/errors/CustomErrors";
 
-console.log("NODE_ENV in auth-service:", process.env.NODE_ENV);
-console.log("USER_SERVICE URL in auth-service:", config.USER_SERVICE);
+interface DecodedToken {
+    id: number;
+    iat?: number;
+    exp?: number;
+    firstName: string;
+    lastName: string;
+    birthDate: string;
+}
 
 class ValidationError extends Error {
     statusCode: number;
@@ -26,12 +33,6 @@ type LoginResponse =
     | { token: string }
     | { requires2FA: true; tempToken: string }
     | { error: string };
-
-export const SECRET: Secret = process.env.JWT_SECRET || "default_secret";
-
-export const AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
-export const ISSUER = process.env.JWT_ISSUER || "your-api";
-const TOKEN_EXPIRATION = 60 * 60 * 1000;
 
 export const registerUser = async (data: RegisterData) => {
     const {
@@ -59,7 +60,7 @@ export const registerUser = async (data: RegisterData) => {
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-        throw new Error("Cet email est déjà enregistré.");
+        throw new ConflictError("Cet email est déjà enregistré.");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,19 +74,25 @@ export const registerUser = async (data: RegisterData) => {
 
     const jwtOptions: SignOptions = {
         expiresIn: "1h",
-        audience: AUDIENCE,
-        issuer: ISSUER,
+        audience: config.jwtAudience,
+        issuer: config.jwtIssuer,
     };
 
     const token = jwt.sign(
         { id: user.id, email: user.email },
-        SECRET,
+        config.jwtSecret,
         jwtOptions
     );
 
     const activationToken = jwt.sign(
-        { id: user.id, email: user.email },
-        SECRET,
+        {
+            id: user.id,
+            email: user.email,
+            firstName,
+            lastName,
+            birthDate: birth.toISOString(),
+        },
+        config.jwtSecret,
         {
             expiresIn: "24h",
         }
@@ -96,31 +103,6 @@ export const registerUser = async (data: RegisterData) => {
     } catch (error) {
         logger.error("Erreur envoi mail d'activation :", error);
         throw new Error("Impossible d'envoyer le mail d'activation.");
-    }
-
-    try {
-        await axios.post(
-            `${config.USER_SERVICE}/profile`,
-            {
-                userId: user.id,
-                firstName,
-                lastName,
-                birthDate: birth,
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-    } catch (error) {
-        const err = error as any;
-        logger.error(
-            "Erreur création profil :",
-            err.response?.data || err.message || err
-        );
-        await User.destroy({ where: { id: user.id } });
-        throw new Error("Erreur lors de la création du profil utilisateur.");
     }
 
     return user;
@@ -143,20 +125,70 @@ export const loginUser = async (
     if (user.twoFactorEnabled) {
         const tempToken = jwt.sign(
             { id: user.id, email: user.email, twoFA: true },
-            SECRET,
+            config.jwtSecret,
             { expiresIn: "5m" }
         );
 
         return { requires2FA: true, tempToken };
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
-        expiresIn: "1h",
-        audience: AUDIENCE,
-        issuer: ISSUER,
-    });
+    const token = jwt.sign(
+        { id: user.id, email: user.email },
+        config.jwtSecret,
+        {
+            expiresIn: "1h",
+            audience: config.jwtAudience,
+            issuer: config.jwtIssuer,
+        }
+    );
 
     return { token };
+};
+
+export const activateUser = async (token: string) => {
+    let decoded: DecodedToken;
+
+    try {
+        decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
+    } catch (error: any) {
+        if (error.name === "TokenExpiredError") {
+            throw new ValidationError("Le token d'activation a expiré.");
+        }
+        throw new ValidationError("Token d'activation invalide.");
+    }
+
+    const user = await User.findByPk(decoded.id);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    if (user.isActive) return "AlreadyActive";
+
+    user.isActive = true;
+    await user.save();
+
+    try {
+        await axios.post(
+            `${config.apiUrls.USER_SERVICE}/profile`,
+            {
+                userId: user.id,
+                firstName: decoded.firstName,
+                lastName: decoded.lastName,
+                birthDate: decoded.birthDate,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+    } catch (error) {
+        const err = error as any;
+        logger.error(
+            "Erreur création du profil utilisateur :",
+            err.response?.data || err.message || err
+        );
+        throw new Error("ProfileCreationFailed");
+    }
+
+    return "Success";
 };
 
 export const sendPasswordResetEmail = async (user: any) => {
@@ -165,7 +197,7 @@ export const sendPasswordResetEmail = async (user: any) => {
     await PasswordResetToken.upsert({
         userId: user.id,
         token,
-        expiresAt: new Date(Date.now() + TOKEN_EXPIRATION),
+        expiresAt: new Date(Date.now() + config.tokenExpirationMs),
     });
 
     await sendResetPasswordEmail(user.email, token);
@@ -174,15 +206,16 @@ export const sendPasswordResetEmail = async (user: any) => {
 export const resetUserPassword = async (token: string, newPassword: string) => {
     const tokenEntry = await PasswordResetToken.findOne({ where: { token } });
 
-    if (!tokenEntry) throw new Error("Token invalide.");
+    if (!tokenEntry)
+        throw new ValidationError("Token de réinitialisation invalide.");
 
     if (tokenEntry.expiresAt < new Date()) {
         await PasswordResetToken.destroy({ where: { token } });
-        throw new Error("Token expiré.");
+        throw new ValidationError("Token de réinitialisation expiré.");
     }
 
     const user = await User.findByPk(tokenEntry.userId);
-    if (!user) throw new Error("Utilisateur non trouvé.");
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
@@ -193,7 +226,7 @@ export const resetUserPassword = async (token: string, newPassword: string) => {
 
 export const setupTwoFactor = async (userId: number) => {
     const user = await User.findByPk(userId);
-    if (!user) throw new Error("Utilisateur non trouvé");
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
     const secret = speakeasy.generateSecret({
         name: `WeGift (${user.email})`,
@@ -220,9 +253,8 @@ export const verifyTwoFactorCode = async (
     code: string
 ): Promise<boolean> => {
     const user = await User.findByPk(userId);
-    if (!user || !user.twoFactorSecret) {
-        throw new Error("Utilisateur ou secret 2FA introuvable");
-    }
+    if (!user || !user.twoFactorSecret) 
+        throw new NotFoundError("Utilisateur ou secret 2FA introuvable.");
 
     const verified = speakeasy.totp.verify({
         secret: user.twoFactorSecret,
@@ -237,4 +269,80 @@ export const verifyTwoFactorCode = async (
     }
 
     return verified;
+};
+
+export const verifyTwoFactorCodeAndGenerateToken = async (
+    userId: number,
+    code: string
+) => {
+    if (!code) throw new ValidationError("Code 2FA manquant.");
+
+    const isValid = await verifyTwoFactorCode(userId, code);
+    if (!isValid) throw new ValidationError("Code 2FA invalide.");
+
+    const token = jwt.sign({ id: userId }, config.jwtSecret, {
+        expiresIn: "1h",
+        audience: config.jwtAudience,
+        issuer: config.jwtIssuer,
+    });
+
+    return token;
+};
+
+export const disableTwoFactorAuth = async (userId: number) => {
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = null;
+    await user.save();
+    return;
+};
+
+export const getAccountById = async (userId: number) => {
+    const user = await User.findOne({
+        where: { id: userId },
+        attributes: [
+            "id",
+            "email",
+            "acceptedTerms",
+            "newsletter",
+            "twoFactorEnabled",
+        ],
+    });
+
+    if (!user)  throw new NotFoundError("Utilisateur non trouvé.");
+
+    return user;
+};
+
+export const updateEmailForUser = async (
+    userId: number,
+    currentPassword: string,
+    newEmail: string
+) => {
+    const user = await User.findByPk(userId);
+    if (!user)  throw new NotFoundError("Utilisateur non trouvé.");
+
+    const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+    if (!isPasswordValid) throw new ValidationError("Mot de passe incorrect.");
+
+    const emailInUse = await User.findOne({ where: { email: newEmail } });
+    if (emailInUse) throw new ConflictError("Email déjà utilisé.");
+
+    user.email = newEmail;
+    user.isActive = false;
+
+    await user.save();
+
+    const activationToken = jwt.sign(
+        { id: user.id, email: user.email },
+        config.jwtSecret,
+        { expiresIn: "24h" }
+    );
+
+    await sendActivationEmail(newEmail, activationToken);
 };

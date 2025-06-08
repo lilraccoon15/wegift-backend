@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { AppError, AuthError } from "src/errors/CustomErrors";
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -20,25 +21,24 @@ export const verifyTokenMiddleware = (
       token = req.cookies.token;
     }
 
-    if (!token) {
-      res.status(401).json({ message: "Token manquant" });
-      return;
-    }
+    if (!token) throw new AuthError("Token manquant");
 
     const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error(
-        "JWT_SECRET non défini dans les variables d’environnement"
+    if (!secret) 
+      throw new AppError(
+        "JWT_SECRET non défini dans les variables d’environnement",
+        500
       );
-    }
 
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
 
     next();
   } catch (error) {
-    res.status(401).json({ message: "Token invalide ou expiré" });
-    return;
+    if (error instanceof AuthError || error instanceof AppError)
+      return next(error);
+    
+    return next(new AuthError("Token invalide ou expiré"));
   }
 };
 

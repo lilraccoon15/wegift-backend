@@ -1,44 +1,45 @@
-import { Request, Response } from "express";
-import logger from "../utils/logger";
-import sendError from "../utils/sendError";
+import { NextFunction, Request, Response } from "express";
 import sendSuccess from "../utils/sendSuccess";
 import {
     createProfileService,
     getProfileService,
     updateProfileService,
 } from "../services/userService";
-import { AuthenticatedRequest } from '../middlewares/verifyTokenMiddleware';
+import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
 import UserProfile from "../models/UserProfile";
 import path from "path";
 import fs from "fs";
+import {
+    AppError,
+    ConflictError,
+    NotFoundError,
+} from "src/errors/CustomErrors";
 
-export const me = async (req: AuthenticatedRequest, res: Response) => {
+export const me = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+) => {
     const userId = req.user?.id;
-
-    if (!userId) {
-        return sendError(res, "Non authentifié", 401);
-    }
 
     try {
         const profile = await getProfileService(userId);
 
-        if (!profile) {
-            return sendError(res, "Profil non trouvé", 404);
-        }
+        if (!profile) return next(new NotFoundError("Profil non trouvé"));
 
         return sendSuccess(res, "Profil récupéré", profile);
     } catch (error) {
-        return sendError(res, "Erreur serveur", 500);
+        next(error);
     }
 };
 
 export const createProfile = async (
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) => {
     const userId = req.user?.id;
-    if (!userId) return sendError(res, "Non authentifié", 401);
 
     const { firstName, lastName, birthDate } = req.body;
 
@@ -52,21 +53,19 @@ export const createProfile = async (
 
         return sendSuccess(res, "Profil créé", profile);
     } catch (error: any) {
-        if (error.message === "Profil déjà existant") {
-            return sendError(res, error.message, 409);
-        }
-        return sendError(res, "Erreur serveur", 500);
+        if (error.message === "Profil déjà existant")
+            return next(new ConflictError(error.message));
+
+        next(error);
     }
 };
 
 export const getCurrentUser = async (
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) => {
     const userId = req.user?.id;
-    if (!userId) return sendError(res, "Non authentifié", 401);
-
-    if (!userId) return sendError(res, "Non autorisé", 401);
 
     try {
         const user = await UserProfile.findOne({
@@ -81,20 +80,20 @@ export const getCurrentUser = async (
             ],
         });
 
-        if (!user) return sendError(res, "Utilisateur non trouvé", 404);
+        if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
 
         sendSuccess(res, "Utilisateur trouvé", { user }, 200);
     } catch (error) {
-        return sendError(res, "Erreur serveur", 500);
+        next(error);
     }
 };
 
 export const updateProfile = async (
     req: AuthenticatedRequest,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) => {
     const userId = req.user?.id;
-    if (!userId) return sendError(res, "Non authentifié", 401);
 
     const { firstName, lastName, birthDate, description } = req.body;
 
@@ -133,9 +132,8 @@ export const updateProfile = async (
 
         return sendSuccess(res, "Profil mis à jour", updatedProfile);
     } catch (error: any) {
-        if (error.message === "Profil non trouvé") {
-            return sendError(res, error.message, 404);
-        }
-        return sendError(res, "Erreur serveur", 500);
+        if (error.message === "Profil non trouvé")
+            return next(new NotFoundError(error.message));
+        next(error);
     }
 };

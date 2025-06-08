@@ -39,7 +39,6 @@ app.use("/api/auth", createProxyMiddleware({
   onProxyRes: addCorsHeaders,
 } as any));
 
-// Les autres proxys
 app.use("/api/exchange", createProxyMiddleware({
   target: config.EXCHANGE_SERVICE,
   changeOrigin: true,
