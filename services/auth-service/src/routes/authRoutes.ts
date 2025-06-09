@@ -15,6 +15,7 @@ import {
   updatePassword,
   activate,
   updateNewsletter,
+  deleteAccount,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
@@ -62,5 +63,7 @@ router.put("/update-email", verifyTokenMiddleware, ensureAuthenticated, updateEm
 router.put("/update-password", verifyTokenMiddleware, ensureAuthenticated, updatePassword);
 
 router.patch("/update-newsletter", verifyTokenMiddleware, ensureAuthenticated, updateNewsletter);
+
+router.delete("/delete-account", verifyTokenMiddleware, ensureAuthenticated, deleteAccount);
 
 export default router;

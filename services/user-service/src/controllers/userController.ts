@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import sendSuccess from "../utils/sendSuccess";
 import {
     createProfileService,
+    deleteProfileUser,
     getProfileService,
     updateProfileService,
 } from "../services/userService";
@@ -137,3 +138,20 @@ export const updateProfile = async (
         next(error);
     }
 };
+
+export const deleteProfile = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    const { userId } = req.body;
+
+    if (!userId) return next(new AppError("userId manquant dans la requête", 400));
+
+    try {
+        await deleteProfileUser(userId);
+        return sendSuccess(res, "Profil utilisateur supprimé", {}, 200);
+    } catch (error) {
+        next(error);
+    }
+}

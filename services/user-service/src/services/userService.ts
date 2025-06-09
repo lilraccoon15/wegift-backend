@@ -50,3 +50,14 @@ export const updateProfileService = async (
 
     return profile;
 };
+
+
+export const deleteProfileUser = async (
+    userId: number,
+) => {
+    const profile = await UserProfile.findOne({ where: { userId } });
+
+    if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+
+    await profile.destroy();
+}

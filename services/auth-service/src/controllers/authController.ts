@@ -13,6 +13,7 @@ import {
     updateEmailForUser,
     setNewPassword,
     setNewsletter,
+    deleteUserAccount,
 } from "../services/authService";
 import User from "../models/User";
 import sendSuccess from "../utils/sendSuccess";
@@ -24,6 +25,7 @@ import {
     NotFoundError,
     ValidationError,
 } from "../errors/CustomErrors";
+import currentConfig from "src/config";
 
 export const register = async (
     req: Request,
@@ -385,3 +387,33 @@ export const updateNewsletter = async (
         );
     }
 };
+
+export const deleteAccount = async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const userId = req.user.id;
+
+        const { password } = req.body;
+    
+        await deleteUserAccount(userId, password);
+
+        await fetch(`${currentConfig.apiUrls.USER_SERVICE}/api/user/delete-profile`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+            },
+            body: JSON.stringify({ userId })
+        });
+    
+        sendSuccess(res, "Compte supprimé avec succès", 200);
+    } catch (error: any) {
+        if (error.message === "Utilisateur non trouvé")
+            return next(new NotFoundError(error.message));
+        next(
+            new AppError("Erreur lors de la suppression du compte", 500)
+        );
+    }
+}

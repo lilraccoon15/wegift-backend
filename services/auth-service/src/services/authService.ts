@@ -380,3 +380,19 @@ export const setNewsletter = async (
     
     await user.save();
 }
+
+export const deleteUserAccount = async (
+    userId: number,
+    password: string,
+) => {
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    const isPasswordValid = await bcrypt.compare(
+        password,
+        user.password
+    );
+    if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
+
+    await user.destroy();
+}
