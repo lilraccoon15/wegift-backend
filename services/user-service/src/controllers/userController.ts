@@ -1,157 +1,117 @@
-import { NextFunction, Request, Response } from "express";
 import sendSuccess from "../utils/sendSuccess";
 import {
-    createProfileService,
-    deleteProfileUser,
-    getProfileService,
-    updateProfileService,
+  createProfileService,
+  deleteProfileUser,
+  getProfileService,
+  updateProfileService,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
 import UserProfile from "../models/UserProfile";
 import path from "path";
 import fs from "fs";
-import {
-    AppError,
-    ConflictError,
-    NotFoundError,
-} from "../errors/CustomErrors";
+import { AppError, NotFoundError } from "../errors/CustomErrors";
+import { asyncHandler } from "src/middlewares/asyncHandler";
 
-export const me = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => {
-    const userId = req.user?.id;
+export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
+  const userId = req.user?.id;
 
-    try {
-        const profile = await getProfileService(userId);
+  const profile = await getProfileService(userId);
 
-        if (!profile) return next(new NotFoundError("Profil non trouvé"));
+  if (!profile) return next(new NotFoundError("Profil non trouvé"));
 
-        return sendSuccess(res, "Profil récupéré", profile);
-    } catch (error) {
-        next(error);
-    }
-};
+  return sendSuccess(res, "Profil récupéré", profile);
+});
 
-export const createProfile = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => {
+export const createProfile = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user?.id;
 
     const { firstName, lastName, birthDate } = req.body;
 
-    try {
-        const profile = await createProfileService(
-            userId,
-            firstName,
-            lastName,
-            birthDate
-        );
+    const profile = await createProfileService(
+      userId,
+      firstName,
+      lastName,
+      birthDate
+    );
 
-        return sendSuccess(res, "Profil créé", profile);
-    } catch (error: any) {
-        if (error.message === "Profil déjà existant")
-            return next(new ConflictError(error.message));
+    return sendSuccess(res, "Profil créé", profile);
+  }
+);
 
-        next(error);
-    }
-};
-
-export const getCurrentUser = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => {
+export const getCurrentUser = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user?.id;
 
-    try {
-        const user = await UserProfile.findOne({
-            where: { userId },
-            attributes: [
-                "id",
-                "firstName",
-                "lastName",
-                "birthDate",
-                "picture",
-                "description",
-            ],
-        });
+    const user = await UserProfile.findOne({
+      where: { userId },
+      attributes: [
+        "id",
+        "firstName",
+        "lastName",
+        "birthDate",
+        "picture",
+        "description",
+      ],
+    });
 
-        if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
+    if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
 
-        sendSuccess(res, "Utilisateur trouvé", { user }, 200);
-    } catch (error) {
-        next(error);
-    }
-};
+    sendSuccess(res, "Utilisateur trouvé", { user }, 200);
+  }
+);
 
-export const updateProfile = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => {
+export const updateProfile = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user?.id;
 
     const { firstName, lastName, birthDate, description } = req.body;
 
-    try {
-        const file = req.file;
-        console.log(file);
-        if (file) {
-            const uploadDir = path.join(
-                __dirname,
-                "../../public/uploads/profilePictures/"
-            );
-            const files = fs.readdirSync(uploadDir);
+    const file = req.file;
+    console.log(file);
+    if (file) {
+      const uploadDir = path.join(
+        __dirname,
+        "../../public/uploads/profilePictures/"
+      );
+      const files = fs.readdirSync(uploadDir);
 
-            files.forEach((fileInDir) => {
-                if (
-                    fileInDir.startsWith(`profile_${userId}_pp`) &&
-                    fileInDir !== file.filename
-                ) {
-                    fs.unlinkSync(path.join(uploadDir, fileInDir));
-                }
-            });
+      files.forEach((fileInDir) => {
+        if (
+          fileInDir.startsWith(`profile_${userId}_pp`) &&
+          fileInDir !== file.filename
+        ) {
+          fs.unlinkSync(path.join(uploadDir, fileInDir));
         }
-
-        const picture = req.file
-            ? `/uploads/profilePictures/${req.file.filename}`
-            : undefined;
-
-        const updatedProfile = await updateProfileService(
-            userId,
-            firstName,
-            lastName,
-            birthDate,
-            picture,
-            description
-        );
-
-        return sendSuccess(res, "Profil mis à jour", updatedProfile);
-    } catch (error: any) {
-        if (error.message === "Profil non trouvé")
-            return next(new NotFoundError(error.message));
-        next(error);
+      });
     }
-};
 
-export const deleteProfile = async (
-    req: AuthenticatedRequest,
-    res: Response,
-    next: NextFunction
-) => {
+    const picture = req.file
+      ? `/uploads/profilePictures/${req.file.filename}`
+      : undefined;
+
+    const updatedProfile = await updateProfileService(
+      userId,
+      firstName,
+      lastName,
+      birthDate,
+      picture,
+      description
+    );
+
+    return sendSuccess(res, "Profil mis à jour", updatedProfile);
+  }
+);
+
+export const deleteProfile = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
     const { userId } = req.body;
 
-    if (!userId) return next(new AppError("userId manquant dans la requête", 400));
+    if (!userId)
+      return next(new AppError("userId manquant dans la requête", 400));
 
-    try {
-        await deleteProfileUser(userId);
-        return sendSuccess(res, "Profil utilisateur supprimé", {}, 200);
-    } catch (error) {
-        next(error);
-    }
-}
+    await deleteProfileUser(userId);
+    return sendSuccess(res, "Profil utilisateur supprimé", {}, 200);
+  }
+);

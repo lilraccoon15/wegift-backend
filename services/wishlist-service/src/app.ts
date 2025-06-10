@@ -7,6 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import wishlistRoutes from "./routes/wishlistRoutes";
+import errorHandler from "./middlewares/errorHandler";
 
 if (process.env.NODE_ENV !== 'test') {
   dotenv.config();
@@ -23,6 +24,10 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+
+app.use("/uploads", express.static("public/uploads"));
+
+app.use(errorHandler);
 
 app.use('/', wishlistRoutes);
 

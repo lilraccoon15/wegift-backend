@@ -7,7 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes";
-import { errorHandler } from "./middlewares/errorHandler";
+import errorHandler from "./middlewares/errorHandler";
 
 if (process.env.NODE_ENV !== 'test') {
   dotenv.config();

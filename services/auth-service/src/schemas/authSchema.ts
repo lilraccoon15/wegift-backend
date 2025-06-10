@@ -26,7 +26,7 @@ export const registerSchema = z.object({
     }),
   email: emailSchema,
   password: passwordSchema,
-  acceptedTerms: z.boolean(),
+  acceptedTerms: z.boolean().refine(val => val === true, { message: "Vous devez accepter les conditions." }),
   newsletter: z.boolean(),
 });
 

@@ -191,7 +191,7 @@ export const activateUser = async (token: string) => {
     return "Success";
 };
 
-export const sendPasswordResetEmail = async (user: any) => {
+export const sendPasswordResetEmail = async (user: User) => {
     const token = crypto.randomBytes(32).toString("hex");
 
     await PasswordResetToken.upsert({
