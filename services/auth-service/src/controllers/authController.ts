@@ -25,7 +25,7 @@ import {
   ValidationError,
 } from "../errors/CustomErrors";
 import currentConfig from "../config";
-import { asyncHandler } from "src/middlewares/asyncHandler";
+import { asyncHandler } from "../middlewares/asyncHandler";
 
 export const register = asyncHandler(async (req, res, next) => {
   const user = await registerUser(req.body);

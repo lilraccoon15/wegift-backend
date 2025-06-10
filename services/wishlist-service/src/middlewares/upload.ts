@@ -1,15 +1,16 @@
 import multer from "multer";
 import path from "path";
 import { Request } from "express";
+import { UUIDV4 } from "sequelize";
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, "public/uploads/wishlistPictures/");
     },
     filename: function (req, file, cb) {
-        const wishlistId = (req as any).wishlist?.id || "unknown";
+        const uniqueName = UUIDV4();
         const ext = path.extname(file.originalname);
-        cb(null, `wishlist_${wishlistId}_pp${ext}`);
+        cb(null, `wishlist_picture_${uniqueName}${ext}`);
     },
 });
 

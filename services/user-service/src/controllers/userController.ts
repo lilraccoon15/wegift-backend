@@ -11,7 +11,7 @@ import UserProfile from "../models/UserProfile";
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
-import { asyncHandler } from "src/middlewares/asyncHandler";
+import { asyncHandler } from "../middlewares/asyncHandler";
 
 export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
   const userId = req.user?.id;
@@ -69,7 +69,7 @@ export const updateProfile = asyncHandler(
     const { firstName, lastName, birthDate, description } = req.body;
 
     const file = req.file;
-    console.log(file);
+
     if (file) {
       const uploadDir = path.join(
         __dirname,

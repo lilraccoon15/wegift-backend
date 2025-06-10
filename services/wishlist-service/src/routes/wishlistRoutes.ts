@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { createProfile, deleteProfile, getCurrentUser, me, updateProfile } from "../controllers/wishlistController";
 import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
-import { validateBody } from "../middlewares/validateBody";
-import { createProfileSchema } from "../schemas/wishlistSchema";
-import { upload } from "../middlewares/upload";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import { createWishlist, getUserWishlist, getUserWishlists } from "../controllers/wishlistController";
+import { upload } from "../middlewares/upload";
 
 const router = Router();
 
+router.get("/get-user-wishlists", verifyTokenMiddleware, ensureAuthenticated, getUserWishlists);
+router.post("/create-wishlist", verifyTokenMiddleware, ensureAuthenticated, upload.single("picture"), createWishlist);
+router.get("/my-wishlist/:id", verifyTokenMiddleware, ensureAuthenticated, getUserWishlist);
 
 export default router;

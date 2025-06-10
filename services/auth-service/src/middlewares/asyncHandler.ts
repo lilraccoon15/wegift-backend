@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
-import logger from "src/utils/logger";
+import logger from "../utils/logger";
 import { AppError } from "../errors/CustomErrors";
 
 export function asyncHandler(
