@@ -25,7 +25,7 @@ import {
     NotFoundError,
     ValidationError,
 } from "../errors/CustomErrors";
-import currentConfig from "src/config";
+import currentConfig from "../config";
 
 export const register = async (
     req: Request,
