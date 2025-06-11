@@ -51,10 +51,10 @@ export const createWishlist = asyncHandler(
 
 export const getUserWishlist = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const wishlistId = req.params.id;
+    const id = req.params.id;
 
     const wishlist = await Wishlist.findOne({
-      where: { wishlistId },
+      where: { id },
       attributes: [
         "id",
         "userId",
