@@ -12,6 +12,8 @@ import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
+import { Op } from "sequelize";
+import Friendship from "src/models/Friendship";
 
 export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
   const userId = req.user?.id;
@@ -115,3 +117,42 @@ export const deleteProfile = asyncHandler(
     return sendSuccess(res, "Profil utilisateur supprimé", {}, 200);
   }
 );
+
+
+export const getUser = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { id } = req.params;
+
+    if (!id)
+      return next(new AppError("userId manquant dans la requête", 400));
+
+    const user = await UserProfile.findByPk(id);
+
+    if (!user) return next(new NotFoundError("Profil non trouvé"));
+
+    return sendSuccess(res, "Profil utilisateur trouvé", { user }, 200)
+  }
+)
+
+export const areFriends = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { user1, user2 } = req.query;
+    
+    if (!user1 || !user2)
+      return next(new AppError("Les deux IDs doivent être fournis", 400));
+
+    const friendship = await Friendship.findOne({
+      where: {
+        [Op.or]: [
+          { userId1: user1, userId2: user2 },
+          { userId1: user2, userId2: user1 },
+        ],
+      },
+    });
+
+    return sendSuccess(res, "Relation d'amitié vérifiée", {
+      areFriends: !!friendship,
+    });
+
+  }
+)

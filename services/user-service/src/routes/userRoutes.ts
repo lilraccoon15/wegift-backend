@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createProfile, deleteProfile, getCurrentUser, me, updateProfile } from "../controllers/userController";
+import { areFriends, createProfile, deleteProfile, getCurrentUser, getUser, me, updateProfile } from "../controllers/userController";
 import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 import { validateBody } from "../middlewares/validateBody";
 import { createProfileSchema } from "../schemas/userSchema";
@@ -13,5 +13,7 @@ router.post("/profile", verifyTokenMiddleware, ensureAuthenticated, validateBody
 router.get("/get-user", verifyTokenMiddleware, ensureAuthenticated, getCurrentUser);
 router.put("/update-profile", verifyTokenMiddleware, ensureAuthenticated, upload.single("picture"), updateProfile);
 router.delete("/delete-profile", verifyTokenMiddleware, ensureAuthenticated, upload.single("picture"), deleteProfile);
+router.get("/profile/:id", verifyTokenMiddleware, ensureAuthenticated, getUser);
+router.get("/are-friends", verifyTokenMiddleware, ensureAuthenticated, areFriends);
 
 export default router;
