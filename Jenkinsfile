@@ -20,24 +20,28 @@ pipeline {
                     file(credentialsId: 'wegift-env-user', variable: 'USER_ENV'),
                     file(credentialsId: 'wegift-env-wishlist', variable: 'WISHLIST_ENV'),
                     file(credentialsId: 'wegift-env-exchange', variable: 'EXCHANGE_ENV'),
+                    file(credentialsId: 'wegift-env-notification', variable: 'NOTIFICATION_ENV'),
                     file(credentialsId: 'wegift-env-gateway', variable: 'GATEWAY_ENV'),
 
                     file(credentialsId: 'wegift-env-auth-test', variable: 'AUTH_ENV_TEST'),
                     file(credentialsId: 'wegift-env-user-test', variable: 'USER_ENV_TEST'),
                     file(credentialsId: 'wegift-env-wishlist-test', variable: 'WISHLIST_ENV_TEST'),
-                    file(credentialsId: 'wegift-env-exchange-test', variable: 'EXCHANGE_ENV_TEST')
+                    file(credentialsId: 'wegift-env-exchange-test', variable: 'EXCHANGE_ENV_TEST'),
+                    file(credentialsId: 'wegift-env-notification-test', variable: 'NOTIFICATION_ENV_TEST')
                 ]) {
                     bat '''
                     copy %AUTH_ENV% services\\auth-service\\.env
                     copy %USER_ENV% services\\user-service\\.env
                     copy %WISHLIST_ENV% services\\wishlist-service\\.env
                     copy %EXCHANGE_ENV% services\\exchange-service\\.env
+                    copy %NOTIFICATION_ENV% services\\notification-service\\.env
                     copy %GATEWAY_ENV% gateway\\.env
 
                     copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
                     copy %USER_ENV_TEST% services\\user-service\\.env.test
                     copy %WISHLIST_ENV_TEST% services\\wishlist-service\\.env.test
                     copy %EXCHANGE_ENV_TEST% services\\exchange-service\\.env.test
+                    copy %NOTIFICATION_ENV_TEST% services\\notification-service\\.env.test
                     '''
                 }
             }
@@ -69,6 +73,11 @@ pipeline {
                 stage('Install exchange-service') {
                     steps {
                         bat 'docker compose run --rm exchange-service npm install --production'
+                    }
+                }
+                stage('Install notification-service') {
+                    steps {
+                        bat 'docker compose run --rm notification-service npm install --production'
                     }
                 }
                 stage('Install gateway') {

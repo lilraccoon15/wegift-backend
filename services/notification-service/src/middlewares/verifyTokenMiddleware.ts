@@ -14,6 +14,9 @@ export const verifyTokenMiddleware = (
   try {
     let token: string | undefined;
 
+    console.log("Cookies reçus :", req.cookies);
+console.log("Header Authorization :", req.headers.authorization);
+
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       token = authHeader.substring(7);

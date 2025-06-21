@@ -4,8 +4,9 @@ import UserProfile from "./UserProfile";
 
 class Friendship extends Model {
     public id!: string;
-    public userId1!: string;
-    public userId2!: string;
+    public requesterId!: string;
+    public addresseeId!: string;
+    public status!: "pending" | "accepted";
 }
 
 Friendship.init(
@@ -15,7 +16,7 @@ Friendship.init(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        userId1: {
+        requesterId: {
             type: DataTypes.UUID,
             allowNull: false,
             references: {
@@ -24,7 +25,7 @@ Friendship.init(
             },
             onDelete: "CASCADE",
         },
-        userId2: {
+        addresseeId: {
             type: DataTypes.UUID,
             allowNull: false,
             references: {
@@ -32,6 +33,11 @@ Friendship.init(
                 key: "id",
             },
             onDelete: "CASCADE",
+        },
+        status: {
+            type: DataTypes.ENUM("pending", "accepted"),
+            allowNull: false,
+            defaultValue: "pending",
         },
     },
     {
@@ -39,6 +45,6 @@ Friendship.init(
         tableName: "friendships",
         timestamps: true,
     }
-)
+);
 
 export default Friendship;

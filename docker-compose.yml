@@ -62,3 +62,15 @@ services:
       - ./services/exchange-service/.env
     environment:
       - NODE_ENV=docker
+
+  notification-service:
+    build:
+      context: ./services/exchange-service
+    container_name: wegift-exchange-service
+    ports:
+      - "3005:3005"
+    restart: unless-stopped
+    env_file:
+      - ./services/exchange-service/.env
+    environment:
+      - NODE_ENV=docker

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { areFriends, createProfile, deleteProfile, getCurrentUser, getUser, me, updateProfile } from "../controllers/userController";
+import { areFriends, askFriendship, createProfile, deleteProfile, getCurrentUser, getFriendshipStatus, getUser, me, updateProfile } from "../controllers/userController";
 import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 import { validateBody } from "../middlewares/validateBody";
 import { createProfileSchema } from "../schemas/userSchema";
