@@ -67,6 +67,13 @@ app.use("/api/wishlist", createProxyMiddleware({
   onProxyRes: addCorsHeaders,
 } as any));
 
+app.use("/api/notification", createProxyMiddleware({
+  target: config.NOTIFICATION_SERVICE,
+  changeOrigin: true,
+  pathRewrite: { '^/api/notification': '' },
+  onProxyRes: addCorsHeaders,
+} as any));
+
 app.listen(PORT, () => {
   console.log(`API Gateway en écoute sur http://localhost:${PORT}`);
 });

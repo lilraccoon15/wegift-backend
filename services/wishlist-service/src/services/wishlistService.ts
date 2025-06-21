@@ -75,6 +75,29 @@ export const createNewWish = async (
     return wish;
 }
 
+export const updateWishService = async (
+    id: string,
+    title: string,
+    link?: string,
+    price?: number,
+    description?: string,
+    picture?: string,
+) => {
+    const wish = await Wish.findByPk(id);
+
+    if (!wish) throw new NotFoundError("Wish non trouvée");
+
+    wish.title = title;
+    if (description !== undefined) wish.description = description;
+    if (picture !== undefined) wish.picture = picture;
+    if (link !== undefined) wish.link = link;
+    if (price !== undefined) wish.price = price;
+
+    await wish.save();
+
+    return wish;
+}
+
 export const deleteWishService = async (
     id: string,
 ) => {

@@ -3,7 +3,7 @@ import { asyncHandler } from "../middlewares/asyncHandler";
 import Wishlist from "../models/Wishlist";
 import Wish from "../models/Wish";
 import sendSuccess from "../utils/sendSuccess";
-import { createNewWish, createWishlistService, deleteWishlistService, deleteWishService, updateWishlistService } from "../services/wishlistService";
+import { createNewWish, createWishlistService, deleteWishlistService, deleteWishService, updateWishlistService, updateWishService } from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
@@ -201,7 +201,7 @@ export const updateWish = asyncHandler(
             ? `/uploads/wishPictures/${req.file.filename}`
             : undefined;
 
-        const updatedWish = await updateWishlistService(
+        const updatedWish = await updateWishService(
             id,
             title,
             link,

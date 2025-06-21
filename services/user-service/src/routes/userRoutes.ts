@@ -15,5 +15,7 @@ router.put("/update-profile", verifyTokenMiddleware, ensureAuthenticated, upload
 router.delete("/delete-profile", verifyTokenMiddleware, ensureAuthenticated, upload.single("picture"), deleteProfile);
 router.get("/profile/:id", verifyTokenMiddleware, ensureAuthenticated, getUser);
 router.get("/are-friends", verifyTokenMiddleware, ensureAuthenticated, areFriends);
+router.get("/friendship-status", verifyTokenMiddleware, ensureAuthenticated, getFriendshipStatus);
+router.post("/ask-friend", verifyTokenMiddleware, ensureAuthenticated, askFriendship);
 
 export default router;
