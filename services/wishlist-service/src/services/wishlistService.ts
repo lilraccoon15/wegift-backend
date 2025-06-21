@@ -1,3 +1,4 @@
+import Wish from "../models/Wish";
 import { NotFoundError } from "../errors/CustomErrors";
 import Wishlist from "../models/Wishlist";
 
@@ -52,4 +53,34 @@ export const deleteWishlistService = async (
     if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
     await wishlist.destroy();
+}
+
+export const createNewWish = async (
+    title: string,
+    wishlistId: string,
+    description?: string,
+    price?: number,
+    link?: string,
+    picture?: string,
+) => {
+    const wish = await Wish.create({
+        title,
+        wishlistId,
+        description,
+        price,
+        link,
+        picture,
+    });
+
+    return wish;
+}
+
+export const deleteWishService = async (
+    id: string,
+) => {
+    const wish = await Wish.findByPk(id);
+
+    if (!wish) throw new NotFoundError("Wish non trouvée");
+
+    await wish.destroy();
 }

@@ -13,7 +13,7 @@ import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { Op } from "sequelize";
-import Friendship from "src/models/Friendship";
+import Friendship from "../models/Friendship";
 
 export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
   const userId = req.user?.id;
