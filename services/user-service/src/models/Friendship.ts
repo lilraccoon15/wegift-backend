@@ -7,6 +7,8 @@ class Friendship extends Model {
     public requesterId!: string;
     public addresseeId!: string;
     public status!: "pending" | "accepted";
+    public requester?: UserProfile;
+    public addressee?: UserProfile;
 }
 
 Friendship.init(

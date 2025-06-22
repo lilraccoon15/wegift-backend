@@ -1,6 +1,5 @@
-import Friendship from "../models/Friendship";
+import { Friendship, UserProfile } from "../models/associations";
 import { ConflictError, NotFoundError } from "../errors/CustomErrors";
-import UserProfile from "../models/UserProfile";
 import { Op } from "sequelize";
 import axios from "axios";
 import config from "../config";
@@ -164,4 +163,49 @@ export async function sendFriendshipAsk(
     }
 
     return newFriendship;
+}
+
+export async function getFriendships(profileId: string): Promise<UserProfile[]> {
+    const friendships = await Friendship.findAll({
+        where: {
+            [Op.and]: [
+                {
+                    [Op.or]: [
+                        { requesterId: profileId },
+                        { addresseeId: profileId },
+                    ],
+                },
+                { status: "accepted" },
+            ],
+        },
+        include: [
+            {
+                model: UserProfile,
+                as: "requester",
+                required: false,
+                attributes: ["id", "firstName", "lastName", "picture"]
+            },
+            {
+                model: UserProfile,
+                as: "addressee",
+                required: false,
+                attributes: ["id", "firstName", "lastName", "picture"]
+            },
+        ],
+    });
+
+    if (!friendships || friendships.length === 0) {
+        return [];
+    }
+
+    const friendProfiles = friendships
+      .map((friendship) => {
+          const requester = friendship.requester;
+          const addressee = friendship.addressee;
+
+          return requester?.id === profileId ? addressee : requester;
+      })
+      .filter((profile): profile is UserProfile => profile !== undefined);
+
+    return friendProfiles;
 }

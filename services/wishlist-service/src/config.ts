@@ -41,6 +41,8 @@ if (!JWT_SECRET) {
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
 const JWT_ISSUER = process.env.JWT_ISSUER || "your-api";
 const TOKEN_EXPIRATION_MS = 60 * 60 * 1000; 
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+const GOOGLE_CSE_ID = process.env.GOOGLE_CSE_ID;
 
 const currentConfig = {
   apiUrls: API_URLS[ENV] || API_URLS.development,
@@ -49,6 +51,8 @@ const currentConfig = {
   jwtIssuer: JWT_ISSUER,
   tokenExpirationMs: TOKEN_EXPIRATION_MS,
   env: ENV,
+  googleApiKey: GOOGLE_API_KEY,
+  googleCseId: GOOGLE_CSE_ID,
 };
 
 export default currentConfig;

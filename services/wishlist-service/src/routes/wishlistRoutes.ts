@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
-import { createWish, createWishlist, deleteWish, deleteWishlist, getUserWish, getUserWishesFromWishlist, getUserWishlist, getUserWishlists, updateWish, updateWishlist } from "../controllers/wishlistController";
+import { createWish, createWishlist, deleteWish, deleteWishlist, getUserWish, getUserWishesFromWishlist, getUserWishlist, getUserWishlists, searchProduct, updateWish, updateWishlist } from "../controllers/wishlistController";
 import { upload } from "../middlewares/upload";
 
 const router = Router();
@@ -16,5 +16,7 @@ router.post("/create-wish", verifyTokenMiddleware, ensureAuthenticated, upload.s
 router.get("/my-wish/:id", verifyTokenMiddleware, ensureAuthenticated, getUserWish);
 router.put("/update-wish/:id", verifyTokenMiddleware, ensureAuthenticated, upload.single("picture"), updateWish);
 router.delete("/delete-wish/:id", verifyTokenMiddleware, ensureAuthenticated, deleteWish);
+router.get("/search-product", verifyTokenMiddleware, ensureAuthenticated, searchProduct);
+
 
 export default router;

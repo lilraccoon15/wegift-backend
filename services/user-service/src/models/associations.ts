@@ -1,7 +1,7 @@
 import UserProfile from "./UserProfile";
 import Friendship from "./Friendship";
 
-Friendship.belongsTo(UserProfile, { foreignKey: "userId1", as: "user1" });
-Friendship.belongsTo(UserProfile, { foreignKey: "userId2", as: "user2" });
+Friendship.belongsTo(UserProfile, { foreignKey: "requesterId", as: "requester" });
+Friendship.belongsTo(UserProfile, { foreignKey: "addresseeId", as: "addressee" });
 
 export { UserProfile, Friendship };

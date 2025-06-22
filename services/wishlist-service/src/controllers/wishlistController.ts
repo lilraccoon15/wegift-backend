@@ -3,7 +3,7 @@ import { asyncHandler } from "../middlewares/asyncHandler";
 import Wishlist from "../models/Wishlist";
 import Wish from "../models/Wish";
 import sendSuccess from "../utils/sendSuccess";
-import { createNewWish, createWishlistService, deleteWishlistService, deleteWishService, updateWishlistService, updateWishService } from "../services/wishlistService";
+import { createNewWish, createWishlistService, deleteWishlistService, deleteWishService, searchProductsService, updateWishlistService, updateWishService } from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
@@ -223,4 +223,17 @@ export const deleteWish = asyncHandler(
       await deleteWishService(id);
       return sendSuccess(res, "Souhait supprimé", {}, 200);
     }
+);
+
+export const searchProduct = asyncHandler(
+  async (req, res, next) => {
+    const query = req.query.q as string;
+
+    if (!query)
+      return next(new AppError("Paramètre 'q' manquant", 400));
+
+    const results = await searchProductsService(query);
+
+    return sendSuccess(res, "Résultats de recherche", { results }, 200);
+  }
 );

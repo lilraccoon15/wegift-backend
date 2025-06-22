@@ -1,6 +1,14 @@
 import Wish from "../models/Wish";
 import { NotFoundError } from "../errors/CustomErrors";
 import Wishlist from "../models/Wishlist";
+import axios from "axios";
+import config from "../config";
+
+interface SearchResult {
+  title: string;
+  link: string;
+  snippet: string;
+}
 
 export const createWishlistService = async (
     userId: string,
@@ -106,4 +114,36 @@ export const deleteWishService = async (
     if (!wish) throw new NotFoundError("Wish non trouvée");
 
     await wish.destroy();
+}
+
+export async function searchProductsService(query: string): Promise<SearchResult[]> {
+  const apiKey = config.googleApiKey;
+  const cx = config.googleCseId;
+
+  if (!apiKey || !cx) {
+    throw new Error("Clé API Google ou ID moteur de recherche manquant.");
+  }
+
+  const url = `https://www.googleapis.com/customsearch/v1`;
+
+  try {
+    const response = await axios.get(url, {
+      params: {
+        q: query,
+        key: apiKey,
+        cx,
+      },
+    });
+
+    if (!response.data.items) return [];
+
+    return response.data.items.map((item: any) => ({
+      title: item.title,
+      link: item.link,
+      snippet: item.snippet,
+    }));
+  } catch (error) {
+    console.error("Erreur lors de la recherche Google:", error);
+    throw error;
+  }
 }

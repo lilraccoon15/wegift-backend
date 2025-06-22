@@ -3,6 +3,7 @@ import {
     createProfileService,
     deleteProfileUser,
     getFriendship,
+    getFriendships,
     getFriendshipStatusBetween,
     getProfileService,
     sendFriendshipAsk,
@@ -15,8 +16,7 @@ import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
-import { Op } from "sequelize";
-import Friendship from "../models/Friendship";
+
 
 export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user?.id;
@@ -188,8 +188,32 @@ export const askFriendship = asyncHandler(
         if (!requesterProfile) {
             return next(new AppError("Profil du demandeur non trouvé", 404));
         }
-        const ask = await sendFriendshipAsk(requesterProfile.id, addresseeId, token);
+        const ask = await sendFriendshipAsk(
+            requesterProfile.id,
+            addresseeId,
+            token
+        );
 
         return sendSuccess(res, "Demande d'ami envoyée", { ask });
+    }
+);
+
+export const getMyFriends = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user?.id;
+
+        const profileId = await UserProfile.findOne({
+            where: { userId: userId },
+        });
+
+        if (!profileId) 
+            return next(new AppError("Profil non trouvé", 404));
+
+        const friendships = await getFriendships(profileId.id);
+
+        if (friendships.length === 0) 
+            return sendSuccess(res, "Aucun ami trouvé", { friendships: [] });
+        
+        return sendSuccess(res, "Amitiés récupérées", { friendships });
     }
 );
