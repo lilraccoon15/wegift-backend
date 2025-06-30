@@ -20,14 +20,9 @@ const fileFilter = (
 
 const uploadConfig = [
     {
-        match: ["/create-wishlist", "/update-wishlist"],
-        folder: "public/uploads/wishlistPictures/",
-        prefix: "wishlist_picture",
-    },
-    {
-        match: ["/create-wish", "/update-wish"],
-        folder: "public/uploads/wishPictures/",
-        prefix: "wish_picture",
+        match: ["/create-exchange", "/update-exchange"],
+        folder: "public/uploads/exchangePictures/",
+        prefix: "exchange_picture",
     },
 ];
 

@@ -10,8 +10,8 @@ import wishlistRoutes from "./routes/wishlistRoutes";
 import errorHandler from "./middlewares/errorHandler";
 import setupAssociations from "./models/setupAssociations";
 
-if (process.env.NODE_ENV !== 'test') {
-  dotenv.config();
+if (process.env.NODE_ENV !== "test") {
+    dotenv.config();
 }
 
 const app = express();
@@ -19,10 +19,10 @@ const app = express();
 setupAssociations();
 
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
@@ -30,12 +30,12 @@ app.use(express.json());
 
 app.use("/uploads", express.static("public/uploads"));
 
-app.use('/', wishlistRoutes);
+app.use("/", wishlistRoutes);
 
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-  res.send("Wishlist service is running!");
+    res.send("Wishlist service is running!");
 });
 
 export default app;

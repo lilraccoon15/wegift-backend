@@ -1,5 +1,3 @@
 import { z } from "zod";
 
-export const createWishlistSchema = z.object({
-  
-});
+export const createWishlistSchema = z.object({});

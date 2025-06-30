@@ -3,14 +3,21 @@ import User from "../models/User";
 import jwt, { SignOptions, Secret } from "jsonwebtoken";
 import { RegisterData } from "../schemas/authSchema";
 import axios from "axios";
-import { sendActivationEmail, sendResetPasswordEmail } from "./emailService";
+import {
+    sendUserActivationEmail,
+    sendUserPasswordResetEmail,
+} from "./emailService";
 import PasswordResetToken from "../models/PasswordResetToken";
 import logger from "../utils/logger";
 import * as crypto from "crypto";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import config from "../config";
-import { AuthError, ConflictError, NotFoundError } from "../errors/CustomErrors";
+import {
+    AuthError,
+    ConflictError,
+    NotFoundError,
+} from "../errors/CustomErrors";
 
 interface DecodedToken {
     id: number;
@@ -34,7 +41,7 @@ type LoginResponse =
     | { requires2FA: true; tempToken: string }
     | { error: string };
 
-export const registerUser = async (data: RegisterData) => {
+export const createUser = async (data: RegisterData) => {
     const {
         firstName,
         lastName,
@@ -99,7 +106,7 @@ export const registerUser = async (data: RegisterData) => {
     );
 
     try {
-        await sendActivationEmail(email, activationToken);
+        await sendUserActivationEmail(email, activationToken);
     } catch (error) {
         logger.error("Erreur envoi mail d'activation :", error);
         throw new Error("Impossible d'envoyer le mail d'activation.");
@@ -108,7 +115,7 @@ export const registerUser = async (data: RegisterData) => {
     return user;
 };
 
-export const loginUser = async (
+export const authenticateUser = async (
     email: string,
     password: string
 ): Promise<LoginResponse> => {
@@ -145,7 +152,7 @@ export const loginUser = async (
     return { token };
 };
 
-export const activateUser = async (token: string) => {
+export const setUserAsActive = async (token: string) => {
     let decoded: DecodedToken;
 
     try {
@@ -200,7 +207,7 @@ export const sendPasswordResetEmail = async (user: User) => {
         expiresAt: new Date(Date.now() + config.tokenExpirationMs),
     });
 
-    await sendResetPasswordEmail(user.email, token);
+    await sendUserPasswordResetEmail(user.email, token);
 };
 
 export const resetUserPassword = async (token: string, newPassword: string) => {
@@ -224,7 +231,7 @@ export const resetUserPassword = async (token: string, newPassword: string) => {
     await PasswordResetToken.destroy({ where: { token } });
 };
 
-export const setupTwoFactor = async (userId: number) => {
+export const generate2FASecret = async (userId: number) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
@@ -248,12 +255,12 @@ export const setupTwoFactor = async (userId: number) => {
     };
 };
 
-export const verifyTwoFactorCode = async (
+export const activate2FA = async (
     userId: number,
     code: string
 ): Promise<boolean> => {
     const user = await User.findByPk(userId);
-    if (!user || !user.twoFactorSecret) 
+    if (!user || !user.twoFactorSecret)
         throw new NotFoundError("Utilisateur ou secret 2FA introuvable.");
 
     const verified = speakeasy.totp.verify({
@@ -271,13 +278,10 @@ export const verifyTwoFactorCode = async (
     return verified;
 };
 
-export const verifyTwoFactorCodeAndGenerateToken = async (
-    userId: number,
-    code: string
-) => {
+export const validate2FACode = async (userId: number, code: string) => {
     if (!code) throw new ValidationError("Code 2FA manquant.");
 
-    const isValid = await verifyTwoFactorCode(userId, code);
+    const isValid = await activate2FA(userId, code);
     if (!isValid) throw new ValidationError("Code 2FA invalide.");
 
     const token = jwt.sign({ id: userId }, config.jwtSecret, {
@@ -289,7 +293,7 @@ export const verifyTwoFactorCodeAndGenerateToken = async (
     return token;
 };
 
-export const disableTwoFactorAuth = async (userId: number) => {
+export const deactivate2FA = async (userId: number) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
@@ -299,7 +303,7 @@ export const disableTwoFactorAuth = async (userId: number) => {
     return;
 };
 
-export const getAccountById = async (userId: number) => {
+export const fetchUserAccount = async (userId: number) => {
     const user = await User.findOne({
         where: { id: userId },
         attributes: [
@@ -311,18 +315,18 @@ export const getAccountById = async (userId: number) => {
         ],
     });
 
-    if (!user)  throw new NotFoundError("Utilisateur non trouvé.");
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
     return user;
 };
 
-export const updateEmailForUser = async (
+export const changeUserEmail = async (
     userId: number,
     currentPassword: string,
     newEmail: string
 ) => {
     const user = await User.findByPk(userId);
-    if (!user)  throw new NotFoundError("Utilisateur non trouvé.");
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
     const isPasswordValid = await bcrypt.compare(
         currentPassword,
@@ -344,14 +348,13 @@ export const updateEmailForUser = async (
         { expiresIn: "24h" }
     );
 
-    await sendActivationEmail(newEmail, activationToken);
+    await sendUserActivationEmail(newEmail, activationToken);
 };
 
-
-export const setNewPassword = async (
+export const changeUserPassword = async (
     userId: number,
     currentPassword: string,
-    newPassword: string,
+    newPassword: string
 ) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
@@ -367,32 +370,26 @@ export const setNewPassword = async (
     user.password = hashedPassword;
 
     await user.save();
-}
+};
 
-export const setNewsletter = async (
+export const changeNewsletterSubscription = async (
     userId: number,
-    newsletter:boolean,
+    newsletter: boolean
 ) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
     user.newsletter = newsletter;
-    
-    await user.save();
-}
 
-export const deleteUserAccount = async (
-    userId: number,
-    password: string,
-) => {
+    await user.save();
+};
+
+export const removeUser = async (userId: number, password: string) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-    const isPasswordValid = await bcrypt.compare(
-        password,
-        user.password
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
 
     await user.destroy();
-}
+};

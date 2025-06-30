@@ -3,27 +3,29 @@ import { asyncHandler } from "../middlewares/asyncHandler";
 import Wishlist from "../models/Wishlist";
 import Wish from "../models/Wish";
 import sendSuccess from "../utils/sendSuccess";
-import { createNewWish, createWishlistService, deleteWishlistService, deleteWishService, searchProductsService, updateWishlistService, updateWishService } from "../services/wishlistService";
+import {
+    addNewWishToWishlist,
+    createNewWishlist,
+    deleteWishlistById,
+    deleteWishById,
+    findProductsByQuery,
+    modifyWishlistById,
+    modifyWishById,
+    getAllUserWishlists,
+    getWishlistById,
+    getWishesByWishlistId,
+    findWishById,
+} from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
+import { Sequelize } from "sequelize";
 
 export const getUserWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
 
-        const wishlists = await Wishlist.findAll({
-            where: { userId },
-            attributes: [
-                "id",
-                "userId",
-                "title",
-                "access",
-                "picture",
-                "description",
-                "published",
-            ],
-        });
+        const wishlists = await getAllUserWishlists(userId);
 
         sendSuccess(res, "Wishlist(s) trouvée(s)", { wishlists }, 200);
     }
@@ -39,7 +41,7 @@ export const createWishlist = asyncHandler(
             ? `/uploads/wishlistPictures/${req.file.filename}`
             : undefined;
 
-        const wishlist = await createWishlistService(
+        const wishlist = await createNewWishlist(
             userId,
             title,
             published,
@@ -56,18 +58,9 @@ export const getUserWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const id = req.params.id;
 
-        const wishlist = await Wishlist.findOne({
-            where: { id },
-            attributes: [
-                "id",
-                "userId",
-                "title",
-                "access",
-                "picture",
-                "description",
-                "published",
-            ],
-        });
+        const wishlist = await getWishlistById(id);
+
+        if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
         sendSuccess(res, "Wishlist trouvée", { wishlist }, 200);
     }
@@ -75,12 +68,12 @@ export const getUserWishlist = asyncHandler(
 
 export const getUserWishesFromWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-        const wishlistId = req.query.wishlistid;
+        const wishlistId = req.query.wishlistid as string;
 
-        const wishes = await Wish.findAll({
-            where: { wishlistId },
-            attributes: ["id", "title"],
-        });
+        if (!wishlistId)
+            return next(new AppError("Paramètre wishlistid manquant", 400));
+
+        const wishes = await getWishesByWishlistId(wishlistId);
 
         sendSuccess(res, "Souhaits trouvés", { wishes }, 200);
     }
@@ -104,8 +97,8 @@ export const updateWishlist = asyncHandler(
             if (picture) {
                 const oldPath = path.join(__dirname, "../../public", picture);
                 if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
-              }
+                    fs.unlinkSync(oldPath);
+                }
             }
         }
 
@@ -113,13 +106,13 @@ export const updateWishlist = asyncHandler(
             ? `/uploads/wishlistPictures/${req.file.filename}`
             : undefined;
 
-        const updatedWishlist = await updateWishlistService(
+        const updatedWishlist = await modifyWishlistById(
             id,
             title,
             access,
             Number(published),
             description,
-            picture,
+            picture
         );
         return sendSuccess(res, "Wishlist mise à jour", updatedWishlist);
     }
@@ -127,13 +120,15 @@ export const updateWishlist = asyncHandler(
 
 export const deleteWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-      const { id } = req.params;
+        const { id } = req.params;
 
-      if (!id)
-        return next(new AppError("wishlistId manquant dans la requête", 400));
+        if (!id)
+            return next(
+                new AppError("wishlistId manquant dans la requête", 400)
+            );
 
-      await deleteWishlistService(id);
-      return sendSuccess(res, "Wishlist supprimée", {}, 200);
+        await deleteWishlistById(id);
+        return sendSuccess(res, "Wishlist supprimée", {}, 200);
     }
 );
 
@@ -145,8 +140,13 @@ export const createWish = asyncHandler(
             ? `/uploads/wishPictures/${req.file.filename}`
             : undefined;
 
-        const wish = await createNewWish(
-            title, wishlistId, description, price, link, picture
+        const wish = await addNewWishToWishlist(
+            title,
+            wishlistId,
+            description,
+            price,
+            link,
+            picture
         );
 
         return sendSuccess(res, "Wish créé", wish);
@@ -157,18 +157,9 @@ export const getUserWish = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const id = req.params.id;
 
-        const wish = await Wish.findOne({
-            where: { id },
-            attributes: [
-                "id",
-                "wishlistId",
-                "title",
-                "description",
-                "price",
-                "link",
-                "picture"
-            ],
-        });
+        const wish = await findWishById(id);
+
+        if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
         sendSuccess(res, "Wish trouvé", { wish }, 200);
     }
@@ -192,8 +183,8 @@ export const updateWish = asyncHandler(
             if (picture) {
                 const oldPath = path.join(__dirname, "../../public", picture);
                 if (fs.existsSync(oldPath)) {
-                fs.unlinkSync(oldPath);
-              }
+                    fs.unlinkSync(oldPath);
+                }
             }
         }
 
@@ -201,13 +192,13 @@ export const updateWish = asyncHandler(
             ? `/uploads/wishPictures/${req.file.filename}`
             : undefined;
 
-        const updatedWish = await updateWishService(
+        const updatedWish = await modifyWishById(
             id,
             title,
             link,
             Number(price),
             description,
-            picture,
+            picture
         );
         return sendSuccess(res, "Wish mis à jour", updatedWish);
     }
@@ -215,25 +206,22 @@ export const updateWish = asyncHandler(
 
 export const deleteWish = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-      const { id } = req.params;
+        const { id } = req.params;
 
-      if (!id)
-        return next(new AppError("wishId manquant dans la requête", 400));
+        if (!id)
+            return next(new AppError("wishId manquant dans la requête", 400));
 
-      await deleteWishService(id);
-      return sendSuccess(res, "Souhait supprimé", {}, 200);
+        await deleteWishById(id);
+        return sendSuccess(res, "Souhait supprimé", {}, 200);
     }
 );
 
-export const searchProduct = asyncHandler(
-  async (req, res, next) => {
+export const searchProduct = asyncHandler(async (req, res, next) => {
     const query = req.query.q as string;
 
-    if (!query)
-      return next(new AppError("Paramètre 'q' manquant", 400));
+    if (!query) return next(new AppError("Paramètre 'q' manquant", 400));
 
-    const results = await searchProductsService(query);
+    const results = await findProductsByQuery(query);
 
     return sendSuccess(res, "Résultats de recherche", { results }, 200);
-  }
-);
+});

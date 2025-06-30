@@ -9,17 +9,17 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes";
 import errorHandler from "./middlewares/errorHandler";
 
-if (process.env.NODE_ENV !== 'test') {
-  dotenv.config();
+if (process.env.NODE_ENV !== "test") {
+    dotenv.config();
 }
 
 const app = express();
 
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
@@ -29,10 +29,10 @@ app.use("/uploads", express.static("public/uploads"));
 
 app.use(errorHandler);
 
-app.use('/', userRoutes);
+app.use("/", userRoutes);
 
 app.get("/", (_req, res) => {
-  res.send("User service is running!");
+    res.send("User service is running!");
 });
 
 export default app;

@@ -3,7 +3,7 @@ import { asyncHandler } from "../middlewares/asyncHandler";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
 
-export const getUserNotifications = asyncHandler(
+export const getNotificationsForUser = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
 
@@ -24,7 +24,7 @@ export const getUserNotifications = asyncHandler(
     }
 );
 
-export const sendNotification = asyncHandler(
+export const sendUserNotification = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { recipientId, senderId, type, data, read } = req.body;
 

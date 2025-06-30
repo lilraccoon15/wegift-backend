@@ -1,13 +1,13 @@
 import sendSuccess from "../utils/sendSuccess";
 import {
-    createProfileService,
-    deleteProfileUser,
-    getFriendship,
-    getFriendships,
+    insertUserProfile,
+    removeUserProfileByUserId,
+    findFriendshipBetweenUsers,
+    fetchFriendsByProfileId,
     getFriendshipStatusBetween,
-    getProfileService,
-    sendFriendshipAsk,
-    updateProfileService,
+    fetchUserProfileByUserId,
+    createFriendshipRequest,
+    updateProfileDetails,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
@@ -17,24 +17,25 @@ import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
 
+export const getUserProfile = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user?.id;
 
-export const me = asyncHandler(async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user?.id;
+        const profile = await fetchUserProfileByUserId(userId);
 
-    const profile = await getProfileService(userId);
+        if (!profile) return next(new NotFoundError("Profil non trouvé"));
 
-    if (!profile) return next(new NotFoundError("Profil non trouvé"));
+        return sendSuccess(res, "Profil récupéré", profile);
+    }
+);
 
-    return sendSuccess(res, "Profil récupéré", profile);
-});
-
-export const createProfile = asyncHandler(
+export const createUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
         const { firstName, lastName, birthDate } = req.body;
 
-        const profile = await createProfileService(
+        const profile = await insertUserProfile(
             userId,
             firstName,
             lastName,
@@ -45,7 +46,7 @@ export const createProfile = asyncHandler(
     }
 );
 
-export const getCurrentUser = asyncHandler(
+export const getCurrentUserBasicInfo = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
@@ -67,7 +68,7 @@ export const getCurrentUser = asyncHandler(
     }
 );
 
-export const updateProfile = asyncHandler(
+export const updateUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
@@ -96,7 +97,7 @@ export const updateProfile = asyncHandler(
             ? `/uploads/profilePictures/${req.file.filename}`
             : undefined;
 
-        const updatedProfile = await updateProfileService(
+        const updatedProfile = await updateProfileDetails(
             userId,
             firstName,
             lastName,
@@ -109,19 +110,19 @@ export const updateProfile = asyncHandler(
     }
 );
 
-export const deleteProfile = asyncHandler(
+export const deleteUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { userId } = req.body;
 
         if (!userId)
             return next(new AppError("userId manquant dans la requête", 400));
 
-        await deleteProfileUser(userId);
+        await removeUserProfileByUserId(userId);
         return sendSuccess(res, "Profil utilisateur supprimé", {}, 200);
     }
 );
 
-export const getUser = asyncHandler(
+export const getUserProfileById = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { id } = req.params;
 
@@ -136,7 +137,7 @@ export const getUser = asyncHandler(
     }
 );
 
-export const areFriends = asyncHandler(
+export const checkFriendshipStatus = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const user1 = req.query.user1 as string;
         const user2 = req.query.user2 as string;
@@ -144,7 +145,7 @@ export const areFriends = asyncHandler(
         if (!user1 || !user2)
             return next(new AppError("Les deux IDs doivent être fournis", 400));
 
-        const friendship = await getFriendship(user1, user2);
+        const friendship = await findFriendshipBetweenUsers(user1, user2);
 
         return sendSuccess(res, "Relation d'amitié vérifiée", {
             areFriends: !!friendship,
@@ -152,7 +153,7 @@ export const areFriends = asyncHandler(
     }
 );
 
-export const getFriendshipStatus = asyncHandler(
+export const getFriendshipStatusBetweenUsers = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const requesterId = req.query.user1 as string;
         const addresseeId = req.query.user2 as string;
@@ -168,7 +169,7 @@ export const getFriendshipStatus = asyncHandler(
     }
 );
 
-export const askFriendship = asyncHandler(
+export const sendFriendRequest = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const requesterUserId = req.user?.id;
         const { addresseeId } = req.body;
@@ -188,7 +189,7 @@ export const askFriendship = asyncHandler(
         if (!requesterProfile) {
             return next(new AppError("Profil du demandeur non trouvé", 404));
         }
-        const ask = await sendFriendshipAsk(
+        const ask = await createFriendshipRequest(
             requesterProfile.id,
             addresseeId,
             token
@@ -198,7 +199,7 @@ export const askFriendship = asyncHandler(
     }
 );
 
-export const getMyFriends = asyncHandler(
+export const getFriendsListForUser = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
@@ -206,14 +207,13 @@ export const getMyFriends = asyncHandler(
             where: { userId: userId },
         });
 
-        if (!profileId) 
-            return next(new AppError("Profil non trouvé", 404));
+        if (!profileId) return next(new AppError("Profil non trouvé", 404));
 
-        const friendships = await getFriendships(profileId.id);
+        const friendships = await fetchFriendsByProfileId(profileId.id);
 
-        if (friendships.length === 0) 
+        if (friendships.length === 0)
             return sendSuccess(res, "Aucun ami trouvé", { friendships: [] });
-        
+
         return sendSuccess(res, "Amitiés récupérées", { friendships });
     }
 );

@@ -1,69 +1,128 @@
 import { Router } from "express";
 import {
-  register,
-  login,
-  logout,
-  resetPassword,
-  confirmPasswordReset,
-  setup2FA,
-  enable2FA,
-  verifyTwoFactorCodeHandler,
-  status2FA,
-  disable2FA,
-  getAccount,
-  updateEmail,
-  updatePassword,
-  activate,
-  updateNewsletter,
-  deleteAccount,
+    registerUser,
+    loginUser,
+    logoutUser,
+    requestPasswordReset,
+    confirmPasswordReset,
+    get2FASetup,
+    enable2FAForUser,
+    verify2FACode,
+    get2FAStatus,
+    disable2FAForUser,
+    getUserAccount,
+    updateUserEmail,
+    updateUserPassword,
+    activateUserAccount,
+    updateNewsletterPreference,
+    deleteUserAccount,
 } from "../controllers/authController";
 import { authLimiter } from "../middlewares/rateLimit";
 import {
-  emailObjectSchema,
-  loginSchema,
-  registerSchema,
-  resetPasswordSchema,
+    emailObjectSchema,
+    loginSchema,
+    registerSchema,
+    resetPasswordSchema,
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
-import { verifyTokenMiddleware } from '../middlewares/verifyTokenMiddleware';
+import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 
 const router = Router();
 
-router.post("/register", authLimiter, validateBody(registerSchema), register);
-
-router.post("/login", authLimiter, validateBody(loginSchema), login);
-
-router.post("/logout", logout);
-
-router.get("/activate", activate);
-
-router.post("/forgot-password", validateBody(emailObjectSchema), resetPassword);
-
 router.post(
-  "/reset-password",
-  validateBody(resetPasswordSchema),
-  confirmPasswordReset
+    "/register",
+    authLimiter,
+    validateBody(registerSchema),
+    registerUser
 );
 
-router.get("/generate-2fa", verifyTokenMiddleware, ensureAuthenticated, setup2FA);
+router.post("/login", authLimiter, validateBody(loginSchema), loginUser);
 
-router.post("/enable-2fa", verifyTokenMiddleware, ensureAuthenticated, enable2FA);
+router.post("/logout", logoutUser);
 
-router.post("/verify-2fa", verifyTokenMiddleware, ensureAuthenticated, verifyTwoFactorCodeHandler);
+router.get("/activate", activateUserAccount);
 
-router.get("/2fa-status", verifyTokenMiddleware, ensureAuthenticated, status2FA);
+router.post(
+    "/forgot-password",
+    validateBody(emailObjectSchema),
+    requestPasswordReset
+);
 
-router.post("/disable-2fa", verifyTokenMiddleware, ensureAuthenticated, disable2FA);
+router.post(
+    "/reset-password",
+    validateBody(resetPasswordSchema),
+    confirmPasswordReset
+);
 
-router.get("/get-account", verifyTokenMiddleware, ensureAuthenticated, getAccount);
+router.get(
+    "/generate-2fa",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    get2FASetup
+);
 
-router.put("/update-email", verifyTokenMiddleware, ensureAuthenticated, updateEmail);
+router.post(
+    "/enable-2fa",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    enable2FAForUser
+);
 
-router.put("/update-password", verifyTokenMiddleware, ensureAuthenticated, updatePassword);
+router.post(
+    "/verify-2fa",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    verify2FACode
+);
 
-router.patch("/update-newsletter", verifyTokenMiddleware, ensureAuthenticated, updateNewsletter);
+router.get(
+    "/2fa-status",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    get2FAStatus
+);
 
-router.delete("/delete-account", verifyTokenMiddleware, ensureAuthenticated, deleteAccount);
+router.post(
+    "/disable-2fa",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    disable2FAForUser
+);
+
+router.get(
+    "/get-account",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    getUserAccount
+);
+
+router.put(
+    "/update-email",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    updateUserEmail
+);
+
+router.put(
+    "/update-password",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    updateUserPassword
+);
+
+router.patch(
+    "/update-newsletter",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    updateNewsletterPreference
+);
+
+router.delete(
+    "/delete-account",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    deleteUserAccount
+);
 
 export default router;

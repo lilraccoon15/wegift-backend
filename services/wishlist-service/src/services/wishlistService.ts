@@ -3,14 +3,82 @@ import { NotFoundError } from "../errors/CustomErrors";
 import Wishlist from "../models/Wishlist";
 import axios from "axios";
 import config from "../config";
+import { Sequelize } from "sequelize";
 
 interface SearchResult {
-  title: string;
-  link: string;
-  snippet: string;
+    title: string;
+    link: string;
+    snippet: string;
 }
 
-export const createWishlistService = async (
+export const getAllUserWishlists = async (userId: string) => {
+    const wishlists = await Wishlist.findAll({
+        where: { userId },
+        attributes: [
+            "id",
+            "userId",
+            "title",
+            "access",
+            "picture",
+            "description",
+            "published",
+            [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
+        ],
+        include: [
+            {
+                model: Wish,
+                as: "wishes",
+                attributes: [],
+                required: false,
+            },
+        ],
+        group: ["Wishlist.id"],
+    });
+    return wishlists;
+};
+
+export const getWishlistById = async (id: string) => {
+    const wishlist = await Wishlist.findOne({
+        where: { id },
+        attributes: [
+            "id",
+            "userId",
+            "title",
+            "access",
+            "picture",
+            "description",
+            "published",
+        ],
+    });
+
+    return wishlist;
+};
+
+export const getWishesByWishlistId = async (wishlistId: string) => {
+    const wishes = await Wish.findAll({
+        where: { wishlistId },
+        attributes: ["id", "title"],
+    });
+    return wishes;
+};
+
+export const findWishById = async (id: string) => {
+    const wish = await Wish.findOne({
+        where: { id },
+        attributes: [
+            "id",
+            "wishlistId",
+            "title",
+            "description",
+            "price",
+            "link",
+            "picture",
+        ],
+    });
+    return wish;
+};
+
+export const createNewWishlist = async (
     userId: string,
     title: string,
     published: number = 1,
@@ -30,13 +98,13 @@ export const createWishlistService = async (
     return wishlist;
 };
 
-export const updateWishlistService = async (
+export const modifyWishlistById = async (
     id: string,
     title: string,
     access: string,
     published: number,
     description?: string,
-    picture?: string,
+    picture?: string
 ) => {
     const wishlist = await Wishlist.findByPk(id);
 
@@ -51,25 +119,23 @@ export const updateWishlistService = async (
     await wishlist.save();
 
     return wishlist;
-}
+};
 
-export const deleteWishlistService = async (
-    id: string,
-) => {
+export const deleteWishlistById = async (id: string) => {
     const wishlist = await Wishlist.findByPk(id);
 
     if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
     await wishlist.destroy();
-}
+};
 
-export const createNewWish = async (
+export const addNewWishToWishlist = async (
     title: string,
     wishlistId: string,
     description?: string,
     price?: number,
     link?: string,
-    picture?: string,
+    picture?: string
 ) => {
     const wish = await Wish.create({
         title,
@@ -81,15 +147,15 @@ export const createNewWish = async (
     });
 
     return wish;
-}
+};
 
-export const updateWishService = async (
+export const modifyWishById = async (
     id: string,
     title: string,
     link?: string,
     price?: number,
     description?: string,
-    picture?: string,
+    picture?: string
 ) => {
     const wish = await Wish.findByPk(id);
 
@@ -104,46 +170,46 @@ export const updateWishService = async (
     await wish.save();
 
     return wish;
-}
+};
 
-export const deleteWishService = async (
-    id: string,
-) => {
+export const deleteWishById = async (id: string) => {
     const wish = await Wish.findByPk(id);
 
     if (!wish) throw new NotFoundError("Wish non trouvée");
 
     await wish.destroy();
-}
+};
 
-export async function searchProductsService(query: string): Promise<SearchResult[]> {
-  const apiKey = config.googleApiKey;
-  const cx = config.googleCseId;
+export async function findProductsByQuery(
+    query: string
+): Promise<SearchResult[]> {
+    const apiKey = config.googleApiKey;
+    const cx = config.googleCseId;
 
-  if (!apiKey || !cx) {
-    throw new Error("Clé API Google ou ID moteur de recherche manquant.");
-  }
+    if (!apiKey || !cx) {
+        throw new Error("Clé API Google ou ID moteur de recherche manquant.");
+    }
 
-  const url = `https://www.googleapis.com/customsearch/v1`;
+    const url = `https://www.googleapis.com/customsearch/v1`;
 
-  try {
-    const response = await axios.get(url, {
-      params: {
-        q: query,
-        key: apiKey,
-        cx,
-      },
-    });
+    try {
+        const response = await axios.get(url, {
+            params: {
+                q: query,
+                key: apiKey,
+                cx,
+            },
+        });
 
-    if (!response.data.items) return [];
+        if (!response.data.items) return [];
 
-    return response.data.items.map((item: any) => ({
-      title: item.title,
-      link: item.link,
-      snippet: item.snippet,
-    }));
-  } catch (error) {
-    console.error("Erreur lors de la recherche Google:", error);
-    throw error;
-  }
+        return response.data.items.map((item: any) => ({
+            title: item.title,
+            link: item.link,
+            snippet: item.snippet,
+        }));
+    } catch (error) {
+        console.error("Erreur lors de la recherche Google:", error);
+        throw error;
+    }
 }

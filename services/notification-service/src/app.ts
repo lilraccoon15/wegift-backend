@@ -9,28 +9,28 @@ import cookieParser from "cookie-parser";
 import notificationRoutes from "./routes/notificationRoutes";
 import errorHandler from "./middlewares/errorHandler";
 
-if (process.env.NODE_ENV !== 'test') {
-  dotenv.config();
+if (process.env.NODE_ENV !== "test") {
+    dotenv.config();
 }
 
 const app = express();
 
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
 app.use(express.json());
 
-app.use('/', notificationRoutes);
+app.use("/", notificationRoutes);
 
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-  res.send("Notification service is running!");
+    res.send("Notification service is running!");
 });
 
 export default app;

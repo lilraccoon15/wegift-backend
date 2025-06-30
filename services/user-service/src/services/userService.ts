@@ -12,7 +12,7 @@ class ValidationError extends Error {
     }
 }
 
-export const createProfileService = async (
+export const insertUserProfile = async (
     userId: number,
     firstName: string,
     lastName: string,
@@ -32,14 +32,14 @@ export const createProfileService = async (
     return profile;
 };
 
-export const getProfileService = async (userId: number) => {
+export const fetchUserProfileByUserId = async (userId: number) => {
     const profile = await UserProfile.findOne({ where: { userId } });
     if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
     return profile;
 };
 
-export const updateProfileService = async (
+export const updateProfileDetails = async (
     userId: number,
     firstName: string,
     lastName: string,
@@ -62,7 +62,7 @@ export const updateProfileService = async (
     return profile;
 };
 
-export const deleteProfileUser = async (userId: number) => {
+export const removeUserProfileByUserId = async (userId: number) => {
     const profile = await UserProfile.findOne({ where: { userId } });
 
     if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
@@ -70,7 +70,7 @@ export const deleteProfileUser = async (userId: number) => {
     await profile.destroy();
 };
 
-export async function getFriendship(user1: string, user2: string) {
+export async function findFriendshipBetweenUsers(user1: string, user2: string) {
     const friendship = await Friendship.findOne({
         where: {
             [Op.or]: [
@@ -91,7 +91,7 @@ export async function getFriendshipStatusBetween(
 ) {
     let friendship;
     try {
-        friendship = await getFriendship(requesterId, addresseeId);
+        friendship = await findFriendshipBetweenUsers(requesterId, addresseeId);
     } catch (err) {
         if (err instanceof NotFoundError) {
             return "none";
@@ -112,7 +112,7 @@ export async function getFriendshipStatusBetween(
     return "unknown";
 }
 
-export async function sendFriendshipAsk(
+export async function createFriendshipRequest(
     requesterId: string,
     addresseeId: string,
     token: string
@@ -124,7 +124,7 @@ export async function sendFriendshipAsk(
     }
 
     try {
-        await getFriendship(requesterId, addresseeId);
+        await findFriendshipBetweenUsers(requesterId, addresseeId);
         throw new ConflictError(
             "Une relation existe déjà entre ces utilisateurs"
         );
@@ -165,7 +165,9 @@ export async function sendFriendshipAsk(
     return newFriendship;
 }
 
-export async function getFriendships(profileId: string): Promise<UserProfile[]> {
+export async function fetchFriendsByProfileId(
+    profileId: string
+): Promise<UserProfile[]> {
     const friendships = await Friendship.findAll({
         where: {
             [Op.and]: [
@@ -183,13 +185,13 @@ export async function getFriendships(profileId: string): Promise<UserProfile[]> 
                 model: UserProfile,
                 as: "requester",
                 required: false,
-                attributes: ["id", "firstName", "lastName", "picture"]
+                attributes: ["id", "firstName", "lastName", "picture"],
             },
             {
                 model: UserProfile,
                 as: "addressee",
                 required: false,
-                attributes: ["id", "firstName", "lastName", "picture"]
+                attributes: ["id", "firstName", "lastName", "picture"],
             },
         ],
     });
@@ -199,13 +201,13 @@ export async function getFriendships(profileId: string): Promise<UserProfile[]> 
     }
 
     const friendProfiles = friendships
-      .map((friendship) => {
-          const requester = friendship.requester;
-          const addressee = friendship.addressee;
+        .map((friendship) => {
+            const requester = friendship.requester;
+            const addressee = friendship.addressee;
 
-          return requester?.id === profileId ? addressee : requester;
-      })
-      .filter((profile): profile is UserProfile => profile !== undefined);
+            return requester?.id === profileId ? addressee : requester;
+        })
+        .filter((profile): profile is UserProfile => profile !== undefined);
 
     return friendProfiles;
 }

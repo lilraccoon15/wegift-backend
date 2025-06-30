@@ -11,41 +11,43 @@ class Wishlist extends Model {
     public published!: number;
 }
 
-Wishlist.init({
-    id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
-        primaryKey: true,
+Wishlist.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            primaryKey: true,
+        },
+        userId: {
+            type: DataTypes.UUID,
+            allowNull: false,
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        access: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        picture: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        description: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        published: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
     },
-    userId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    access: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    picture: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    published: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+    {
+        sequelize,
+        tableName: "wishlists",
+        timestamps: true,
     }
-},
-{
-    sequelize,
-    tableName: "wishlists",
-    timestamps: true,
-  });
+);
 
 export default Wishlist;
