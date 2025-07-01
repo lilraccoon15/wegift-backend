@@ -8,12 +8,15 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import notificationRoutes from "./routes/notificationRoutes";
 import errorHandler from "./middlewares/errorHandler";
+import setupAssociations from "./models/setupAssociations";
 
 if (process.env.NODE_ENV !== "test") {
     dotenv.config();
 }
 
 const app = express();
+
+setupAssociations();
 
 app.use(
     cors({

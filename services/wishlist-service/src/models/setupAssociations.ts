@@ -12,3 +12,5 @@ export default function setupAssociations() {
         as: "wishlist",
     });
 }
+
+export { Wishlist, Wish };

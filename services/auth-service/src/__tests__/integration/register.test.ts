@@ -4,8 +4,7 @@ import app from "../../app";
 describe("POST /register", () => {
     it("should register a new user successfully", async () => {
         const newUser = {
-            firstName: "Test",
-            lastName: "User",
+            pseudo: "User",
             birthDate: "1990-01-01",
             email: `testuser${Date.now()}@example.com`,
             password: "Aa1!aaaa",
@@ -25,8 +24,7 @@ describe("POST /register", () => {
 
     it("should fail if email format is invalid", async () => {
         const newUser = {
-            firstName: "Test",
-            lastName: "User",
+            pseudo: "User",
             birthDate: "1990-01-01",
             email: "notanemail",
             password: "Aa1!aaaa",
@@ -42,8 +40,7 @@ describe("POST /register", () => {
 
     it("should fail if password does not meet criteria", async () => {
         const newUser = {
-            firstName: "Test",
-            lastName: "User",
+            pseudo: "User",
             birthDate: "1990-01-01",
             email: `testuser${Date.now()}@example.com`,
             password: "password",
@@ -60,8 +57,7 @@ describe("POST /register", () => {
 
     it("should fail if acceptedTerms is false", async () => {
         const newUser = {
-            firstName: "Test",
-            lastName: "User",
+            pseudo: "User",
             birthDate: "1990-01-01",
             email: `testuser${Date.now()}@example.com`,
             password: "Aa1!aaaa",

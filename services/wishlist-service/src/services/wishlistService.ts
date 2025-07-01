@@ -1,6 +1,5 @@
-import Wish from "../models/Wish";
+import { Wish, Wishlist } from "../models/setupAssociations";
 import { NotFoundError } from "../errors/CustomErrors";
-import Wishlist from "../models/Wishlist";
 import axios from "axios";
 import config from "../config";
 import { Sequelize } from "sequelize";

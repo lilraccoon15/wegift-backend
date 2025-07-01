@@ -4,8 +4,7 @@ import sequelize from "../config/database";
 class UserProfile extends Model {
     public id!: string;
     public userId!: string;
-    public firstName!: string;
-    public lastName!: string;
+    public pseudo!: string;
     public birthDate!: Date;
     public picture!: string | null;
     public description!: string | null;
@@ -23,11 +22,7 @@ UserProfile.init(
             allowNull: false,
             unique: true,
         },
-        firstName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
-        lastName: {
+        pseudo: {
             type: DataTypes.STRING,
             allowNull: false,
         },

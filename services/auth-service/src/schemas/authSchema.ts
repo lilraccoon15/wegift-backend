@@ -17,18 +17,15 @@ export const passwordSchema = z
     );
 
 export const registerSchema = z.object({
-    firstName: z.string().min(1, "Le prénom est requis."),
-    lastName: z.string().min(1, "Le nom est requis."),
+    pseudo: z.string().min(1, "Le pseudo est requis."),
     birthDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
         message: "La date de naissance est invalide.",
     }),
     email: emailSchema,
     password: passwordSchema,
-    acceptedTerms: z
-        .boolean()
-        .refine((val) => val === true, {
-            message: "Vous devez accepter les conditions.",
-        }),
+    acceptedTerms: z.boolean().refine((val) => val === true, {
+        message: "Vous devez accepter les conditions.",
+    }),
     newsletter: z.boolean(),
 });
 

@@ -2,23 +2,19 @@ import Notification from "../models/Notification";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
+import NotificationType from "../models/NotificationTypes";
+import { AppError } from "../errors/CustomErrors";
+import { findNotificationsByUserId } from "../services/notificationServices";
 
 export const getNotificationsForUser = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-        const userId = req.user.id;
+        const userId = req.query.userId as string;
 
-        const notifications = await Notification.findAll({
-            where: { recipientId: userId },
-            attributes: [
-                "id",
-                "senderId",
-                "recipientId",
-                "type",
-                "data",
-                "read",
-                "createdAt",
-            ],
-        });
+        if (!userId) {
+            return next(new AppError("userId  manquant", 400));
+        }
+
+        const notifications = await findNotificationsByUserId(userId);
 
         sendSuccess(res, "Notification(s) trouvée(s)", { notifications }, 200);
     }
@@ -26,12 +22,16 @@ export const getNotificationsForUser = asyncHandler(
 
 export const sendUserNotification = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-        const { recipientId, senderId, type, data, read } = req.body;
+        const { userId, type, data, read } = req.body;
+
+        const notifType = await NotificationType.findOne({ where: { type } });
+
+        if (!notifType)
+            throw new Error(`Type de notification inconnu: ${type}`);
 
         const notification = await Notification.create({
-            recipientId,
-            senderId,
-            type,
+            userId,
+            notificationTypeId: notifType.id,
             data,
             read: read ?? false,
         });

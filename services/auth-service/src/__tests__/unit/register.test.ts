@@ -19,8 +19,7 @@ describe("authService.registerUser", () => {
     it("should throw error if birthDate is in the future", async () => {
         await expect(
             authService.registerUser({
-                firstName: "Test",
-                lastName: "User",
+                pseudo: "Test",
                 birthDate: "2999-01-01",
                 email: "test@example.com",
                 password: "Aa1!aaaa",
@@ -35,8 +34,7 @@ describe("authService.registerUser", () => {
     it("should throw error if acceptedTerms is false", async () => {
         await expect(
             authService.registerUser({
-                firstName: "Test",
-                lastName: "User",
+                pseudo: "User",
                 birthDate: "1990-01-01",
                 email: "test@example.com",
                 password: "Aa1!aaaa",
@@ -53,8 +51,7 @@ describe("authService.registerUser", () => {
 
         await expect(
             authService.registerUser({
-                firstName: "Test",
-                lastName: "User",
+                pseudo: "User",
                 birthDate: "1990-01-01",
                 email: "test@example.com",
                 password: "Aa1!aaaa",
@@ -78,8 +75,7 @@ describe("authService.registerUser", () => {
         (axios.post as jest.Mock).mockResolvedValue({ status: 200 });
 
         const user = await authService.registerUser({
-            firstName: "Test",
-            lastName: "User",
+            pseudo: "User",
             birthDate: "1990-01-01",
             email: "test@example.com",
             password: "Aa1!aaaa",

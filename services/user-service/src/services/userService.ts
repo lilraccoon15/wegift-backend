@@ -1,4 +1,4 @@
-import { Friendship, UserProfile } from "../models/associations";
+import { Friendship, UserProfile } from "../models/setupAssociations";
 import { ConflictError, NotFoundError } from "../errors/CustomErrors";
 import { Op } from "sequelize";
 import axios from "axios";
@@ -14,8 +14,7 @@ class ValidationError extends Error {
 
 export const insertUserProfile = async (
     userId: number,
-    firstName: string,
-    lastName: string,
+    pseudo: string,
     birthDate: string
 ) => {
     const existingProfile = await UserProfile.findOne({ where: { userId } });
@@ -24,8 +23,7 @@ export const insertUserProfile = async (
 
     const profile = await UserProfile.create({
         userId,
-        firstName,
-        lastName,
+        pseudo,
         birthDate,
     });
 
@@ -41,8 +39,7 @@ export const fetchUserProfileByUserId = async (userId: number) => {
 
 export const updateProfileDetails = async (
     userId: number,
-    firstName: string,
-    lastName: string,
+    pseudo: string,
     birthDate: string,
     picture?: string,
     description?: string
@@ -51,8 +48,7 @@ export const updateProfileDetails = async (
 
     if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-    profile.firstName = firstName;
-    profile.lastName = lastName;
+    profile.pseudo = pseudo;
     profile.birthDate = new Date(birthDate);
     if (picture !== undefined) profile.picture = picture;
     if (description !== undefined) profile.description = description;
@@ -144,12 +140,9 @@ export async function createFriendshipRequest(
         await axios.post(
             `${config.apiUrls.NOTIFICATION_SERVICE}/notifications`,
             {
-                recipientId: addresseeId,
-                senderId: requesterId,
-                type: "friend_request",
-                data: JSON.stringify({
-                    message: `Nouvelle demande d'ami de ${requesterId}`,
-                }),
+                userId: addresseeId,
+                type: "friendship",
+                data: { requesterId: requesterId },
                 read: false,
             },
             {
@@ -185,13 +178,13 @@ export async function fetchFriendsByProfileId(
                 model: UserProfile,
                 as: "requester",
                 required: false,
-                attributes: ["id", "firstName", "lastName", "picture"],
+                attributes: ["id", "pseudo", "picture"],
             },
             {
                 model: UserProfile,
                 as: "addressee",
                 required: false,
-                attributes: ["id", "firstName", "lastName", "picture"],
+                attributes: ["id", "pseudo", "picture"],
             },
         ],
     });

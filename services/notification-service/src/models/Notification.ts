@@ -3,16 +3,10 @@ import sequelize from "../config/database";
 
 class Notification extends Model {
     public id!: string;
-    public recipientId!: string;
-    public senderId!: string | null;
-    public type!:
-        | "friend_request"
-        | "wishlist_update"
-        | "exchange_update"
-        | "other";
+    public userId!: string;
+    public notificationTypeId!: string;
     public data!: object;
     public read!: boolean;
-    public createdAt!: Date;
 }
 
 Notification.init(
@@ -23,23 +17,19 @@ Notification.init(
             primaryKey: true,
             allowNull: false,
         },
-        recipientId: {
+        userId: {
             type: DataTypes.UUID,
             allowNull: false,
         },
-        senderId: {
+        notificationTypeId: {
             type: DataTypes.UUID,
-            allowNull: true,
-            defaultValue: null,
-        },
-        type: {
-            type: DataTypes.ENUM(
-                "friend_request",
-                "wishlist_update",
-                "exchange_update",
-                "other"
-            ),
             allowNull: false,
+            references: {
+                model: "notifications_types",
+                key: "id",
+            },
+            onDelete: "RESTRICT",
+            onUpdate: "CASCADE",
         },
         data: {
             type: DataTypes.JSON,
@@ -50,16 +40,11 @@ Notification.init(
             allowNull: true,
             defaultValue: false,
         },
-        createdAt: {
-            type: DataTypes.DATE,
-            allowNull: true,
-            defaultValue: DataTypes.NOW,
-        },
     },
     {
         sequelize,
         tableName: "notifications",
-        timestamps: false,
+        timestamps: true,
     }
 );
 

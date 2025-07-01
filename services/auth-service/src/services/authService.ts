@@ -23,8 +23,7 @@ interface DecodedToken {
     id: number;
     iat?: number;
     exp?: number;
-    firstName: string;
-    lastName: string;
+    pseudo: string;
     birthDate: string;
 }
 
@@ -42,15 +41,8 @@ type LoginResponse =
     | { error: string };
 
 export const createUser = async (data: RegisterData) => {
-    const {
-        firstName,
-        lastName,
-        birthDate,
-        email,
-        password,
-        acceptedTerms,
-        newsletter,
-    } = data;
+    const { pseudo, birthDate, email, password, acceptedTerms, newsletter } =
+        data;
 
     const birth = new Date(birthDate);
     if (birth > new Date()) {
@@ -95,8 +87,7 @@ export const createUser = async (data: RegisterData) => {
         {
             id: user.id,
             email: user.email,
-            firstName,
-            lastName,
+            pseudo,
             birthDate: birth.toISOString(),
         },
         config.jwtSecret,
@@ -176,8 +167,7 @@ export const setUserAsActive = async (token: string) => {
             `${config.apiUrls.USER_SERVICE}/profile`,
             {
                 userId: user.id,
-                firstName: decoded.firstName,
-                lastName: decoded.lastName,
+                pseudo: decoded.pseudo,
                 birthDate: decoded.birthDate,
             },
             {

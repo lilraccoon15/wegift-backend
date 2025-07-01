@@ -12,8 +12,7 @@ beforeAll(async () => {
 
     try {
         const res = await request(app).post("/register").send({
-            firstName: "Camille",
-            lastName: "Test",
+            pseudo: "Test",
             birthDate: "1990-01-01",
             email: "utilisateur@test.com",
             password: "MotDePasse123!",

@@ -33,14 +33,9 @@ export const createUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
-        const { firstName, lastName, birthDate } = req.body;
+        const { pseudo, birthDate } = req.body;
 
-        const profile = await insertUserProfile(
-            userId,
-            firstName,
-            lastName,
-            birthDate
-        );
+        const profile = await insertUserProfile(userId, pseudo, birthDate);
 
         return sendSuccess(res, "Profil créé", profile);
     }
@@ -52,14 +47,7 @@ export const getCurrentUserBasicInfo = asyncHandler(
 
         const user = await UserProfile.findOne({
             where: { userId },
-            attributes: [
-                "id",
-                "firstName",
-                "lastName",
-                "birthDate",
-                "picture",
-                "description",
-            ],
+            attributes: ["id", "pseudo", "birthDate", "picture", "description"],
         });
 
         if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
@@ -72,7 +60,7 @@ export const updateUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
-        const { firstName, lastName, birthDate, description } = req.body;
+        const { pseudo, birthDate, description } = req.body;
 
         const file = req.file;
 
@@ -99,8 +87,7 @@ export const updateUserProfile = asyncHandler(
 
         const updatedProfile = await updateProfileDetails(
             userId,
-            firstName,
-            lastName,
+            pseudo,
             birthDate,
             picture,
             description
@@ -186,6 +173,7 @@ export const sendFriendRequest = asyncHandler(
         const requesterProfile = await UserProfile.findOne({
             where: { userId: requesterUserId },
         });
+        
         if (!requesterProfile) {
             return next(new AppError("Profil du demandeur non trouvé", 404));
         }
