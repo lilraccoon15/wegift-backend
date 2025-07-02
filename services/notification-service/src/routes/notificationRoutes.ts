@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
     getNotificationsForUser,
     sendUserNotification,
+    updateNotification,
 } from "../controllers/notificationController";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import verifyTokenMiddleware from "../middlewares/verifyTokenMiddleware";
@@ -18,6 +19,12 @@ router.post(
     verifyTokenMiddleware,
     ensureAuthenticated,
     sendUserNotification
+);
+router.put(
+    "/mark-as-read",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    updateNotification
 );
 
 export default router;

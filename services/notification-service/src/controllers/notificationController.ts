@@ -4,19 +4,25 @@ import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
 import NotificationType from "../models/NotificationTypes";
 import { AppError } from "../errors/CustomErrors";
-import { findNotificationsByUserId } from "../services/notificationServices";
+import {
+    findNotificationsByUserId,
+    readNotificationsByUserId,
+} from "../services/notificationServices";
 
 export const getNotificationsForUser = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.query.userId as string;
 
-        if (!userId) {
-            return next(new AppError("userId  manquant", 400));
-        }
+        if (!userId) return next(new AppError("userId  manquant", 400));
 
         const notifications = await findNotificationsByUserId(userId);
 
-        sendSuccess(res, "Notification(s) trouvée(s)", { notifications }, 200);
+        sendSuccess(
+            res,
+            "Notification(s) trouvée(s)",
+            { notifications: notifications ?? [] },
+            200
+        );
     }
 );
 
@@ -27,7 +33,7 @@ export const sendUserNotification = asyncHandler(
         const notifType = await NotificationType.findOne({ where: { type } });
 
         if (!notifType)
-            throw new Error(`Type de notification inconnu: ${type}`);
+            throw new AppError(`Type de notification inconnu: ${type}`);
 
         const notification = await Notification.create({
             userId,
@@ -36,6 +42,23 @@ export const sendUserNotification = asyncHandler(
             read: read ?? false,
         });
 
-        return sendSuccess(res, "Notification créée", notification);
+        return sendSuccess(res, "Notification créée", { notification }, 201);
+    }
+);
+
+export const updateNotification = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.query.userId as string;
+
+        if (!userId) return next(new AppError("userId  manquant", 400));
+
+        const notifications = await readNotificationsByUserId(userId);
+
+        sendSuccess(
+            res,
+            "Notification(s) trouvée(s)",
+            { notifications: notifications ?? [] },
+            200
+        );
     }
 );

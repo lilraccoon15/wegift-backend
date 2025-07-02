@@ -57,7 +57,7 @@ export const loginUser = asyncHandler(async (req, res, next) => {
         maxAge: 3600000,
     });
 
-    sendSuccess(res, "Connexion réussie", 200);
+    sendSuccess(res, "Connexion réussie", {}, 200);
 });
 
 export const logoutUser = async (_req: Request, res: Response) => {
@@ -67,7 +67,7 @@ export const logoutUser = async (_req: Request, res: Response) => {
         sameSite: "lax",
     });
 
-    sendSuccess(res, "Déconnexion réussie", 200);
+    sendSuccess(res, "Déconnexion réussie", {}, 200);
 };
 
 export const activateUserAccount = asyncHandler(async (req, res, next) => {
@@ -78,9 +78,9 @@ export const activateUserAccount = asyncHandler(async (req, res, next) => {
     const result = await setUserAsActive(token as string);
 
     if (result === "AlreadyActive")
-        return sendSuccess(res, "Compte déjà activé", 200);
+        return sendSuccess(res, "Compte déjà activé", {}, 200);
 
-    sendSuccess(res, "Compte activé avec succès !", 200);
+    sendSuccess(res, "Compte activé avec succès !", {}, 200);
 });
 
 export const requestPasswordReset = asyncHandler(async (req, res, next) => {
@@ -90,14 +90,14 @@ export const requestPasswordReset = asyncHandler(async (req, res, next) => {
 
     if (user) await sendPasswordResetEmail(user);
 
-    sendSuccess(res, "Si cet email existe, un lien a été envoyé.", 200);
+    sendSuccess(res, "Si cet email existe, un lien a été envoyé.", {}, 200);
 });
 
 export const confirmPasswordReset = asyncHandler(async (req, res, next) => {
     const { token, newPassword } = req.body;
 
     await resetUserPassword(token, newPassword);
-    sendSuccess(res, "Mot de passe réinitialisé avec succès.", 200);
+    sendSuccess(res, "Mot de passe réinitialisé avec succès.", {}, 200);
 });
 
 export const get2FASetup = asyncHandler(
@@ -127,7 +127,7 @@ export const enable2FAForUser = asyncHandler(
 
         if (!isValid) return next(new ValidationError("Code 2FA invalide"));
 
-        sendSuccess(res, "2FA activée avec succès", 200);
+        sendSuccess(res, "2FA activée avec succès", {}, 200);
     }
 );
 
@@ -170,7 +170,7 @@ export const disable2FAForUser = asyncHandler(
 
         await deactivate2FA(userId);
 
-        sendSuccess(res, "2FA désactivée avec succès", 200);
+        sendSuccess(res, "2FA désactivée avec succès", {}, 200);
     }
 );
 
@@ -219,7 +219,7 @@ export const updateUserPassword = asyncHandler(
 
         await changeUserPassword(userId, currentPassword, newPassword);
 
-        sendSuccess(res, "Mot de passe mis à jour avec succès.", 200);
+        sendSuccess(res, "Mot de passe mis à jour avec succès.", {}, 200);
     }
 );
 
@@ -234,6 +234,7 @@ export const updateNewsletterPreference = asyncHandler(
         sendSuccess(
             res,
             "Préfence en newsletter mise à jour avec succès.",
+            {},
             200
         );
     }
@@ -260,6 +261,6 @@ export const deleteUserAccount = asyncHandler(
             }
         );
 
-        sendSuccess(res, "Compte supprimé avec succès", 200);
+        sendSuccess(res, "Compte supprimé avec succès", {}, 200);
     }
 );

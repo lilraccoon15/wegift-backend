@@ -9,6 +9,6 @@ export default function sendSuccess(
     res.status(status).json({
         success: true,
         message,
-        data,
+        data: data ?? {},
     });
 }

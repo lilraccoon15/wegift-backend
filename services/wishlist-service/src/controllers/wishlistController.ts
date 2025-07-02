@@ -19,7 +19,6 @@ import {
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
-import { Sequelize } from "sequelize";
 
 export const getUserWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
@@ -27,7 +26,7 @@ export const getUserWishlists = asyncHandler(
 
         const wishlists = await getAllUserWishlists(userId);
 
-        sendSuccess(res, "Wishlist(s) trouvée(s)", { wishlists }, 200);
+        sendSuccess(res, "Wishlists trouvées", { wishlists });
     }
 );
 
@@ -50,7 +49,7 @@ export const createWishlist = asyncHandler(
             picture
         );
 
-        return sendSuccess(res, "Wishlist créée", wishlist);
+        return sendSuccess(res, "Wishlist créée", { wishlist });
     }
 );
 
@@ -62,7 +61,7 @@ export const getUserWishlist = asyncHandler(
 
         if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
-        sendSuccess(res, "Wishlist trouvée", { wishlist }, 200);
+        sendSuccess(res, "Wishlist trouvée", { wishlist });
     }
 );
 
@@ -75,7 +74,7 @@ export const getUserWishesFromWishlist = asyncHandler(
 
         const wishes = await getWishesByWishlistId(wishlistId);
 
-        sendSuccess(res, "Souhaits trouvés", { wishes }, 200);
+        sendSuccess(res, "Souhaits trouvés", { wishes: wishes || [] }, 200);
     }
 );
 
@@ -149,7 +148,7 @@ export const createWish = asyncHandler(
             picture
         );
 
-        return sendSuccess(res, "Wish créé", wish);
+        return sendSuccess(res, "Wish créé", { wish });
     }
 );
 
@@ -161,7 +160,7 @@ export const getUserWish = asyncHandler(
 
         if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
-        sendSuccess(res, "Wish trouvé", { wish }, 200);
+        sendSuccess(res, "Wish trouvé", { wish });
     }
 );
 

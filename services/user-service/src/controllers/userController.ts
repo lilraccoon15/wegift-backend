@@ -25,7 +25,7 @@ export const getUserProfile = asyncHandler(
 
         if (!profile) return next(new NotFoundError("Profil non trouvé"));
 
-        return sendSuccess(res, "Profil récupéré", profile);
+        return sendSuccess(res, "Profil récupéré", { profile });
     }
 );
 
@@ -37,7 +37,7 @@ export const createUserProfile = asyncHandler(
 
         const profile = await insertUserProfile(userId, pseudo, birthDate);
 
-        return sendSuccess(res, "Profil créé", profile);
+        return sendSuccess(res, "Profil créé", { profile });
     }
 );
 
@@ -52,7 +52,7 @@ export const getCurrentUserBasicInfo = asyncHandler(
 
         if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
 
-        sendSuccess(res, "Utilisateur trouvé", { user }, 200);
+        sendSuccess(res, "Utilisateur trouvé", { profile: user }, 200);
     }
 );
 
@@ -93,7 +93,9 @@ export const updateUserProfile = asyncHandler(
             description
         );
 
-        return sendSuccess(res, "Profil mis à jour", updatedProfile);
+        return sendSuccess(res, "Profil mis à jour", {
+            profile: updatedProfile,
+        });
     }
 );
 
@@ -120,7 +122,12 @@ export const getUserProfileById = asyncHandler(
 
         if (!user) return next(new NotFoundError("Profil non trouvé"));
 
-        return sendSuccess(res, "Profil utilisateur trouvé", { user }, 200);
+        return sendSuccess(
+            res,
+            "Profil utilisateur trouvé",
+            { profile: user },
+            200
+        );
     }
 );
 
@@ -173,7 +180,7 @@ export const sendFriendRequest = asyncHandler(
         const requesterProfile = await UserProfile.findOne({
             where: { userId: requesterUserId },
         });
-        
+
         if (!requesterProfile) {
             return next(new AppError("Profil du demandeur non trouvé", 404));
         }
