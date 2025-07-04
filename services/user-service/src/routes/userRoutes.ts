@@ -10,6 +10,7 @@ import {
     getUserProfileById,
     getUserProfile,
     updateUserProfile,
+    searchUser,
 } from "../controllers/userController";
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
 import { validateBody } from "../middlewares/validateBody";
@@ -77,5 +78,7 @@ router.get(
     ensureAuthenticated,
     getFriendsListForUser
 );
+
+router.get("/search", verifyTokenMiddleware, ensureAuthenticated, searchUser);
 
 export default router;

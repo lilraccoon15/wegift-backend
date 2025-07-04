@@ -9,6 +9,7 @@ class Wishlist extends Model {
     public picture!: string | null;
     public description!: string | null;
     public published!: number;
+    public mode!: "individual" | "collaborative";
 }
 
 Wishlist.init(
@@ -41,6 +42,11 @@ Wishlist.init(
         published: {
             type: DataTypes.INTEGER,
             allowNull: false,
+        },
+        mode: {
+            type: DataTypes.ENUM("individual", "collaborative"),
+            allowNull: false,
+            defaultValue: "individual",
         },
     },
     {

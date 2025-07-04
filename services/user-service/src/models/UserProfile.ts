@@ -25,6 +25,7 @@ UserProfile.init(
         pseudo: {
             type: DataTypes.STRING,
             allowNull: false,
+            unique: true,
         },
         birthDate: {
             type: DataTypes.DATEONLY,

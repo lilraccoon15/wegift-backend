@@ -64,11 +64,18 @@ export const createUser = async (data: RegisterData) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    if ((data as any).role && (data as any).role !== "user") {
+        throw new ValidationError(
+            "Vous ne pouvez pas définir un rôle personnalisé."
+        );
+    }
+
     const user = await User.create({
         email,
         password: hashedPassword,
         acceptedTerms,
         newsletter,
+        role: "user",
     });
 
     const jwtOptions: SignOptions = {

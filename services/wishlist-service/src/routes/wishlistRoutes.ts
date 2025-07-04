@@ -11,6 +11,7 @@ import {
     getUserWishlist,
     getUserWishlists,
     searchProduct,
+    searchWishlist,
     updateWish,
     updateWishlist,
 } from "../controllers/wishlistController";
@@ -87,6 +88,13 @@ router.get(
     verifyTokenMiddleware,
     ensureAuthenticated,
     searchProduct
+);
+
+router.get(
+    "/search",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    searchWishlist
 );
 
 export default router;

@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Rules from "./Rules";
 
 class Exchange extends Model {
     public id!: string;
@@ -10,6 +11,8 @@ class Exchange extends Model {
     public status!: string;
     public startDate!: Date;
     public endDate!: Date;
+    public budget!: Number;
+    public setRules!: (rules: string[] | Rules[]) => Promise<void>;
 }
 
 Exchange.init(
@@ -46,6 +49,10 @@ Exchange.init(
         endDate: {
             type: DataTypes.DATE,
             allowNull: false,
+        },
+        budget: {
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
         },
     },
     {

@@ -3,6 +3,7 @@ import { NotFoundError } from "../errors/CustomErrors";
 import axios from "axios";
 import config from "../config";
 import { Sequelize } from "sequelize";
+import Collaborators from "../models/Collaborators";
 
 interface SearchResult {
     title: string;
@@ -21,6 +22,7 @@ export const getAllUserWishlists = async (userId: string) => {
             "picture",
             "description",
             "published",
+            "mode",
             [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
         ],
         include: [
@@ -30,6 +32,7 @@ export const getAllUserWishlists = async (userId: string) => {
                 attributes: [],
                 required: false,
             },
+            { model: Collaborators, as: "collaborators", separate: true },
         ],
         group: ["Wishlist.id"],
     });
@@ -47,7 +50,9 @@ export const getWishlistById = async (id: string) => {
             "picture",
             "description",
             "published",
+            "mode",
         ],
+        include: [{ model: Collaborators, as: "collaborators" }],
     });
 
     return wishlist;
@@ -82,8 +87,10 @@ export const createNewWishlist = async (
     title: string,
     published: number = 1,
     access: string,
+    mode: string,
     description?: string,
-    picture?: string
+    picture?: string,
+    participantIds: string[] = []
 ) => {
     const wishlist = await Wishlist.create({
         userId,
@@ -92,6 +99,19 @@ export const createNewWishlist = async (
         picture,
         published,
         access,
+        mode,
+    });
+
+    if (participantIds.length > 0) {
+        const participantsData = participantIds.map((participantId) => ({
+            userId: participantId,
+            wishlistId: wishlist.id,
+        }));
+        await Collaborators.bulkCreate(participantsData);
+    }
+
+    await wishlist.reload({
+        include: [{ model: Collaborators, as: "collaborators" }],
     });
 
     return wishlist;
@@ -102,8 +122,10 @@ export const modifyWishlistById = async (
     title: string,
     access: string,
     published: number,
+    mode: string,
     description?: string,
-    picture?: string
+    picture?: string,
+    participantIds: string[] = []
 ) => {
     const wishlist = await Wishlist.findByPk(id);
 
@@ -112,10 +134,25 @@ export const modifyWishlistById = async (
     wishlist.title = title;
     if (description !== undefined) wishlist.description = description;
     if (picture !== undefined) wishlist.picture = picture;
+    wishlist.mode = mode as "individual" | "collaborative";
     wishlist.access = access;
     wishlist.published = published;
 
     await wishlist.save();
+
+    await Collaborators.destroy({ where: { wishlistId: wishlist.id } });
+
+    if (participantIds.length > 0) {
+        const collaboratorsData = participantIds.map((participantId) => ({
+            userId: participantId,
+            wishlistId: wishlist.id,
+        }));
+        await Collaborators.bulkCreate(collaboratorsData);
+    }
+
+    await wishlist.reload({
+        include: [{ model: Collaborators, as: "collaborators" }],
+    });
 
     return wishlist;
 };

@@ -3,6 +3,7 @@ import sequelize from "../config/database";
 
 class User extends Model {
     public id!: string;
+    public role!: "user" | "admin";
     public email!: string;
     public password!: string;
     public acceptedTerms!: boolean;
@@ -18,6 +19,11 @@ User.init(
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
+        },
+        role: {
+            type: DataTypes.ENUM("user", "admin"),
+            allowNull: false,
+            defaultValue: "user",
         },
         email: {
             type: DataTypes.STRING,

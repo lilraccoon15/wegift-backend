@@ -19,6 +19,7 @@ import {
 import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
+import { Op, Sequelize } from "sequelize";
 
 export const getUserWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
@@ -34,7 +35,8 @@ export const createWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
 
-        const { title, description, published, access } = req.body;
+        const { title, description, published, access, mode, participantIds } =
+            req.body;
 
         const picture = req.file
             ? `/uploads/wishlistPictures/${req.file.filename}`
@@ -46,7 +48,9 @@ export const createWishlist = asyncHandler(
             published,
             access,
             description,
-            picture
+            picture,
+            mode,
+            participantIds
         );
 
         return sendSuccess(res, "Wishlist créée", { wishlist });
@@ -82,7 +86,8 @@ export const updateWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const id = req.params.id;
 
-        const { title, description, access, published } = req.body;
+        const { title, description, access, published, mode, participantIds } =
+            req.body;
 
         const file = req.file;
 
@@ -110,8 +115,10 @@ export const updateWishlist = asyncHandler(
             title,
             access,
             Number(published),
+            mode,
             description,
-            picture
+            picture,
+            participantIds
         );
         return sendSuccess(res, "Wishlist mise à jour", updatedWishlist);
     }
@@ -223,4 +230,22 @@ export const searchProduct = asyncHandler(async (req, res, next) => {
     const results = await findProductsByQuery(query);
 
     return sendSuccess(res, "Résultats de recherche", { results }, 200);
+});
+
+export const searchWishlist = asyncHandler(async (req, res, next) => {
+    const searchTerm = req.query.query;
+
+    if (typeof searchTerm !== "string") {
+        return next(
+            new AppError("Paramètre 'query' manquant ou invalide", 400)
+        );
+    }
+
+    const results = await Wishlist.findAll({
+        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
+            [Op.like]: `%${searchTerm.toLowerCase()}%`,
+        }),
+    });
+
+    return sendSuccess(res, "Résultats trouvés", { wishlists: results });
 });

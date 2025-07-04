@@ -16,6 +16,7 @@ import path from "path";
 import fs from "fs";
 import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
+import { Op, Sequelize } from "sequelize";
 
 export const getUserProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
@@ -212,3 +213,21 @@ export const getFriendsListForUser = asyncHandler(
         return sendSuccess(res, "Amitiés récupérées", { friendships });
     }
 );
+
+export const searchUser = asyncHandler(async (req, res, next) => {
+    const searchTerm = req.query.query;
+
+    if (typeof searchTerm !== "string") {
+        return next(
+            new AppError("Paramètre 'query' manquant ou invalide", 400)
+        );
+    }
+
+    const results = await UserProfile.findAll({
+        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
+            [Op.like]: `%${searchTerm.toLowerCase()}%`,
+        }),
+    });
+
+    return sendSuccess(res, "Résultats trouvés", { users: results });
+});

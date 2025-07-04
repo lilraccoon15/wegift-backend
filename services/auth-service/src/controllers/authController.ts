@@ -19,7 +19,6 @@ import User from "../models/User";
 import sendSuccess from "../utils/sendSuccess";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import {
-    AppError,
     AuthError,
     NotFoundError,
     ValidationError,
