@@ -2,7 +2,7 @@ import { Op, Sequelize } from "sequelize";
 import { Exchange, Participants, Rules } from "../models/setupAssociations";
 import { NotFoundError } from "../errors/CustomErrors";
 
-export const getAllUserExchanges = async (userId: string) => {
+export const getAllMyExchanges = async (userId: string) => {
     const exchanges = await Exchange.findAll({
         attributes: [
             "id",
@@ -156,4 +156,54 @@ export const deleteExchangeById = async (id: string) => {
     if (!exchange) throw new NotFoundError("Echange non trouvé");
 
     await exchange.destroy();
+};
+
+export const getExchangeById = async (id: string, userId: string) => {
+    const exchange = await Exchange.findOne({
+        attributes: [
+            "id",
+            "userId",
+            "title",
+            "picture",
+            "description",
+            "status",
+            "startDate",
+            "endDate",
+            [
+                Sequelize.fn("COUNT", Sequelize.col("participants.id")),
+                "participantsCount",
+            ],
+        ],
+        include: [
+            {
+                model: Participants,
+                as: "participants",
+                attributes: [],
+                required: false,
+            },
+        ],
+        where: {
+            [Op.and]: [
+                {
+                    [Op.or]: [{ userId }, { "$participants.userId$": userId }],
+                },
+                { id},
+            ],
+        },
+        group: ["Exchange.id"],
+    });
+
+    return exchange;
+};
+
+export const searchExchangeByTitle = async (query: string) => {
+    const searchTerm = query.toLowerCase();
+
+    const results = await Exchange.findAll({
+        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
+            [Op.like]: `%${searchTerm}%`,
+        }),
+    });
+
+    return results;
 };

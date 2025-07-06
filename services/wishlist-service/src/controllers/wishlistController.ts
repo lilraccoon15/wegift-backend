@@ -15,15 +15,33 @@ import {
     getWishlistById,
     getWishesByWishlistId,
     findWishById,
+    getAllMyWishlists,
+    searchWishlistByTitle,
+    leaveWishlistAsCollaborator,
+    subscribeToWishlistService,
+    unsubscribeFromWishlistService,
 } from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
-import { AppError, NotFoundError } from "../errors/CustomErrors";
-import { Op, Sequelize } from "sequelize";
+import {
+    AppError,
+    NotFoundError,
+    ValidationError,
+} from "../errors/CustomErrors";
 
-export const getUserWishlists = asyncHandler(
+export const getMyWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
+
+        const wishlists = await getAllMyWishlists(userId);
+
+        sendSuccess(res, "Wishlists trouvées", { wishlists });
+    }
+);
+
+export const getWishlists = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.params.userId;
 
         const wishlists = await getAllUserWishlists(userId);
 
@@ -57,11 +75,12 @@ export const createWishlist = asyncHandler(
     }
 );
 
-export const getUserWishlist = asyncHandler(
+export const getMyWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
         const id = req.params.id;
 
-        const wishlist = await getWishlistById(id);
+        const wishlist = await getWishlistById(id, userId);
 
         if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
@@ -69,14 +88,15 @@ export const getUserWishlist = asyncHandler(
     }
 );
 
-export const getUserWishesFromWishlist = asyncHandler(
+export const getMyWishesFromWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
         const wishlistId = req.query.wishlistid as string;
 
         if (!wishlistId)
             return next(new AppError("Paramètre wishlistid manquant", 400));
 
-        const wishes = await getWishesByWishlistId(wishlistId);
+        const wishes = await getWishesByWishlistId(wishlistId, userId);
 
         sendSuccess(res, "Souhaits trouvés", { wishes: wishes || [] }, 200);
     }
@@ -127,14 +147,24 @@ export const updateWishlist = asyncHandler(
 export const deleteWishlist = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { id } = req.params;
+        const userId = req.user.id;
 
         if (!id)
             return next(
                 new AppError("wishlistId manquant dans la requête", 400)
             );
 
-        await deleteWishlistById(id);
-        return sendSuccess(res, "Wishlist supprimée", {}, 200);
+        const wishlist = await Wishlist.findByPk(id);
+
+        if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
+
+        if (wishlist.userId === userId) {
+            await deleteWishlistById(id);
+            return sendSuccess(res, "Wishlist supprimée", {}, 200);
+        }
+
+        await leaveWishlistAsCollaborator(id, userId);
+        return sendSuccess(res, "Vous avez quitté la wishlist", {}, 200);
     }
 );
 
@@ -159,11 +189,12 @@ export const createWish = asyncHandler(
     }
 );
 
-export const getUserWish = asyncHandler(
+export const getMyWish = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const id = req.params.id;
+        const userId = req.user.id;
 
-        const wish = await findWishById(id);
+        const wish = await findWishById(id, userId);
 
         if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
@@ -241,11 +272,46 @@ export const searchWishlist = asyncHandler(async (req, res, next) => {
         );
     }
 
-    const results = await Wishlist.findAll({
-        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
-            [Op.like]: `%${searchTerm.toLowerCase()}%`,
-        }),
-    });
+    const results = await searchWishlistByTitle(searchTerm);
 
     return sendSuccess(res, "Résultats trouvés", { wishlists: results });
 });
+
+export const subscribeToWishlist = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { wishlistId } = req.params;
+
+        if (!wishlistId) {
+            return next(
+                new ValidationError("wishlistId manquant dans la requête")
+            );
+        }
+
+        const result = await subscribeToWishlistService(userId, wishlistId);
+
+        return sendSuccess(
+            res,
+            "Abonnement à la wishlist réussi",
+            { collaborator: result },
+            201
+        );
+    }
+);
+
+export const unsubscribeFromWishlist = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { wishlistId } = req.params;
+
+        if (!wishlistId) {
+            return next(
+                new ValidationError("wishlistId manquant dans la requête")
+            );
+        }
+
+        await unsubscribeFromWishlistService(userId, wishlistId);
+
+        return sendSuccess(res, "Désabonnement effectué avec succès", {}, 200);
+    }
+);

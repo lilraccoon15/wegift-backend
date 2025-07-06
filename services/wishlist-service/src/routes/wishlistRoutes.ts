@@ -6,14 +6,17 @@ import {
     createWishlist,
     deleteWish,
     deleteWishlist,
-    getUserWish,
-    getUserWishesFromWishlist,
-    getUserWishlist,
-    getUserWishlists,
+    getMyWish,
+    getMyWishlist,
+    getMyWishlists,
     searchProduct,
     searchWishlist,
     updateWish,
     updateWishlist,
+    getMyWishesFromWishlist,
+    getWishlists,
+    subscribeToWishlist,
+    unsubscribeFromWishlist,
 } from "../controllers/wishlistController";
 import { upload } from "../middlewares/upload";
 
@@ -23,7 +26,13 @@ router.get(
     "/my-wishlists",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    getUserWishlists
+    getMyWishlists
+);
+router.get(
+    "/:userId/wishlists",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    getWishlists
 );
 router.post(
     "/create-wishlist",
@@ -36,14 +45,26 @@ router.get(
     "/my-wishlist/:id",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    getUserWishlist
+    getMyWishlist
 );
+// router.get(
+//     "/wishlist/:id",
+//     verifyTokenMiddleware,
+//     ensureAuthenticated,
+//     getWishlist
+// );
 router.get(
-    "/wishes",
+    "/my-wishes",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    getUserWishesFromWishlist
+    getMyWishesFromWishlist
 );
+// router.get(
+//     "/:userId/wishes",
+//     verifyTokenMiddleware,
+//     ensureAuthenticated,
+//     getUserWishesFromWishlist
+// );
 router.put(
     "/update-wishlist/:id",
     verifyTokenMiddleware,
@@ -68,8 +89,14 @@ router.get(
     "/my-wish/:id",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    getUserWish
+    getMyWish
 );
+// router.get(
+//     "/wish/:id",
+//     verifyTokenMiddleware,
+//     ensureAuthenticated,
+//     getWish
+// );
 router.put(
     "/update-wish/:id",
     verifyTokenMiddleware,
@@ -95,6 +122,20 @@ router.get(
     verifyTokenMiddleware,
     ensureAuthenticated,
     searchWishlist
+);
+
+router.post(
+    "/:wishlistId/subscribe",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    subscribeToWishlist
+);
+
+router.delete(
+    "/:wishlistId/unsubscribe",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    unsubscribeFromWishlist
 );
 
 export default router;

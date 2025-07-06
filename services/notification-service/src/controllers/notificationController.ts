@@ -7,6 +7,7 @@ import { AppError } from "../errors/CustomErrors";
 import {
     findNotificationsByUserId,
     readNotificationsByUserId,
+    sendNotificationToUser,
 } from "../services/notificationServices";
 
 export const getNotificationsForUser = asyncHandler(
@@ -30,17 +31,12 @@ export const sendUserNotification = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { userId, type, data, read } = req.body;
 
-        const notifType = await NotificationType.findOne({ where: { type } });
-
-        if (!notifType)
-            throw new AppError(`Type de notification inconnu: ${type}`);
-
-        const notification = await Notification.create({
+        const notification = await sendNotificationToUser(
             userId,
-            notificationTypeId: notifType.id,
+            type,
             data,
-            read: read ?? false,
-        });
+            read
+        );
 
         return sendSuccess(res, "Notification créée", { notification }, 201);
     }

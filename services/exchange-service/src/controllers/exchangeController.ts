@@ -2,21 +2,23 @@ import {
     createNewExchange,
     deleteExchangeById,
     getAllExchangeRules,
-    getAllUserExchanges,
+    getAllMyExchanges,
+    getExchangeById,
+    searchExchangeByTitle,
     updateExchangeById,
 } from "../services/exchangeServices";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
-import { AppError } from "../errors/CustomErrors";
+import { AppError, NotFoundError } from "../errors/CustomErrors";
 import Exchange from "../models/Exchange";
 import { Op, Sequelize } from "sequelize";
 
-export const getUserExchanges = asyncHandler(
+export const getMyExchanges = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
 
-        const exchanges = await getAllUserExchanges(userId);
+        const exchanges = await getAllMyExchanges(userId);
 
         sendSuccess(res, "Echanges trouvés", { exchanges }, 200);
     }
@@ -128,11 +130,20 @@ export const searchExchange = asyncHandler(async (req, res, next) => {
         );
     }
 
-    const results = await Exchange.findAll({
-        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
-            [Op.like]: `%${searchTerm.toLowerCase()}%`,
-        }),
-    });
+    const results = await searchExchangeByTitle(searchTerm);
 
     return sendSuccess(res, "Résultats trouvés", { exchanges: results });
 });
+
+export const getMyExchange = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const id = req.params.id;
+
+        const exchange = await getExchangeById(id, userId);
+
+        if (!exchange) return next(new NotFoundError("Echange non trouvée"));
+
+        sendSuccess(res, "Echange trouvée", { exchange });
+    }
+);

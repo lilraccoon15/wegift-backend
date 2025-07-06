@@ -23,7 +23,7 @@ describe("authService.loginUser", () => {
         (bcrypt.compare as jest.Mock).mockResolvedValue(true);
         (jwt.sign as jest.Mock).mockReturnValue("mockedToken");
 
-        const result = await authService.loginUser(
+        const result = await authService.authenticateUser(
             "test@example.com",
             "password123"
         );
@@ -46,7 +46,7 @@ describe("authService.loginUser", () => {
     it("should return an error if the email does not exist", async () => {
         (User.findOne as jest.Mock).mockResolvedValue(null);
 
-        const result = await authService.loginUser(
+        const result = await authService.authenticateUser(
             "notfound@example.com",
             "password"
         );
@@ -63,7 +63,7 @@ describe("authService.loginUser", () => {
         };
         (User.findOne as jest.Mock).mockResolvedValue(mockUser);
 
-        const result = await authService.loginUser(
+        const result = await authService.authenticateUser(
             "test@example.com",
             "password"
         );
@@ -83,7 +83,7 @@ describe("authService.loginUser", () => {
         (User.findOne as jest.Mock).mockResolvedValue(mockUser);
         (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-        const result = await authService.loginUser(
+        const result = await authService.authenticateUser(
             "test@example.com",
             "wrongpassword"
         );

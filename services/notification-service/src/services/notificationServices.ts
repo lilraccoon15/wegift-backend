@@ -1,4 +1,4 @@
-import { NotFoundError } from "../errors/CustomErrors";
+import { AppError, NotFoundError } from "../errors/CustomErrors";
 import { Notification, NotificationType } from "../models/setupAssociations";
 
 export async function findNotificationsByUserId(userId: string) {
@@ -36,3 +36,25 @@ export async function readNotificationsByUserId(userId: string) {
         }
     );
 }
+
+export const sendNotificationToUser = async (
+    userId: string,
+    type: string,
+    data: any,
+    read: boolean = false
+) => {
+    const notifType = await NotificationType.findOne({ where: { type } });
+
+    if (!notifType) {
+        throw new AppError(`Type de notification inconnu: ${type}`, 400);
+    }
+
+    const notification = await Notification.create({
+        userId,
+        notificationTypeId: notifType.id,
+        data,
+        read,
+    });
+
+    return notification;
+};

@@ -6,7 +6,7 @@ class Friendship extends Model {
     public id!: string;
     public requesterId!: string;
     public addresseeId!: string;
-    public status!: "pending" | "accepted";
+    public status!: "pending" | "accepted" | "rejected";
     public requester?: UserProfile;
     public addressee?: UserProfile;
 }
@@ -37,7 +37,7 @@ Friendship.init(
             onDelete: "CASCADE",
         },
         status: {
-            type: DataTypes.ENUM("pending", "accepted"),
+            type: DataTypes.ENUM("pending", "accepted", "rejected"),
             allowNull: false,
             defaultValue: "pending",
         },

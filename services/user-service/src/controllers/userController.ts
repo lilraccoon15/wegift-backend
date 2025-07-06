@@ -8,17 +8,23 @@ import {
     fetchUserProfileByUserId,
     createFriendshipRequest,
     updateProfileDetails,
+    searchUserByPseudo,
+    removeFriendship,
+    respondToFriendRequestService,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
 import UserProfile from "../models/UserProfile";
 import path from "path";
 import fs from "fs";
-import { AppError, NotFoundError } from "../errors/CustomErrors";
+import {
+    AppError,
+    NotFoundError,
+    ValidationError,
+} from "../errors/CustomErrors";
 import { asyncHandler } from "../middlewares/asyncHandler";
-import { Op, Sequelize } from "sequelize";
 
-export const getUserProfile = asyncHandler(
+export const getMyProfile = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
@@ -39,21 +45,6 @@ export const createUserProfile = asyncHandler(
         const profile = await insertUserProfile(userId, pseudo, birthDate);
 
         return sendSuccess(res, "Profil créé", { profile });
-    }
-);
-
-export const getCurrentUserBasicInfo = asyncHandler(
-    async (req: AuthenticatedRequest, res, next) => {
-        const userId = req.user?.id;
-
-        const user = await UserProfile.findOne({
-            where: { userId },
-            attributes: ["id", "pseudo", "birthDate", "picture", "description"],
-        });
-
-        if (!user) return next(new NotFoundError("Utilisateur non trouvé"));
-
-        sendSuccess(res, "Utilisateur trouvé", { profile: user }, 200);
     }
 );
 
@@ -119,7 +110,7 @@ export const getUserProfileById = asyncHandler(
         if (!id)
             return next(new AppError("userId manquant dans la requête", 400));
 
-        const user = await UserProfile.findByPk(id);
+        const user = await fetchUserProfileByUserId(id);
 
         if (!user) return next(new NotFoundError("Profil non trouvé"));
 
@@ -132,35 +123,24 @@ export const getUserProfileById = asyncHandler(
     }
 );
 
-export const checkFriendshipStatus = asyncHandler(
+export const getFriendshipStatus = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const user1 = req.query.user1 as string;
         const user2 = req.query.user2 as string;
+        const mode = req.query.mode as string;
 
         if (!user1 || !user2)
             return next(new AppError("Les deux IDs doivent être fournis", 400));
 
-        const friendship = await findFriendshipBetweenUsers(user1, user2);
-
-        return sendSuccess(res, "Relation d'amitié vérifiée", {
-            areFriends: !!friendship,
-        });
-    }
-);
-
-export const getFriendshipStatusBetweenUsers = asyncHandler(
-    async (req: AuthenticatedRequest, res, next) => {
-        const requesterId = req.query.user1 as string;
-        const addresseeId = req.query.user2 as string;
-
-        if (!requesterId || !addresseeId)
-            return next(new AppError("Les deux IDs doivent être fournis", 400));
-
-        const status = await getFriendshipStatusBetween(
-            requesterId,
-            addresseeId
-        );
-        return sendSuccess(res, "Statut récupéré", { status });
+        if (mode === "simple") {
+            const friendship = await findFriendshipBetweenUsers(user1, user2);
+            return sendSuccess(res, "Relation d'amitié vérifiée", {
+                areFriends: !!friendship,
+            });
+        } else {
+            const status = await getFriendshipStatusBetween(user1, user2);
+            return sendSuccess(res, "Statut récupéré", { status });
+        }
     }
 );
 
@@ -195,7 +175,7 @@ export const sendFriendRequest = asyncHandler(
     }
 );
 
-export const getFriendsListForUser = asyncHandler(
+export const getMyFriendList = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user?.id;
 
@@ -223,11 +203,45 @@ export const searchUser = asyncHandler(async (req, res, next) => {
         );
     }
 
-    const results = await UserProfile.findAll({
-        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
-            [Op.like]: `%${searchTerm.toLowerCase()}%`,
-        }),
-    });
+    const results = await searchUserByPseudo(searchTerm);
 
     return sendSuccess(res, "Résultats trouvés", { users: results });
 });
+
+export const deleteFriend = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { friendId } = req.params;
+
+        await removeFriendship(userId, friendId);
+
+        sendSuccess(res, "Ami supprimé avec succès", {}, 200);
+    }
+);
+
+export const respondToFriendRequest = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { requesterId } = req.params;
+        const { action } = req.body;
+
+        if (!["accept", "reject"].includes(action)) {
+            return next(new ValidationError("Action invalide."));
+        }
+
+        await respondToFriendRequestService(
+            userId,
+            requesterId,
+            action as "accept" | "reject"
+        );
+
+        sendSuccess(
+            res,
+            `Demande ${
+                action === "accept" ? "acceptée" : "refusée"
+            } avec succès`,
+            {},
+            200
+        );
+    }
+);

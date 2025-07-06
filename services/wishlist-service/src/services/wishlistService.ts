@@ -1,8 +1,13 @@
 import { Wish, Wishlist } from "../models/setupAssociations";
-import { NotFoundError } from "../errors/CustomErrors";
+import {
+    AuthError,
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+} from "../errors/CustomErrors";
 import axios from "axios";
 import config from "../config";
-import { Sequelize } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import Collaborators from "../models/Collaborators";
 
 interface SearchResult {
@@ -13,7 +18,46 @@ interface SearchResult {
 
 export const getAllUserWishlists = async (userId: string) => {
     const wishlists = await Wishlist.findAll({
-        where: { userId },
+        where: {
+            [Op.and]: [
+                {
+                    [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+                },
+                { access: "public" },
+                { published: 1 },
+            ],
+        },
+        attributes: [
+            "id",
+            "userId",
+            "title",
+            "picture",
+            "description",
+            "mode",
+            [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
+        ],
+        include: [
+            {
+                model: Wish,
+                as: "wishes",
+                attributes: [],
+                required: false,
+            },
+            {
+                model: Collaborators,
+                as: "collaborators",
+                attributes: ["userId"],
+                required: false,
+            },
+        ],
+        group: ["Wishlist.id"],
+    });
+    return wishlists;
+};
+
+export const getAllMyWishlists = async (userId: string) => {
+    const wishlists = await Wishlist.findAll({
+        where: { [Op.or]: [{ userId }, { "$collaborators.userId$": userId }] },
         attributes: [
             "id",
             "userId",
@@ -32,16 +76,21 @@ export const getAllUserWishlists = async (userId: string) => {
                 attributes: [],
                 required: false,
             },
-            { model: Collaborators, as: "collaborators", separate: true },
+            {
+                model: Collaborators,
+                as: "collaborators",
+                attributes: ["userId"],
+                required: false,
+            },
         ],
         group: ["Wishlist.id"],
     });
     return wishlists;
 };
 
-export const getWishlistById = async (id: string) => {
+export const getWishlistById = async (id: string, userId: string) => {
     const wishlist = await Wishlist.findOne({
-        where: { id },
+        where: { id, userId },
         attributes: [
             "id",
             "userId",
@@ -58,17 +107,20 @@ export const getWishlistById = async (id: string) => {
     return wishlist;
 };
 
-export const getWishesByWishlistId = async (wishlistId: string) => {
+export const getWishesByWishlistId = async (
+    wishlistId: string,
+    userId: string
+) => {
     const wishes = await Wish.findAll({
-        where: { wishlistId },
+        where: { wishlistId, userId },
         attributes: ["id", "title"],
     });
     return wishes;
 };
 
-export const findWishById = async (id: string) => {
+export const findWishById = async (id: string, userId: string) => {
     const wish = await Wish.findOne({
-        where: { id },
+        where: { id, userId },
         attributes: [
             "id",
             "wishlistId",
@@ -249,3 +301,92 @@ export async function findProductsByQuery(
         throw error;
     }
 }
+
+export const searchWishlistByTitle = async (query: string) => {
+    const searchTerm = query.toLowerCase();
+
+    const results = await Wishlist.findAll({
+        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
+            [Op.like]: `%${searchTerm}%`,
+        }),
+    });
+
+    return results;
+};
+
+export const leaveWishlistAsCollaborator = async (
+    wishlistId: string,
+    userId: string
+) => {
+    const wishlist = await Wishlist.findByPk(wishlistId, {
+        include: [{ model: Collaborators, as: "collaborators" }],
+    });
+
+    if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+
+    const isCollaborator = wishlist.collaborators?.some(
+        (c) => c.userId === userId
+    );
+
+    if (!isCollaborator)
+        throw new AuthError("Vous n’êtes pas collaborateur de cette wishlist.");
+
+    await Collaborators.destroy({
+        where: { userId, wishlistId },
+    });
+};
+
+export const subscribeToWishlistService = async (
+    userId: string,
+    wishlistId: string
+) => {
+    const wishlist = await Wishlist.findOne({
+        where: { id: wishlistId, access: "public", published: 1 },
+    });
+
+    if (!wishlist) {
+        throw new NotFoundError("Wishlist non trouvée ou non accessible.");
+    }
+
+    if (wishlist.userId === userId) {
+        throw new ValidationError(
+            "Vous êtes déjà propriétaire de cette wishlist."
+        );
+    }
+
+    const alreadyCollaborator = await Collaborators.findOne({
+        where: { userId, wishlistId },
+    });
+
+    if (alreadyCollaborator) {
+        throw new ConflictError("Vous êtes déjà abonné à cette wishlist.");
+    }
+
+    const newCollab = await Collaborators.create({ userId, wishlistId });
+
+    return newCollab;
+};
+
+export const unsubscribeFromWishlistService = async (userId: string, wishlistId: string) => {
+    const wishlist = await Wishlist.findByPk(wishlistId);
+
+    if (!wishlist) {
+        throw new NotFoundError("Wishlist non trouvée.");
+    }
+
+    if (wishlist.userId === userId) {
+        throw new ValidationError("Vous êtes propriétaire de cette wishlist.");
+    }
+
+    const collaborator = await Collaborators.findOne({
+        where: { userId, wishlistId },
+    });
+
+    if (!collaborator) {
+        throw new NotFoundError("Vous n'êtes pas collaborateur de cette wishlist.");
+    }
+
+    await collaborator.destroy();
+
+    return { success: true };
+};

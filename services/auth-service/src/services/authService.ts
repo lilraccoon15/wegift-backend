@@ -171,7 +171,7 @@ export const setUserAsActive = async (token: string) => {
 
     try {
         await axios.post(
-            `${config.apiUrls.USER_SERVICE}/profile`,
+            `${config.apiUrls.USER_SERVICE}/create-profile`,
             {
                 userId: user.id,
                 pseudo: decoded.pseudo,
@@ -324,6 +324,10 @@ export const changeUserEmail = async (
 ) => {
     const user = await User.findByPk(userId);
     if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    if (user.email === newEmail) {
+        throw new ValidationError("Le nouvel email est identique à l'actuel.");
+    }
 
     const isPasswordValid = await bcrypt.compare(
         currentPassword,

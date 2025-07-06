@@ -1,5 +1,6 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Collaborators from "./Collaborators";
 
 class Wishlist extends Model {
     public id!: string;
@@ -10,6 +11,7 @@ class Wishlist extends Model {
     public description!: string | null;
     public published!: number;
     public mode!: "individual" | "collaborative";
+    public collaborators?: Collaborators[];
 }
 
 Wishlist.init(

@@ -9,13 +9,13 @@ import verifyTokenMiddleware from "../middlewares/verifyTokenMiddleware";
 const router = Router();
 
 router.get(
-    "/get-notifications",
+    "/notifications",
     verifyTokenMiddleware,
     ensureAuthenticated,
     getNotificationsForUser
 );
 router.post(
-    "/notifications",
+    "/send-notification",
     verifyTokenMiddleware,
     ensureAuthenticated,
     sendUserNotification

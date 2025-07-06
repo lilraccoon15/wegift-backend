@@ -194,7 +194,7 @@ export const updateUserEmail = asyncHandler(
                     "Mot de passe actuel et nouvel email requis"
                 )
             );
-        // TODO : vérifier si le mail à changé lol
+
         await changeUserEmail(userId, currentPassword, newEmail);
 
         sendSuccess(

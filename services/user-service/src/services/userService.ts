@@ -1,6 +1,6 @@
 import { Friendship, UserProfile } from "../models/setupAssociations";
 import { ConflictError, NotFoundError } from "../errors/CustomErrors";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 import axios from "axios";
 import config from "../config";
 
@@ -30,8 +30,11 @@ export const insertUserProfile = async (
     return profile;
 };
 
-export const fetchUserProfileByUserId = async (userId: number) => {
-    const profile = await UserProfile.findOne({ where: { userId } });
+export const fetchUserProfileByUserId = async (userId: string) => {
+    const profile = await UserProfile.findOne({
+        where: { userId },
+        attributes: ["id", "pseudo", "birthDate", "picture", "description"],
+    });
     if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
     return profile;
@@ -70,7 +73,7 @@ export async function findFriendshipBetweenUsers(user1: string, user2: string) {
     const friendship = await Friendship.findOne({
         where: {
             [Op.or]: [
-                { requesterId: user1, addresseeId: user2 },
+                { addresseeId: user1, requesterId: user2 },
                 { addresseeId: user2, requesterId: user1 },
             ],
         },
@@ -138,7 +141,7 @@ export async function createFriendshipRequest(
 
     try {
         await axios.post(
-            `${config.apiUrls.NOTIFICATION_SERVICE}/notifications`,
+            `${config.apiUrls.NOTIFICATION_SERVICE}/send-notification`,
             {
                 userId: addresseeId,
                 type: "friendship",
@@ -204,3 +207,62 @@ export async function fetchFriendsByProfileId(
 
     return friendProfiles;
 }
+
+export const searchUserByPseudo = async (query: string) => {
+    const searchTerm = query.toLowerCase();
+
+    const results = await UserProfile.findAll({
+        where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
+            [Op.like]: `%${searchTerm}%`,
+        }),
+    });
+
+    return results;
+};
+
+export const removeFriendship = async (userId1: string, userId2: string) => {
+    const friendship = await Friendship.findOne({
+        where: {
+            [Op.or]: [
+                { requesterId: userId1, addresseeId: userId2 },
+                { requesterId: userId2, addresseeId: userId1 },
+            ],
+            status: "accepted",
+        },
+    });
+
+    if (!friendship) {
+        throw new NotFoundError("Relation d’amitié non trouvée.");
+    }
+
+    await friendship.destroy();
+};
+
+export const respondToFriendRequestService = async (
+    userId: string,
+    requesterId: string,
+    action: "accept" | "reject"
+) => {
+    const friendship = await Friendship.findOne({
+        where: {
+            requesterId,
+            addresseeId: userId,
+            status: "pending",
+        },
+    });
+
+    if (!friendship) {
+        throw new NotFoundError("Demande d'amitié non trouvée.");
+    }
+
+    if (action === "accept") {
+        friendship.status = "accepted";
+    } else if (action === "reject") {
+        friendship.status = "rejected";
+    } else {
+        throw new ValidationError("Action invalide.");
+    }
+
+    await friendship.save();
+    return friendship;
+};

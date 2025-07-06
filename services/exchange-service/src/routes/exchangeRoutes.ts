@@ -3,7 +3,8 @@ import {
     createExchange,
     deleteExchange,
     getExchangeRules,
-    getUserExchanges,
+    getMyExchange,
+    getMyExchanges,
     searchExchange,
     updateExchange,
 } from "../controllers/exchangeController";
@@ -17,7 +18,7 @@ router.get(
     "/my-exchanges",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    getUserExchanges
+    getMyExchanges
 );
 
 router.get(
@@ -33,8 +34,13 @@ router.post(
     upload.single("picture"),
     createExchange
 );
-
-router.post(
+router.get(
+    "/my-exchange/:id",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    getMyExchange
+);
+router.put(
     "/update-exchange/:id",
     verifyTokenMiddleware,
     ensureAuthenticated,
