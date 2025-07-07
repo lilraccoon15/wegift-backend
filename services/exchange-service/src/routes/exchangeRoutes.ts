@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
     createExchange,
     deleteExchange,
+    drawExchange,
     getExchangeRules,
     getMyExchange,
     getMyExchanges,
+    respondToExchangeInvitation,
     searchExchange,
     updateExchange,
 } from "../controllers/exchangeController";
@@ -61,5 +63,15 @@ router.get(
     ensureAuthenticated,
     searchExchange
 );
+
+router.patch(
+    "/exchange/:requesterId/respond",
+    verifyTokenMiddleware,
+    ensureAuthenticated,
+    respondToExchangeInvitation
+);
+
+router.post("/draw/:exchangeId", verifyTokenMiddleware, ensureAuthenticated, drawExchange);
+
 
 export default router;

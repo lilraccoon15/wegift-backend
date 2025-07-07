@@ -3,6 +3,7 @@ import sequelize from "../config/database";
 
 class Rules extends Model {
     public id!: string;
+    public code!: string;
     public title!: string;
     public description!: string;
 }
@@ -13,6 +14,11 @@ Rules.init(
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
+        },
+        code: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true,
         },
         title: {
             type: DataTypes.TEXT,

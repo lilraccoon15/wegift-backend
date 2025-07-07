@@ -1,5 +1,5 @@
 import { Op, Sequelize } from "sequelize";
-import { Exchange, Participants, Rules } from "../models/setupAssociations";
+import { Assigned, Exchange, Participants, Rules } from "../models/setupAssociations";
 import { NotFoundError } from "../errors/CustomErrors";
 
 export const getAllMyExchanges = async (userId: string) => {
@@ -206,4 +206,131 @@ export const searchExchangeByTitle = async (query: string) => {
     });
 
     return results;
+};
+
+export const respondToExchange = async (
+    userId: string,
+    exchangeId: string,
+    action: "accept" | "reject"
+) => {
+    const participant = await Participants.findOne({
+        where: {
+            userId,
+            exchangeId,
+        },
+    });
+
+    if (!participant) {
+        throw new NotFoundError("Invitation à l'échange non trouvée.");
+    }
+
+    if (participant.acceptedAt) {
+        throw new ValidationError("Invitation déjà acceptée.");
+    }
+
+    if (action === "accept") {
+        participant.acceptedAt = new Date();
+        await participant.save();
+    } else if (action === "reject") {
+        await participant.destroy(); // supprime la ligne
+    }
+
+    return participant;
+};
+
+
+export const drawExchangeService = async (
+    userId: string,
+    exchangeId: string
+) => {
+    const exchange = await Exchange.findByPk(exchangeId);
+
+    if (!exchange) {
+        throw new NotFoundError("Échange introuvable.");
+    }
+
+    if (exchange.userId !== userId) {
+        throw new ForbiddenError("Seul le créateur peut lancer le tirage.");
+    }
+
+    // 1. Règles associées
+    const rulesAssoc = await ExchangeRulesAssoc.findAll({
+        where: { exchangeId },
+        include: [{ model: Rules, as: "rule" }],
+    });
+    const activeRules = rulesAssoc.map((assoc) => assoc.rule?.code);
+
+    // 2. Participants ayant accepté
+    const participants = await Participants.findAll({
+        where: {
+            exchangeId,
+            acceptedAt: { [Op.not]: null },
+        },
+    });
+
+    if (participants.length < 3) {
+        throw new ValidationError("Au moins 3 participants doivent avoir accepté.");
+    }
+
+    // 3. Tentatives de tirage avec validation
+    const maxAttempts = 20;
+    let assignments: { userId: string; assignedUserId: string; exchangeId: string }[] = [];
+    let success = false;
+
+    for (let attempt = 0; attempt < maxAttempts && !success; attempt++) {
+        const shuffled = shuffleArray([...participants]);
+        const tempAssignments: typeof assignments = [];
+        const assignedTargets = new Set<string>();
+
+        success = true;
+
+        for (let i = 0; i < shuffled.length; i++) {
+            const giver = shuffled[i];
+            const receiver = shuffled[(i + 1) % shuffled.length];
+
+            // --- Règle 1 : Pas d’auto-attribution
+            if (activeRules.includes("no_self") && giver.userId === receiver.userId) {
+                success = false;
+                break;
+            }
+
+            // --- Règle 2 : Pas de double attribution
+            if (activeRules.includes("no_double_target") && assignedTargets.has(receiver.userId)) {
+                success = false;
+                break;
+            }
+
+            // --- Règle 3 : Pas deux fois la même personne
+            if (activeRules.includes("no_repeat")) {
+                const previous = await Assigned.findOne({
+                    where: { userId: giver.userId },
+                    order: [["createdAt", "DESC"]], // ou une table spécifique d'historique
+                });
+
+                if (previous && previous.assignedUserId === receiver.userId) {
+                    success = false;
+                    break;
+                }
+            }
+
+            assignedTargets.add(receiver.userId);
+            tempAssignments.push({
+                userId: giver.userId,
+                assignedUserId: receiver.userId,
+                exchangeId,
+            });
+        }
+
+        if (success) {
+            assignments = tempAssignments;
+        }
+    }
+
+    if (!success) {
+        throw new ValidationError("Impossible de générer un tirage valide après plusieurs tentatives.");
+    }
+
+    await Assigned.destroy({ where: { exchangeId } });
+
+    await Assigned.bulkCreate(assignments);
 };

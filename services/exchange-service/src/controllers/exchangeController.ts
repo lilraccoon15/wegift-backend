@@ -1,9 +1,11 @@
 import {
     createNewExchange,
     deleteExchangeById,
+    drawExchangeService,
     getAllExchangeRules,
     getAllMyExchanges,
     getExchangeById,
+    respondToExchange,
     searchExchangeByTitle,
     updateExchangeById,
 } from "../services/exchangeServices";
@@ -145,5 +147,41 @@ export const getMyExchange = asyncHandler(
         if (!exchange) return next(new NotFoundError("Echange non trouvée"));
 
         sendSuccess(res, "Echange trouvée", { exchange });
+    }
+);
+
+export const respondToExchangeInvitation = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { exchangeId } = req.params;
+        const { action } = req.body;
+
+        if (!["accept", "reject"].includes(action)) {
+            return next(new ValidationError("Action invalide."));
+        }
+
+        await respondToExchange(
+            userId,
+            exchangeId,
+            action as "accept" | "reject"
+        );
+
+        sendSuccess(
+            res,
+            `Invitation ${action === "accept" ? "acceptée" : "refusée"} avec succès`,
+            {},
+            200
+        );
+    }
+);
+
+export const drawExchange = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.id;
+        const { exchangeId } = req.params;
+
+        await drawExchangeService(userId, exchangeId);
+
+        sendSuccess(res, "Tirage au sort effectué avec succès.", {}, 200);
     }
 );
