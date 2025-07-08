@@ -14,7 +14,7 @@ import {
 } from "../controllers/userController";
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
 import { validateBody } from "../middlewares/validateBody";
-import { createProfileSchema } from "../schemas/userSchema";
+import { createOrUpdateProfileSchema } from "../schemas/userSchema";
 import { upload } from "../middlewares/upload";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 
@@ -30,7 +30,7 @@ router.post(
     "/create-profile",
     verifyTokenMiddleware,
     ensureAuthenticated,
-    validateBody(createProfileSchema),
+    validateBody(createOrUpdateProfileSchema),
     createUserProfile
 );
 router.put(

@@ -12,11 +12,7 @@ import {
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
-import {
-    AppError,
-    NotFoundError,
-    ValidationError,
-} from "../errors/CustomErrors";
+import { AppError, NotFoundError } from "../errors/CustomErrors";
 import {
     createExchangeSchema,
     respondToExchangeSchema,
@@ -68,7 +64,7 @@ export const createExchange = asyncHandler(
             new Date(startDate),
             description,
             picture,
-            budget ? parseFloat(budget) : undefined,
+            budget ?? undefined,
             participantIds,
             rules
         );
@@ -106,7 +102,7 @@ export const updateExchange = asyncHandler(
             new Date(startDate),
             description,
             picture,
-            budget ? parseFloat(budget) : undefined,
+            budget ?? undefined,
             participantIds,
             rules
         );
