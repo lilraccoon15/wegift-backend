@@ -1,76 +1,76 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  gateway:
-    build:
-      context: ./gateway
-    container_name: wegift-gateway
-    ports:
-      - "4000:4000"
-    restart: unless-stopped
-    env_file:
-      - ./gateway/.env
-    environment:
-      - NODE_ENV=docker
+    gateway:
+        build:
+            context: ./gateway
+        container_name: wegift-gateway
+        ports:
+            - "4000:4000"
+        restart: unless-stopped
+        env_file:
+            - ./gateway/.env
+        environment:
+            - NODE_ENV=docker
 
-  auth-service:
-    build:
-      context: ./services/auth-service
-    container_name: wegift-auth-service
-    ports:
-      - "3001:3001"
-    restart: unless-stopped
-    env_file:
-      - ./services/auth-service/.env
-    environment:
-      - NODE_ENV=docker
+    auth-service:
+        build:
+            context: ./services/auth-service
+        container_name: wegift-auth-service
+        ports:
+            - "3001:3001"
+        restart: unless-stopped
+        env_file:
+            - ./services/auth-service/.env
+        environment:
+            - NODE_ENV=docker
 
-  user-service:
-    build:
-      context: ./services/user-service
-    container_name: wegift-user-service
-    ports:
-      - "3003:3003"
-    restart: unless-stopped
-    env_file:
-      - ./services/user-service/.env
-    environment:
-      - NODE_ENV=docker
-    volumes:
-      - ./services/user-service/public/uploads:/app/public/uploads
+    user-service:
+        build:
+            context: ./services/user-service
+        container_name: wegift-user-service
+        ports:
+            - "3003:3003"
+        restart: unless-stopped
+        env_file:
+            - ./services/user-service/.env
+        environment:
+            - NODE_ENV=docker
+        volumes:
+            - ./services/user-service/public/uploads:/app/public/uploads
 
-  wishlist-service:
-    build:
-      context: ./services/wishlist-service
-    container_name: wegift-wishlist-service
-    ports:
-      - "3004:3004"
-    restart: unless-stopped
-    env_file:
-      - ./services/wishlist-service/.env
-    environment:
-      - NODE_ENV=docker
+    wishlist-service:
+        build:
+            context: ./services/wishlist-service
+        container_name: wegift-wishlist-service
+        ports:
+            - "3004:3004"
+        restart: unless-stopped
+        env_file:
+            - ./services/wishlist-service/.env
+        environment:
+            - NODE_ENV=docker
 
-  exchange-service:
-    build:
-      context: ./services/exchange-service
-    container_name: wegift-exchange-service
-    ports:
-      - "3002:3002"
-    restart: unless-stopped
-    env_file:
-      - ./services/exchange-service/.env
-    environment:
-      - NODE_ENV=docker
+    exchange-service:
+        build:
+            context: ./services/exchange-service
+        container_name: wegift-exchange-service
+        ports:
+            - "3002:3002"
+        restart: unless-stopped
+        env_file:
+            - ./services/exchange-service/.env
+        environment:
+            - NODE_ENV=docker
 
-  notification-service:
-    build:
-      context: ./services/exchange-service
-    container_name: wegift-exchange-service
-    ports:
-      - "3005:3005"
-    restart: unless-stopped
-    env_file:
-      - ./services/exchange-service/.env
-    environment:
-      - NODE_ENV=docker
+    notification-service:
+        build:
+            context: ./services/notification-service
+        container_name: wegift-notification-service
+        ports:
+            - "3005:3005"
+        restart: unless-stopped
+        env_file:
+            - ./services/notification-service/.env
+        environment:
+            - NODE_ENV=docker

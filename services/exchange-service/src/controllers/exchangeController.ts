@@ -12,9 +12,11 @@ import {
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 import sendSuccess from "../utils/sendSuccess";
-import { AppError, NotFoundError } from "../errors/CustomErrors";
-import Exchange from "../models/Exchange";
-import { Op, Sequelize } from "sequelize";
+import {
+    AppError,
+    NotFoundError,
+    ValidationError,
+} from "../errors/CustomErrors";
 
 export const getMyExchanges = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
@@ -168,7 +170,9 @@ export const respondToExchangeInvitation = asyncHandler(
 
         sendSuccess(
             res,
-            `Invitation ${action === "accept" ? "acceptée" : "refusée"} avec succès`,
+            `Invitation ${
+                action === "accept" ? "acceptée" : "refusée"
+            } avec succès`,
             {},
             200
         );

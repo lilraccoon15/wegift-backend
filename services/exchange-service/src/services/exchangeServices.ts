@@ -1,6 +1,17 @@
 import { Op, Sequelize } from "sequelize";
-import { Assigned, Exchange, Participants, Rules } from "../models/setupAssociations";
-import { NotFoundError } from "../errors/CustomErrors";
+import {
+    Assigned,
+    Exchange,
+    Participants,
+    Rules,
+    ExchangeRulesAssoc,
+} from "../models/setupAssociations";
+import {
+    ConflictError,
+    NotFoundError,
+    ValidationError,
+} from "../errors/CustomErrors";
+import { shuffleArray } from "../utils/shuffleArray";
 
 export const getAllMyExchanges = async (userId: string) => {
     const exchanges = await Exchange.findAll({
@@ -187,7 +198,7 @@ export const getExchangeById = async (id: string, userId: string) => {
                 {
                     [Op.or]: [{ userId }, { "$participants.userId$": userId }],
                 },
-                { id},
+                { id },
             ],
         },
         group: ["Exchange.id"],
@@ -232,12 +243,11 @@ export const respondToExchange = async (
         participant.acceptedAt = new Date();
         await participant.save();
     } else if (action === "reject") {
-        await participant.destroy(); // supprime la ligne
+        await participant.destroy();
     }
 
     return participant;
 };
-
 
 export const drawExchangeService = async (
     userId: string,
@@ -250,7 +260,7 @@ export const drawExchangeService = async (
     }
 
     if (exchange.userId !== userId) {
-        throw new ForbiddenError("Seul le créateur peut lancer le tirage.");
+        throw new ConflictError("Seul le créateur peut lancer le tirage.");
     }
 
     // 1. Règles associées
@@ -269,12 +279,18 @@ export const drawExchangeService = async (
     });
 
     if (participants.length < 3) {
-        throw new ValidationError("Au moins 3 participants doivent avoir accepté.");
+        throw new ValidationError(
+            "Au moins 3 participants doivent avoir accepté."
+        );
     }
 
     // 3. Tentatives de tirage avec validation
     const maxAttempts = 20;
-    let assignments: { userId: string; assignedUserId: string; exchangeId: string }[] = [];
+    let assignments: {
+        userId: string;
+        assignedUserId: string;
+        exchangeId: string;
+    }[] = [];
     let success = false;
 
     for (let attempt = 0; attempt < maxAttempts && !success; attempt++) {
@@ -289,13 +305,19 @@ export const drawExchangeService = async (
             const receiver = shuffled[(i + 1) % shuffled.length];
 
             // --- Règle 1 : Pas d’auto-attribution
-            if (activeRules.includes("no_self") && giver.userId === receiver.userId) {
+            if (
+                activeRules.includes("no_self") &&
+                giver.userId === receiver.userId
+            ) {
                 success = false;
                 break;
             }
 
             // --- Règle 2 : Pas de double attribution
-            if (activeRules.includes("no_double_target") && assignedTargets.has(receiver.userId)) {
+            if (
+                activeRules.includes("no_double_target") &&
+                assignedTargets.has(receiver.userId)
+            ) {
                 success = false;
                 break;
             }
@@ -327,7 +349,9 @@ export const drawExchangeService = async (
     }
 
     if (!success) {
-        throw new ValidationError("Impossible de générer un tirage valide après plusieurs tentatives.");
+        throw new ValidationError(
+            "Impossible de générer un tirage valide après plusieurs tentatives."
+        );
     }
 
     await Assigned.destroy({ where: { exchangeId } });
