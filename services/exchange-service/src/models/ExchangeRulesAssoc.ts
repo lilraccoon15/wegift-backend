@@ -1,10 +1,12 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
+import Rules from "./Rules";
 
 class ExchangeRulesAssoc extends Model {
     public id!: string;
     public exchangeId!: string;
     public ruleId!: string;
+    public rule?: Rules;
 }
 
 ExchangeRulesAssoc.init(

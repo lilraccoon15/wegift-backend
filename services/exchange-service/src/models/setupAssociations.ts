@@ -32,6 +32,11 @@ export default function setupAssociations() {
         otherKey: "exchangeId",
         as: "exchanges",
     });
+
+    ExchangeRulesAssoc.belongsTo(Rules, {
+        foreignKey: "ruleId",
+        as: "rule",
+    });
 }
 
-export { Rules, Participants, Exchange, Assigned };
+export { Rules, Participants, Exchange, Assigned, ExchangeRulesAssoc };
