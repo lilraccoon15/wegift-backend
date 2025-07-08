@@ -90,7 +90,10 @@ export const getAllMyWishlists = async (userId: string) => {
 
 export const getWishlistById = async (id: string, userId: string) => {
   const wishlist = await Wishlist.findOne({
-    where: { id, userId },
+    where: {
+      id,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
     attributes: [
       "id",
       "userId",
@@ -111,26 +114,37 @@ export const getWishesByWishlistId = async (
   wishlistId: string,
   userId: string
 ) => {
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
+
+  if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
+
   const wishes = await Wish.findAll({
-    where: { wishlistId, userId },
+    where: { wishlistId },
     attributes: ["id", "title"],
   });
   return wishes;
 };
 
 export const findWishById = async (id: string, userId: string) => {
-  const wish = await Wish.findOne({
-    where: { id, userId },
-    attributes: [
-      "id",
-      "wishlistId",
-      "title",
-      "description",
-      "price",
-      "link",
-      "picture",
-    ],
+  const wish = await Wish.findByPk(id);
+  if (!wish) return null;
+
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wish.wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
   });
+
+  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
+
   return wish;
 };
 

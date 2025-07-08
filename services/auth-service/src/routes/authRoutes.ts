@@ -1,28 +1,32 @@
 import { Router } from "express";
 import {
-    registerUser,
-    loginUser,
-    logoutUser,
-    requestPasswordReset,
-    confirmPasswordReset,
-    get2FASetup,
-    enable2FAForUser,
-    verify2FACode,
-    get2FAStatus,
-    disable2FAForUser,
-    getUserAccount,
-    updateUserEmail,
-    updateUserPassword,
-    activateUserAccount,
-    updateNewsletterPreference,
-    deleteUserAccount,
+  registerUser,
+  loginUser,
+  logoutUser,
+  requestPasswordReset,
+  confirmPasswordReset,
+  get2FASetup,
+  enable2FAForUser,
+  verify2FACode,
+  get2FAStatus,
+  disable2FAForUser,
+  getUserAccount,
+  updateUserEmail,
+  updateUserPassword,
+  activateUserAccount,
+  updateNewsletterPreference,
+  deleteUserAccount,
 } from "../controllers/authController";
-import { authLimiter } from "../middlewares/rateLimit";
 import {
-    emailObjectSchema,
-    loginSchema,
-    registerSchema,
-    resetPasswordSchema,
+  authLimiter,
+  loginLimiter,
+  passwordResetLimiter,
+} from "../middlewares/rateLimit";
+import {
+  emailObjectSchema,
+  loginSchema,
+  registerSchema,
+  resetPasswordSchema,
 } from "../schemas/authSchema";
 import { validateBody } from "../middlewares/validateBody";
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
@@ -31,98 +35,99 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 const router = Router();
 
 router.post(
-    "/register",
-    authLimiter,
-    validateBody(registerSchema),
-    registerUser
+  "/register",
+  authLimiter,
+  validateBody(registerSchema),
+  registerUser
 );
 
-router.post("/login", authLimiter, validateBody(loginSchema), loginUser);
+router.post("/login", loginLimiter, validateBody(loginSchema), loginUser);
 
 router.post("/logout", logoutUser);
 
 router.get("/activate", activateUserAccount);
 
 router.post(
-    "/forgot-password",
-    validateBody(emailObjectSchema),
-    requestPasswordReset
+  "/forgot-password",
+  passwordResetLimiter,
+  validateBody(emailObjectSchema),
+  requestPasswordReset
 );
 
 router.post(
-    "/reset-password",
-    validateBody(resetPasswordSchema),
-    confirmPasswordReset
+  "/reset-password",
+  validateBody(resetPasswordSchema),
+  confirmPasswordReset
 );
 
 router.get(
-    "/generate-2fa",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    get2FASetup
+  "/generate-2fa",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  get2FASetup
 );
 
 router.post(
-    "/enable-2fa",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    enable2FAForUser
+  "/enable-2fa",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  enable2FAForUser
 );
 
 router.post(
-    "/verify-2fa",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    verify2FACode
+  "/verify-2fa",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  verify2FACode
 );
 
 router.get(
-    "/2fa-status",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    get2FAStatus
+  "/2fa-status",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  get2FAStatus
 );
 
 router.post(
-    "/disable-2fa",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    disable2FAForUser
+  "/disable-2fa",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  disable2FAForUser
 );
 
 router.get(
-    "/get-account",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    getUserAccount
+  "/get-account",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  getUserAccount
 );
 
 router.put(
-    "/update-email",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    updateUserEmail
+  "/update-email",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  updateUserEmail
 );
 
 router.put(
-    "/update-password",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    updateUserPassword
+  "/update-password",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  updateUserPassword
 );
 
 router.patch(
-    "/update-newsletter",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    updateNewsletterPreference
+  "/update-newsletter",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  updateNewsletterPreference
 );
 
 router.delete(
-    "/delete-account",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    deleteUserAccount
+  "/delete-account",
+  verifyTokenMiddleware,
+  ensureAuthenticated,
+  deleteUserAccount
 );
 
 export default router;
