@@ -31,6 +31,7 @@ import {
 import { validateBody } from "../middlewares/validateBody";
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import User from "../models/User";
 
 const router = Router();
 
@@ -129,5 +130,29 @@ router.delete(
   ensureAuthenticated,
   deleteUserAccount
 );
+
+// Route spéciale pour tests uniquement : activation simplifiée par email
+if (["test", "test-local"].includes(process.env.NODE_ENV || "")) {
+  router.post("/fake-activate", async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ message: "Email requis" });
+      return;
+    }
+
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      res.status(404).json({ message: "Utilisateur non trouvé" });
+      return;
+    }
+
+    user.isActive = true;
+    await user.save();
+
+    res.status(200).json({ message: "Utilisateur activé (test)" });
+  });
+}
 
 export default router;

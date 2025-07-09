@@ -11,6 +11,7 @@ import {
   searchUserByPseudo,
   removeFriendship,
   respondToFriendRequestService,
+  fetchMyProfile,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
@@ -36,7 +37,7 @@ export const getMyProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user?.id;
 
-    const profile = await fetchUserProfileByUserId(userId);
+    const profile = await fetchMyProfile(userId);
 
     if (!profile) return next(new NotFoundError("Profil non trouvé"));
 

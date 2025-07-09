@@ -1,1 +1,4 @@
-declare module 'iconv-lite/encodings';
+declare module "iconv-lite/encodings" {
+  const encodings: any;
+  export = encodings;
+}

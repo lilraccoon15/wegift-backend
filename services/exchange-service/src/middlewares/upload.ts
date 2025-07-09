@@ -7,57 +7,57 @@ import { UUIDV4 } from "sequelize";
 const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
 const fileFilter = (
-    req: Request,
-    file: Express.Multer.File,
-    cb: multer.FileFilterCallback
+  req: Request,
+  file: Express.Multer.File,
+  cb: multer.FileFilterCallback
 ) => {
-    if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
-    } else {
-        cb(new Error("Format d’image non supporté"));
-    }
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Format d’image non supporté"));
+  }
 };
 
 const uploadConfig = [
-    {
-        match: ["/create-exchange", "/update-exchange"],
-        folder: "public/uploads/exchangePictures/",
-        prefix: "exchange_picture",
-    },
+  {
+    match: ["/create-exchange", "/update-exchange"],
+    folder: "public/uploads/exchangePictures/",
+    prefix: "exchange_picture",
+  },
 ];
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const url = req.originalUrl;
+  destination: function (req, file, cb) {
+    const url = req.originalUrl;
 
-        const config = uploadConfig.find((c) =>
-            c.match.some((m) => url.includes(m))
-        );
+    const config = uploadConfig.find((c) =>
+      c.match.some((m) => url.includes(m))
+    );
 
-        const folder = config?.folder || "public/uploads/others/";
+    const folder = config?.folder || "public/uploads/others/";
 
-        if (!fs.existsSync(folder)) {
-            fs.mkdirSync(folder, { recursive: true });
-        }
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
 
-        cb(null, folder);
-    },
-    filename: function (req, file, cb) {
-        const url = req.originalUrl;
-        const config = uploadConfig.find((c) =>
-            c.match.some((m) => url.includes(m))
-        );
+    cb(null, folder);
+  },
+  filename: function (req, file, cb) {
+    const url = req.originalUrl;
+    const config = uploadConfig.find((c) =>
+      c.match.some((m) => url.includes(m))
+    );
 
-        const prefix = config?.prefix || "file";
-        const uniqueName = UUIDV4();
-        const ext = path.extname(file.originalname);
+    const prefix = config?.prefix || "file";
+    const uniqueName = UUIDV4();
+    const ext = path.extname(file.originalname);
 
-        cb(null, `${prefix}_${uniqueName}${ext}`);
-    },
+    cb(null, `${prefix}_${uniqueName}${ext}`);
+  },
 });
 
 export const upload = multer({
-    storage,
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo max
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });

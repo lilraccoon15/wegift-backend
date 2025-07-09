@@ -30,9 +30,19 @@ export const insertUserProfile = async (
   return profile;
 };
 
-export const fetchUserProfileByUserId = async (userId: string) => {
+export const fetchMyProfile = async (userId: string) => {
   const profile = await UserProfile.findOne({
     where: { userId },
+    attributes: ["id", "pseudo", "birthDate", "picture", "description"],
+  });
+  if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+
+  return profile;
+};
+
+export const fetchUserProfileByUserId = async (userId: string) => {
+  const profile = await UserProfile.findOne({
+    where: { id: userId },
     attributes: ["id", "pseudo", "birthDate", "picture", "description"],
   });
   if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");

@@ -41,7 +41,7 @@ export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   acceptedTerms: z.boolean().refine((val) => val === true, {
-    message: "Vous devez accepter les conditions.",
+    message: "Vous devez accepter les conditions générales d'utilisation.",
   }),
   newsletter: z.boolean(),
   role: z.undefined().optional(),

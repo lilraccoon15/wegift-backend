@@ -4,22 +4,18 @@ import encodings from "iconv-lite/encodings";
 
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "./config/loadEnv";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/authRoutes";
 import errorHandler from "./middlewares/errorHandler";
 
-if (process.env.NODE_ENV !== "test") {
-    dotenv.config();
-}
-
 const app = express();
 
 app.use(
-    cors({
-        origin: "http://localhost:3000",
-        credentials: true,
-    })
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
 );
 
 app.use(cookieParser());
@@ -30,7 +26,7 @@ app.use("/", authRoutes);
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-    res.send("Auth service is running!");
+  res.send("Auth service is running!");
 });
 
 export default app;

@@ -4,25 +4,21 @@ import encodings from "iconv-lite/encodings";
 
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import "./config/loadEnv";
 import cookieParser from "cookie-parser";
 import wishlistRoutes from "./routes/wishlistRoutes";
 import errorHandler from "./middlewares/errorHandler";
 import setupAssociations from "./models/setupAssociations";
-
-if (process.env.NODE_ENV !== "test") {
-    dotenv.config();
-}
 
 const app = express();
 
 setupAssociations();
 
 app.use(
-    cors({
-        origin: "http://localhost:3000",
-        credentials: true,
-    })
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
 );
 
 app.use(cookieParser());
@@ -35,7 +31,7 @@ app.use("/", wishlistRoutes);
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-    res.send("Wishlist service is running!");
+  res.send("Wishlist service is running!");
 });
 
 export default app;
