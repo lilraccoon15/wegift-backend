@@ -1,97 +1,55 @@
 import { Router } from "express";
-import {
-  sendFriendRequest,
-  createUserProfile,
-  deleteUserProfile,
-  getMyFriendList,
-  getUserProfileById,
-  getMyProfile,
-  updateUserProfile,
-  searchUser,
-  getFriendshipStatus,
-  deleteFriend,
-  respondToFriendRequest,
-} from "../controllers/userController";
+
 import { verifyTokenMiddleware } from "../middlewares/verifyTokenMiddleware";
-import { validateBody } from "../middlewares/validateBody";
-import { createOrUpdateProfileSchema } from "../schemas/userSchema";
-import { upload } from "../middlewares/upload";
 import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import { upload } from "../middlewares/upload";
+
+import {
+    getMyProfile,
+    updateUserProfile,
+    deleteUserProfile,
+    getUserProfileById,
+    checkPseudoAvailability,
+    searchUser,
+    getFriendshipStatus,
+    sendFriendRequest,
+    respondToFriendRequest,
+    getMyFriendList,
+    getFriendList,
+    deleteFriend,
+} from "../controllers/userController";
 
 const router = Router();
+const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-router.get(
-  "/my-profile",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  getMyProfile
-);
-router.post(
-  "/create-profile",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  validateBody(createOrUpdateProfileSchema),
-  createUserProfile
-);
+// === Profil utilisateur ===
+router.get("/my-profile", ...requireAuth, getMyProfile);
 router.put(
-  "/update-profile",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  upload.single("picture"),
-  updateUserProfile
+    "/update-profile",
+    ...requireAuth,
+    upload.single("picture"),
+    updateUserProfile
 );
 router.delete(
-  "/delete-profile",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  upload.single("picture"),
-  deleteUserProfile
+    "/delete-profile",
+    ...requireAuth,
+    upload.single("picture"),
+    deleteUserProfile
 );
-router.get(
-  "/profile/:id",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  getUserProfileById
-);
-router.get(
-  "/friendship-status",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  getFriendshipStatus
-);
-router.post(
-  "/ask-friend",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  sendFriendRequest
-);
-router.get(
-  "/my-friends",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  getMyFriendList
-);
-// router.get(
-//     "/:userId/friends",
-//     verifyTokenMiddleware,
-//     ensureAuthenticated,
-//     getFriendList
-// );
+router.get("/profile/:userId", ...requireAuth, getUserProfileById);
+router.get("/check-pseudo", checkPseudoAvailability);
+router.get("/search", ...requireAuth, searchUser);
 
-router.delete(
-  "/delete-friend/:friendId",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  deleteFriend
-);
-
+// === Amitié ===
+router.get("/friendship-status", ...requireAuth, getFriendshipStatus);
+router.post("/ask-friend", ...requireAuth, sendFriendRequest);
 router.patch(
-  "/friends/:requesterId/respond",
-  verifyTokenMiddleware,
-  ensureAuthenticated,
-  respondToFriendRequest
+    "/friends/:requesterId/respond",
+    ...requireAuth,
+    respondToFriendRequest
 );
-
-router.get("/search", verifyTokenMiddleware, ensureAuthenticated, searchUser);
+router.get("/my-friends", ...requireAuth, getMyFriendList);
+router.get("/friends/:userId", ...requireAuth, getFriendList);
+router.delete("/delete-friend/:friendId", ...requireAuth, deleteFriend);
 
 export default router;

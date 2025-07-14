@@ -19,6 +19,7 @@ import {
     searchExchangeSchema,
     updateExchangeSchema,
 } from "../schemas/exchangeSchema";
+import { getUploadedPicturePath } from "../utils/files";
 
 export const getMyExchanges = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
@@ -52,16 +53,14 @@ export const createExchange = asyncHandler(
             rules,
         } = createExchangeSchema.parse(req.body);
 
-        const picture = req.file
-            ? `/uploads/exchangesPictures/${req.file.filename}`
-            : undefined;
+        const picture = getUploadedPicturePath(req.file, "exchangesPictures");
 
         const exchange = await createNewExchange(
             userId,
             title,
             "pending",
-            new Date(endDate),
-            new Date(startDate),
+            endDate,
+            startDate,
             description,
             picture,
             budget ?? undefined,
@@ -75,7 +74,7 @@ export const createExchange = asyncHandler(
 
 export const updateExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-        const { id } = req.params;
+        const { exchangeId } = req.params;
         const userId = req.user.id;
 
         const {
@@ -89,17 +88,15 @@ export const updateExchange = asyncHandler(
             rules,
         } = updateExchangeSchema.parse(req.body);
 
-        const picture = req.file
-            ? `/uploads/exchangesPictures/${req.file.filename}`
-            : undefined;
+        const picture = getUploadedPicturePath(req.file, "exchangesPictures");
 
         const updatedExchange = await updateExchangeById(
-            id,
+            exchangeId,
             userId,
             title,
             status,
-            new Date(endDate),
-            new Date(startDate),
+            endDate,
+            startDate,
             description,
             picture,
             budget ?? undefined,
@@ -115,14 +112,14 @@ export const updateExchange = asyncHandler(
 
 export const deleteExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
-        const { id } = req.params;
+        const { exchangeId } = req.params;
 
-        if (!id)
+        if (!exchangeId)
             return next(
                 new AppError("exchangeId manquant dans la requête", 400)
             );
 
-        await deleteExchangeById(id);
+        await deleteExchangeById(exchangeId);
         return sendSuccess(res, "Echange supprimé", {}, 200);
     }
 );
@@ -138,9 +135,9 @@ export const searchExchange = asyncHandler(async (req, res, next) => {
 export const getMyExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
-        const id = req.params.id;
+        const { exchangeId } = req.params;
 
-        const exchange = await getExchangeById(id, userId);
+        const exchange = await getExchangeById(exchangeId, userId);
 
         if (!exchange) return next(new NotFoundError("Echange non trouvée"));
 
@@ -155,11 +152,7 @@ export const respondToExchangeInvitation = asyncHandler(
         const userId = req.user.id;
         const { exchangeId } = req.params;
 
-        await respondToExchange(
-            userId,
-            exchangeId,
-            action as "accept" | "reject"
-        );
+        await respondToExchange(userId, exchangeId, action);
 
         sendSuccess(
             res,

@@ -1,11 +1,11 @@
 import bcrypt from "bcrypt";
 import User from "../models/User";
-import jwt, { SignOptions, Secret } from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { RegisterData } from "../schemas/authSchema";
 import axios from "axios";
 import {
-  sendUserActivationEmail,
-  sendUserPasswordResetEmail,
+    sendUserActivationEmail,
+    sendUserPasswordResetEmail,
 } from "./emailService";
 import PasswordResetToken from "../models/PasswordResetToken";
 import logger from "../utils/logger";
@@ -14,373 +14,433 @@ import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import config from "../config";
 import {
-  AuthError,
-  ConflictError,
-  NotFoundError,
+    AppError,
+    AuthError,
+    ConflictError,
+    NotFoundError,
 } from "../errors/CustomErrors";
 
 interface DecodedToken {
-  id: number;
-  iat?: number;
-  exp?: number;
-  pseudo: string;
-  birthDate: string;
+    id: number;
+    iat?: number;
+    exp?: number;
+    pseudo: string;
+    birthDate: string;
 }
 
 class ValidationError extends Error {
-  statusCode: number;
-  constructor(message: string) {
-    super(message);
-    this.statusCode = 400;
-  }
+    statusCode: number;
+    constructor(message: string) {
+        super(message);
+        this.statusCode = 400;
+    }
 }
 
 type LoginResponse =
-  | { token: string }
-  | { requires2FA: true; tempToken: string }
-  | { error: string };
+    | { token: string }
+    | { requires2FA: true; tempToken: string }
+    | { error: string };
+
+export function generateJWTForUser(user: User): string {
+    const payload = {
+        id: user.id,
+        email: user.email,
+    };
+
+    const options: SignOptions = {
+        expiresIn: "1h",
+        issuer: process.env.JWT_ISSUER,
+        audience: process.env.JWT_AUDIENCE,
+    };
+
+    return jwt.sign(payload, process.env.JWT_SECRET!, options);
+}
 
 export const createUser = async (data: RegisterData) => {
-  const { pseudo, birthDate, email, password, acceptedTerms, newsletter } =
-    data;
+    const { pseudo, birthDate, email, password, acceptedTerms, newsletter } =
+        data;
 
-  const birth = new Date(birthDate);
-  if (birth > new Date()) {
-    throw new ValidationError(
-      "La date de naissance ne peut pas être dans le futur."
-    );
-  }
-
-  if (!acceptedTerms) {
-    throw new ValidationError(
-      "Vous devez accepter les conditions générales d'utilisation."
-    );
-  }
-
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    throw new ConflictError("Cet email est déjà enregistré.");
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  if ((data as any).role && (data as any).role !== "user") {
-    throw new ValidationError(
-      "Vous ne pouvez pas définir un rôle personnalisé."
-    );
-  }
-
-  const user = await User.create({
-    email,
-    password: hashedPassword,
-    acceptedTerms,
-    newsletter,
-    role: "user",
-  });
-
-  const jwtOptions: SignOptions = {
-    expiresIn: "1h",
-    audience: config.jwtAudience,
-    issuer: config.jwtIssuer,
-  };
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email },
-    config.jwtSecret,
-    jwtOptions
-  );
-
-  const activationToken = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      pseudo,
-      birthDate: birth.toISOString(),
-    },
-    config.jwtSecret,
-    {
-      expiresIn: "24h",
+    const birth = new Date(birthDate);
+    if (birth > new Date()) {
+        throw new ValidationError(
+            "La date de naissance ne peut pas être dans le futur."
+        );
     }
-  );
 
-  try {
-    await sendUserActivationEmail(email, activationToken);
-  } catch (error) {
-    logger.error("Erreur envoi mail d'activation :", error);
-    throw new Error("Impossible d'envoyer le mail d'activation.");
-  }
+    if (!acceptedTerms) {
+        throw new ValidationError(
+            "Vous devez accepter les conditions générales d'utilisation."
+        );
+    }
 
-  return user;
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+        throw new ConflictError("Cet email est déjà enregistré.");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if ((data as any).role && (data as any).role !== "user") {
+        throw new ValidationError(
+            "Vous ne pouvez pas définir un rôle personnalisé."
+        );
+    }
+
+    const user = await User.create({
+        email,
+        password: hashedPassword,
+        acceptedTerms,
+        newsletter,
+        role: "user",
+    });
+
+    const jwtOptions: SignOptions = {
+        expiresIn: "1h",
+        audience: config.jwtAudience,
+        issuer: config.jwtIssuer,
+    };
+
+    const token = jwt.sign(
+        { id: user.id, email: user.email },
+        config.jwtSecret,
+        jwtOptions
+    );
+
+    const activationToken = jwt.sign(
+        {
+            id: user.id,
+            email: user.email,
+            pseudo,
+            birthDate: birth.toISOString(),
+        },
+        config.jwtSecret,
+        {
+            expiresIn: "24h",
+        }
+    );
+
+    try {
+        await sendUserActivationEmail(email, activationToken);
+    } catch (error) {
+        logger.error("Erreur envoi mail d'activation :", error);
+        throw new Error("Impossible d'envoyer le mail d'activation.");
+    }
+
+    return user;
 };
 
 export const authenticateUser = async (
-  email: string,
-  password: string
+    email: string,
+    password: string
 ): Promise<LoginResponse> => {
-  const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { email } });
 
-  if (!user) return { error: "Email ou mot de passe invalide." };
+    if (!user) return { error: "Email ou mot de passe invalide." };
 
-  if (!user.isActive)
-    return { error: "Compte non activé. Merci de vérifier votre email." };
+    if (!user.isActive)
+        return { error: "Compte non activé. Merci de vérifier votre email." };
 
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) return { error: "Email ou mot de passe invalide." };
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return { error: "Email ou mot de passe invalide." };
 
-  if (user.twoFactorEnabled) {
-    const tempToken = jwt.sign(
-      { id: user.id, email: user.email, twoFA: true },
-      config.jwtSecret,
-      { expiresIn: "5m" }
+    if (user.twoFactorEnabled) {
+        const tempToken = jwt.sign(
+            { id: user.id, email: user.email, twoFA: true },
+            config.jwtSecret,
+            { expiresIn: "5m" }
+        );
+
+        return { requires2FA: true, tempToken };
+    }
+
+    const token = jwt.sign(
+        { id: user.id, email: user.email },
+        config.jwtSecret,
+        {
+            expiresIn: "1h",
+            audience: config.jwtAudience,
+            issuer: config.jwtIssuer,
+        }
     );
 
-    return { requires2FA: true, tempToken };
-  }
-
-  const token = jwt.sign({ id: user.id, email: user.email }, config.jwtSecret, {
-    expiresIn: "1h",
-    audience: config.jwtAudience,
-    issuer: config.jwtIssuer,
-  });
-
-  return { token };
+    return { token };
 };
 
 export const setUserAsActive = async (token: string) => {
-  let decoded: DecodedToken;
+    let decoded: DecodedToken;
 
-  try {
-    decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
-  } catch (error: any) {
-    if (error.name === "TokenExpiredError") {
-      throw new ValidationError("Le token d'activation a expiré.");
+    try {
+        decoded = jwt.verify(token, config.jwtSecret) as DecodedToken;
+    } catch (error: any) {
+        if (error.name === "TokenExpiredError") {
+            throw new ValidationError("Le token d'activation a expiré.");
+        }
+        throw new ValidationError("Token d'activation invalide.");
     }
-    throw new ValidationError("Token d'activation invalide.");
-  }
 
-  const user = await User.findByPk(decoded.id);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
-  if (user.isActive) return "AlreadyActive";
+    const user = await User.findByPk(decoded.id);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    if (user.isActive) return "AlreadyActive";
 
-  user.isActive = true;
-  await user.save();
+    user.isActive = true;
+    await user.save();
 
-  try {
-    await axios.post(
-      `${config.apiUrls.USER_SERVICE}/create-profile`,
-      {
-        userId: user.id,
-        pseudo: decoded.pseudo,
-        birthDate: decoded.birthDate,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-  } catch (error) {
-    const err = error as any;
-    logger.error(
-      "Erreur création du profil utilisateur :",
-      err.response?.data || err.message || err
-    );
-    throw new Error("ProfileCreationFailed");
-  }
+    try {
+        await axios.post(
+            `${config.apiUrls.USER_SERVICE}/api/internal/users/create-profile`,
+            {
+                userId: user.id,
+                pseudo: decoded.pseudo,
+                birthDate: decoded.birthDate,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.INTERNAL_API_TOKEN}`,
+                },
+            }
+        );
+    } catch (error) {
+        const err = error as any;
+        logger.error(
+            "Erreur création du profil utilisateur :",
+            err.response?.data || err.message || err
+        );
+        throw new Error("ProfileCreationFailed");
+    }
 
-  return "Success";
+    return "Success";
 };
 
 export const sendPasswordResetEmail = async (user: User) => {
-  const token = crypto.randomBytes(32).toString("hex");
+    const token = crypto.randomBytes(32).toString("hex");
 
-  await PasswordResetToken.upsert({
-    userId: user.id,
-    token,
-    expiresAt: new Date(Date.now() + config.tokenExpirationMs),
-  });
+    await PasswordResetToken.upsert({
+        userId: user.id,
+        token,
+        expiresAt: new Date(Date.now() + config.tokenExpirationMs),
+    });
 
-  await sendUserPasswordResetEmail(user.email, token);
+    await sendUserPasswordResetEmail(user.email, token);
 };
 
 export const resetUserPassword = async (token: string, newPassword: string) => {
-  const tokenEntry = await PasswordResetToken.findOne({ where: { token } });
+    const tokenEntry = await PasswordResetToken.findOne({ where: { token } });
 
-  if (!tokenEntry)
-    throw new ValidationError("Token de réinitialisation invalide.");
+    if (!tokenEntry)
+        throw new ValidationError("Token de réinitialisation invalide.");
 
-  if (tokenEntry.expiresAt < new Date()) {
+    if (tokenEntry.expiresAt < new Date()) {
+        await PasswordResetToken.destroy({ where: { token } });
+        throw new ValidationError("Token de réinitialisation expiré.");
+    }
+
+    const user = await User.findByPk(tokenEntry.userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
     await PasswordResetToken.destroy({ where: { token } });
-    throw new ValidationError("Token de réinitialisation expiré.");
-  }
-
-  const user = await User.findByPk(tokenEntry.userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  user.password = hashedPassword;
-  await user.save();
-
-  await PasswordResetToken.destroy({ where: { token } });
 };
 
 export const generate2FASecret = async (userId: number) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  const secret = speakeasy.generateSecret({
-    name: `WeGift (${user.email})`,
-  });
+    const secret = speakeasy.generateSecret({
+        name: `WeGift (${user.email})`,
+    });
 
-  user.twoFactorSecret = secret.base32;
-  await user.save();
+    user.twoFactorSecret = secret.base32;
+    await user.save();
 
-  if (!secret.otpauth_url) {
-    throw new Error("L'URL otpauth est manquante");
-  }
+    if (!secret.otpauth_url) {
+        throw new Error("L'URL otpauth est manquante");
+    }
 
-  const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
+    const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url);
 
-  return {
-    qrCodeDataURL,
-    otpauthUrl: secret.otpauth_url,
-    secret: secret.base32,
-  };
+    return {
+        qrCodeDataURL,
+        otpauthUrl: secret.otpauth_url,
+        secret: secret.base32,
+    };
 };
 
 export const activate2FA = async (
-  userId: number,
-  code: string
+    userId: number,
+    code: string
 ): Promise<boolean> => {
-  const user = await User.findByPk(userId);
-  if (!user || !user.twoFactorSecret)
-    throw new NotFoundError("Utilisateur ou secret 2FA introuvable.");
+    const user = await User.findByPk(userId);
+    if (!user || !user.twoFactorSecret)
+        throw new NotFoundError("Utilisateur ou secret 2FA introuvable.");
 
-  const verified = speakeasy.totp.verify({
-    secret: user.twoFactorSecret,
-    encoding: "base32",
-    token: code,
-    window: 1,
-  });
+    const verified = speakeasy.totp.verify({
+        secret: user.twoFactorSecret,
+        encoding: "base32",
+        token: code,
+        window: 1,
+    });
 
-  if (verified && !user.twoFactorEnabled) {
-    user.twoFactorEnabled = true;
-    await user.save();
-  }
+    if (verified && !user.twoFactorEnabled) {
+        user.twoFactorEnabled = true;
+        await user.save();
+    }
 
-  return verified;
+    return verified;
 };
 
 export const validate2FACode = async (userId: number, code: string) => {
-  if (!code) throw new ValidationError("Code 2FA manquant.");
+    if (!code) throw new ValidationError("Code 2FA manquant.");
 
-  const isValid = await activate2FA(userId, code);
-  if (!isValid) throw new ValidationError("Code 2FA invalide.");
+    const isValid = await activate2FA(userId, code);
+    if (!isValid) throw new ValidationError("Code 2FA invalide.");
 
-  const token = jwt.sign({ id: userId }, config.jwtSecret, {
-    expiresIn: "1h",
-    audience: config.jwtAudience,
-    issuer: config.jwtIssuer,
-  });
+    const token = jwt.sign({ id: userId }, config.jwtSecret, {
+        expiresIn: "1h",
+        audience: config.jwtAudience,
+        issuer: config.jwtIssuer,
+    });
 
-  return token;
+    return token;
 };
 
 export const deactivate2FA = async (userId: number) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  user.twoFactorEnabled = false;
-  user.twoFactorSecret = null;
-  await user.save();
-  return;
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = null;
+    await user.save();
+    return;
 };
 
 export const fetchUserAccount = async (userId: number) => {
-  const user = await User.findOne({
-    where: { id: userId },
-    attributes: [
-      "id",
-      "email",
-      "acceptedTerms",
-      "newsletter",
-      "twoFactorEnabled",
-    ],
-  });
+    const user = await User.findOne({
+        where: { id: userId },
+        attributes: [
+            "id",
+            "email",
+            "acceptedTerms",
+            "newsletter",
+            "twoFactorEnabled",
+            "googleId",
+        ],
+    });
 
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  return user;
+    return user;
 };
 
 export const changeUserEmail = async (
-  userId: number,
-  currentPassword: string,
-  newEmail: string
+    userId: number,
+    currentPassword: string,
+    newEmail: string
 ) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  if (user.email === newEmail) {
-    throw new ValidationError("Le nouvel email est identique à l'actuel.");
-  }
+    if (user.email === newEmail) {
+        throw new ValidationError("Le nouvel email est identique à l'actuel.");
+    }
 
-  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-  if (!isPasswordValid) throw new ValidationError("Mot de passe incorrect.");
+    const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+    if (!isPasswordValid) throw new ValidationError("Mot de passe incorrect.");
 
-  const emailInUse = await User.findOne({ where: { email: newEmail } });
-  if (emailInUse) throw new ConflictError("Email déjà utilisé.");
+    const emailInUse = await User.findOne({ where: { email: newEmail } });
+    if (emailInUse) throw new ConflictError("Email déjà utilisé.");
 
-  user.email = newEmail;
-  user.isActive = false;
+    user.email = newEmail;
+    user.isActive = false;
 
-  await user.save();
+    await user.save();
 
-  const activationToken = jwt.sign(
-    { id: user.id, email: user.email },
-    config.jwtSecret,
-    { expiresIn: "24h" }
-  );
+    const activationToken = jwt.sign(
+        { id: user.id, email: user.email },
+        config.jwtSecret,
+        { expiresIn: "24h" }
+    );
 
-  await sendUserActivationEmail(newEmail, activationToken);
+    await sendUserActivationEmail(newEmail, activationToken);
 };
 
 export const changeUserPassword = async (
-  userId: number,
-  currentPassword: string,
-  newPassword: string
+    userId: number,
+    currentPassword: string,
+    newPassword: string
 ) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
-  if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
+    const isPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+    );
+    if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
 
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-  user.password = hashedPassword;
+    user.password = hashedPassword;
 
-  await user.save();
+    await user.save();
 };
 
 export const changeNewsletterSubscription = async (
-  userId: number,
-  newsletter: boolean
+    userId: number,
+    newsletter: boolean
 ) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  user.newsletter = newsletter;
+    user.newsletter = newsletter;
 
-  await user.save();
+    await user.save();
 };
 
 export const removeUser = async (userId: number, password: string) => {
-  const user = await User.findByPk(userId);
-  if (!user) throw new NotFoundError("Utilisateur non trouvé.");
+    const user = await User.findByPk(userId);
+    if (!user) throw new NotFoundError("Utilisateur non trouvé.");
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) throw new AuthError("Mot de passe incorrect");
 
-  await user.destroy();
+    await user.destroy();
+};
+
+export const unlinkGoogle = async (user: User) => {
+    if (!user.password || user.password.length < 20) {
+        throw new AppError(
+            "Vous devez d'abord définir un mot de passe avant de dissocier Google."
+        );
+    }
+
+    user.googleId = null;
+    await user.save();
+};
+
+export const createPasswordService = async (
+    userId: string,
+    password: string
+) => {
+    const user = await User.findByPk(userId);
+
+    if (!user) {
+        throw new NotFoundError("Utilisateur introuvable");
+    }
+
+    if (user.password) {
+        throw new ValidationError(
+            "Un mot de passe existe déjà pour ce compte."
+        );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+
+    await user.save();
 };

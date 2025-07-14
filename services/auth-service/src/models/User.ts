@@ -11,6 +11,7 @@ class User extends Model {
     public isActive!: boolean;
     public twoFactorEnabled!: boolean;
     public twoFactorSecret!: string | null;
+    public googleId!: string | null;
 }
 
 User.init(
@@ -54,6 +55,11 @@ User.init(
         twoFactorSecret: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        googleId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
         },
     },
     {

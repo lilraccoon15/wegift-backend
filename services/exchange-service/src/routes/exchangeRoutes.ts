@@ -1,4 +1,9 @@
 import { Router } from "express";
+
+import verifyTokenMiddleware from "../middlewares/verifyTokenMiddleware";
+import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
+import { upload } from "../middlewares/upload";
+
 import {
     createExchange,
     deleteExchange,
@@ -10,68 +15,39 @@ import {
     searchExchange,
     updateExchange,
 } from "../controllers/exchangeController";
-import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
-import verifyTokenMiddleware from "../middlewares/verifyTokenMiddleware";
-import { upload } from "../middlewares/upload";
 
 const router = Router();
+const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-router.get(
-    "/my-exchanges",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    getMyExchanges
-);
+// === Récupération / affichage ===
+router.get("/my-exchanges", ...requireAuth, getMyExchanges);
+router.get("/get-rules", ...requireAuth, getExchangeRules);
+router.get("/my-exchange/:id", ...requireAuth, getMyExchange);
+router.get("/search", ...requireAuth, searchExchange);
 
-router.get(
-    "/get-rules",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    getExchangeRules
-);
+// === Création / modification ===
 router.post(
     "/create-exchange",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
+    ...requireAuth,
     upload.single("picture"),
     createExchange
 );
-router.get(
-    "/my-exchange/:id",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    getMyExchange
-);
 router.put(
     "/update-exchange/:id",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
+    ...requireAuth,
     upload.single("picture"),
     updateExchange
 );
 
-router.delete(
-    "/delete-exchange/:id",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    deleteExchange
-);
+// === Suppression ===
+router.delete("/delete-exchange/:id", ...requireAuth, deleteExchange);
 
-router.get(
-    "/search",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
-    searchExchange
-);
-
+// === Invitations / tirage au sort ===
 router.patch(
     "/exchange/:requesterId/respond",
-    verifyTokenMiddleware,
-    ensureAuthenticated,
+    ...requireAuth,
     respondToExchangeInvitation
 );
-
-router.post("/draw/:exchangeId", verifyTokenMiddleware, ensureAuthenticated, drawExchange);
-
+router.post("/draw/:exchangeId", ...requireAuth, drawExchange);
 
 export default router;

@@ -12,7 +12,7 @@ import {
     modifyWishlistById,
     modifyWishById,
     getAllUserWishlists,
-    getWishlistById,
+    getMyWishlistById,
     getWishesByWishlistId,
     findWishById,
     getAllMyWishlists,
@@ -20,6 +20,10 @@ import {
     leaveWishlistAsCollaborator,
     subscribeToWishlistService,
     unsubscribeFromWishlistService,
+    getWishlistById,
+    getMyWishesByWishlistId,
+    findMyWishById,
+    canAccessWishlist,
 } from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
@@ -38,12 +42,13 @@ import {
     updateWishlistSchema,
     updateWishSchema,
 } from "../schemas/wishlistSchema";
-import Collaborators from "../models/Collaborators";
-import { Op } from "sequelize";
+import { deleteFileIfExists } from "../utils/files";
 
 export const getMyWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.id;
+        if (!userId)
+            return next(new ValidationError("ID utilisateur manquant"));
 
         const wishlists = await getAllMyWishlists(userId);
 
@@ -92,7 +97,19 @@ export const getMyWishlist = asyncHandler(
         const userId = req.user.id;
         const id = req.params.id;
 
-        const wishlist = await getWishlistById(id, userId);
+        const wishlist = await getMyWishlistById(id, userId);
+
+        if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
+
+        sendSuccess(res, "Wishlist trouvée", { wishlist });
+    }
+);
+
+export const getWishlist = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const id = req.params.id;
+
+        const wishlist = await getWishlistById(id);
 
         if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
@@ -105,26 +122,27 @@ export const getMyWishesFromWishlist = asyncHandler(
         const userId = req.user.id;
         const { wishlistId } = getWishesSchema.parse(req.query);
 
-        const wishlist = await Wishlist.findOne({
-            where: {
-                id: wishlistId,
-                [Op.or]: [
-                    { userId: req.user.id },
-                    { "$collaborators.userId$": req.user.id },
-                ],
-            },
-            include: [
-                { model: Collaborators, as: "collaborators", attributes: [] },
-            ],
-        });
+        const wishlist = await canAccessWishlist(userId, wishlistId);
 
-        if (!wishlist) {
-            return next(
-                new AuthError("Vous n'avez pas accès à cette wishlist.")
-            );
-        }
+        if (!wishlist)
+            return next(new AuthError("Accès interdit à cette wishlist."));
 
-        const wishes = await getWishesByWishlistId(wishlistId, userId);
+        const wishes = await getMyWishesByWishlistId(wishlistId, userId);
+
+        sendSuccess(res, "Souhaits trouvés", { wishes: wishes || [] }, 200);
+    }
+);
+
+export const getWishesFromWishlist = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const { wishlistId } = getWishesSchema.parse(req.query);
+
+        const wishlist = await canAccessWishlist(req.user.id, wishlistId);
+
+        if (!wishlist)
+            return next(new AuthError("Accès interdit à cette wishlist."));
+
+        const wishes = await getWishesByWishlistId(wishlistId);
 
         sendSuccess(res, "Souhaits trouvés", { wishes: wishes || [] }, 200);
     }
@@ -153,12 +171,9 @@ export const updateWishlist = asyncHandler(
 
         if (file) {
             let picture = wishlist.picture;
-
             if (picture) {
                 const oldPath = path.join(__dirname, "../../public", picture);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                }
+                deleteFileIfExists(oldPath);
             }
         }
 
@@ -209,18 +224,7 @@ export const createWish = asyncHandler(
         const { title, wishlistId, description, price, link } =
             createWishSchema.parse(req.body);
 
-        const wishlist = await Wishlist.findOne({
-            where: {
-                id: wishlistId,
-                [Op.or]: [
-                    { userId: req.user.id },
-                    { "$collaborators.userId$": req.user.id },
-                ],
-            },
-            include: [
-                { model: Collaborators, as: "collaborators", attributes: [] },
-            ],
-        });
+        const wishlist = await canAccessWishlist(req.user.id, wishlistId);
 
         if (!wishlist)
             return next(new AuthError("Accès interdit à cette wishlist."));
@@ -247,28 +251,19 @@ export const getMyWish = asyncHandler(
         const id = req.params.id;
         const userId = req.user.id;
 
-        const wish = await Wish.findByPk(id);
+        const wish = await findMyWishById(id, userId);
         if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
-        const wishlist = await Wishlist.findOne({
-            where: {
-                id: wish.wishlistId,
-                [Op.or]: [
-                    { userId: req.user.id },
-                    { "$collaborators.userId$": req.user.id },
-                ],
-            },
-            include: [
-                { model: Collaborators, as: "collaborators", attributes: [] },
-            ],
-        });
+        sendSuccess(res, "Wish trouvé", { wish });
+    }
+);
 
-        if (!wishlist)
-            return next(
-                new AuthError(
-                    "Vous n'avez pas le droit de consulter ce souhait."
-                )
-            );
+export const getWish = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const id = req.params.id;
+
+        const wish = await findWishById(id);
+        if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
         sendSuccess(res, "Wish trouvé", { wish });
     }
@@ -287,25 +282,10 @@ export const updateWish = asyncHandler(
         const wish = await Wish.findByPk(id);
         if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
-        const wishlist = await Wishlist.findOne({
-            where: {
-                id: wish.wishlistId,
-                [Op.or]: [
-                    { userId: req.user.id },
-                    { "$collaborators.userId$": req.user.id },
-                ],
-            },
-            include: [
-                { model: Collaborators, as: "collaborators", attributes: [] },
-            ],
-        });
+        const wishlist = await canAccessWishlist(req.user.id, wish.wishlistId);
 
         if (!wishlist)
-            return next(
-                new AuthError(
-                    "Vous n'avez pas le droit de modifier ce souhait."
-                )
-            );
+            return next(new AuthError("Accès interdit à cette wishlist."));
 
         if (file) {
             let picture = wish.picture;
@@ -344,25 +324,10 @@ export const deleteWish = asyncHandler(
         const wish = await Wish.findByPk(id);
         if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
-        const wishlist = await Wishlist.findOne({
-            where: {
-                id: wish.wishlistId,
-                [Op.or]: [
-                    { userId: req.user.id },
-                    { "$collaborators.userId$": req.user.id },
-                ],
-            },
-            include: [
-                { model: Collaborators, as: "collaborators", attributes: [] },
-            ],
-        });
+        const wishlist = await canAccessWishlist(req.user.id, wish.wishlistId);
 
         if (!wishlist)
-            return next(
-                new AuthError(
-                    "Vous n'avez pas le droit de supprimer ce souhait."
-                )
-            );
+            return next(new AuthError("Accès interdit à cette wishlist."));
 
         await deleteWishById(id);
         return sendSuccess(res, "Souhait supprimé", {}, 200);
