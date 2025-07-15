@@ -229,7 +229,7 @@ export const getFriendList = asyncHandler(
         const { userId } = userIdParamSchema.parse(req.params);
 
         const profileId = await UserProfile.findOne({
-            where: { userId: userId },
+            where: { id: userId },
         });
 
         if (!profileId) return next(new AppError("Profil non trouvé", 404));
