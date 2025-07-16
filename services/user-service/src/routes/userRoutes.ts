@@ -5,18 +5,19 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { upload } from "../middlewares/upload";
 
 import {
-    getMyProfile,
-    updateUserProfile,
-    deleteUserProfile,
-    getUserProfileById,
-    checkPseudoAvailability,
-    searchUser,
-    getFriendshipStatus,
-    sendFriendRequest,
-    respondToFriendRequest,
-    getMyFriendList,
-    getFriendList,
-    deleteFriend,
+  getMyProfile,
+  updateUserProfile,
+  deleteUserProfile,
+  getUserProfileById,
+  checkPseudoAvailability,
+  searchUser,
+  getFriendshipStatus,
+  sendFriendRequest,
+  respondToFriendRequest,
+  getMyFriendList,
+  getFriendList,
+  deleteFriend,
+  updateProfileVisibility,
 } from "../controllers/userController";
 
 const router = Router();
@@ -25,16 +26,17 @@ const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 // === Profil utilisateur ===
 router.get("/my-profile", ...requireAuth, getMyProfile);
 router.put(
-    "/update-profile",
-    ...requireAuth,
-    upload.single("picture"),
-    updateUserProfile
+  "/update-profile",
+  ...requireAuth,
+  upload.single("picture"),
+  updateUserProfile
 );
+router.patch("/update-visibility", ...requireAuth, updateProfileVisibility);
 router.delete(
-    "/delete-profile",
-    ...requireAuth,
-    upload.single("picture"),
-    deleteUserProfile
+  "/delete-profile",
+  ...requireAuth,
+  upload.single("picture"),
+  deleteUserProfile
 );
 router.get("/profile/:userId", ...requireAuth, getUserProfileById);
 router.get("/check-pseudo", checkPseudoAvailability);
@@ -44,9 +46,9 @@ router.get("/search", ...requireAuth, searchUser);
 router.get("/friendship-status", ...requireAuth, getFriendshipStatus);
 router.post("/ask-friend", ...requireAuth, sendFriendRequest);
 router.patch(
-    "/friends/:requesterId/respond",
-    ...requireAuth,
-    respondToFriendRequest
+  "/friends/:requesterId/respond",
+  ...requireAuth,
+  respondToFriendRequest
 );
 router.get("/my-friends", ...requireAuth, getMyFriendList);
 router.get("/friends/:userId", ...requireAuth, getFriendList);
