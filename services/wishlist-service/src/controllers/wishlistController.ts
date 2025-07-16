@@ -334,15 +334,41 @@ export const deleteWish = asyncHandler(
     }
 );
 
-export const searchProduct = asyncHandler(async (req, res, next) => {
-    const query = req.query.q as string;
+export const scrapAndCreateWish = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const { url, wishlistId } = req.body;
+        const userId = req.user.id;
 
-    if (!query) return next(new AppError("Paramètre 'q' manquant", 400));
+        if (!url || !wishlistId) {
+            return next(new ValidationError("Champs manquants."));
+        }
 
-    const results = await findProductsByQuery(query);
+        const wishlist = await canAccessWishlist(userId, wishlistId);
+        if (!wishlist) {
+            return next(new AuthError("Accès refusé à cette wishlist."));
+        }
 
-    return sendSuccess(res, "Résultats de recherche", { results }, 200);
-});
+        const results = await findProductsByQuery(url, wishlistId);
+        if (!results.length) {
+            return next(
+                new NotFoundError("Aucun résultat trouvé pour cette URL.")
+            );
+        }
+
+        const bestResult = results[0];
+
+        const wish = await addNewWishToWishlist(
+            bestResult.title,
+            wishlistId,
+            bestResult.snippet,
+            bestResult.price ?? undefined,
+            bestResult.link,
+            bestResult.image ?? undefined
+        );
+
+        return sendSuccess(res, "Souhait créé automatiquement", { wish }, 201);
+    }
+);
 
 export const searchWishlist = asyncHandler(async (req, res, next) => {
     const { query } = searchWishlistSchema.parse(req.query);

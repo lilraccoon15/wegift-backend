@@ -14,6 +14,8 @@ interface SearchResult {
     title: string;
     link: string;
     snippet: string;
+    image?: string | null;
+    price?: number | null;
 }
 
 export async function canAccessWishlist(userId: string, wishlistId: string) {
@@ -161,7 +163,7 @@ export const getMyWishesByWishlistId = async (
 
     const wishes = await Wish.findAll({
         where: { wishlistId },
-        attributes: ["id", "title"],
+        attributes: ["id", "title", "picture"],
     });
     return wishes;
 };
@@ -358,7 +360,8 @@ export const deleteWishById = async (id: string) => {
 };
 
 export async function findProductsByQuery(
-    query: string
+    url: string,
+    wishlistId: string
 ): Promise<SearchResult[]> {
     const apiKey = config.googleApiKey;
     const cx = config.googleCseId;
@@ -367,12 +370,12 @@ export async function findProductsByQuery(
         throw new Error("Clé API Google ou ID moteur de recherche manquant.");
     }
 
-    const url = `https://www.googleapis.com/customsearch/v1`;
+    const api = `https://www.googleapis.com/customsearch/v1`;
 
     try {
-        const response = await axios.get(url, {
+        const response = await axios.get(api, {
             params: {
-                q: query,
+                q: url,
                 key: apiKey,
                 cx,
             },
@@ -380,11 +383,23 @@ export async function findProductsByQuery(
 
         if (!response.data.items) return [];
 
-        return response.data.items.map((item: any) => ({
-            title: item.title,
-            link: item.link,
-            snippet: item.snippet,
-        }));
+        return response.data.items.map((item: any) => {
+            const image = item.pagemap?.cse_image?.[0]?.src ?? null;
+
+            const priceMatch =
+                item.snippet?.match(/(\d+)[\s]*€/) ||
+                item.snippet?.match(/€[\s]*(\d+)/);
+
+            const price = priceMatch ? parseInt(priceMatch[1], 10) : null;
+
+            return {
+                title: item.title,
+                link: item.link,
+                snippet: item.snippet,
+                image,
+                price,
+            };
+        });
     } catch (error) {
         console.error("Erreur lors de la recherche Google:", error);
         throw error;

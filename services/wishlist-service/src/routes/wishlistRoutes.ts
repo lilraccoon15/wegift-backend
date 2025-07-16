@@ -19,10 +19,10 @@ import {
     getWishesFromWishlist,
     updateWish,
     updateWishlist,
-    searchProduct,
     searchWishlist,
     subscribeToWishlist,
     unsubscribeFromWishlist,
+    scrapAndCreateWish,
 } from "../controllers/wishlistController";
 
 const router = Router();
@@ -56,6 +56,7 @@ router.post(
     upload.single("picture"),
     createWish
 );
+router.post("/scrap-wish", ...requireAuth, scrapAndCreateWish);
 router.get("/my-wish/:id", ...requireAuth, getMyWish);
 router.get("/wish/:id", ...requireAuth, getWish);
 router.put(
@@ -67,7 +68,6 @@ router.put(
 router.delete("/delete-wish/:id", ...requireAuth, deleteWish);
 
 // === Recherche ===
-router.get("/search-product", ...requireAuth, searchProduct);
 router.get("/search", ...requireAuth, searchWishlist);
 
 // === Souscriptions aux wishlists ===
