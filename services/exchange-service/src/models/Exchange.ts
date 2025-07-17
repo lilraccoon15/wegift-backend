@@ -1,6 +1,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../config/database";
 import Rules from "./Rules";
+import Participants from "./Participants";
 
 class Exchange extends Model {
     public id!: string;
@@ -12,7 +13,11 @@ class Exchange extends Model {
     public startDate!: Date;
     public endDate!: Date;
     public budget!: Number;
+
     public setRules!: (rules: string[] | Rules[]) => Promise<void>;
+
+    public participants?: Participants[];
+    public rules?: Rules[];
 }
 
 Exchange.init(

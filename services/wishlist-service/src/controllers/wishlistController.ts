@@ -24,6 +24,7 @@ import {
   getMyWishesByWishlistId,
   findMyWishById,
   canAccessWishlist,
+  deleteWishlistsByUserId,
 } from "../services/wishlistService";
 import path from "path";
 import fs from "fs";
@@ -416,4 +417,16 @@ export const unsubscribeFromWishlist = asyncHandler(
 
     return sendSuccess(res, "Désabonnement effectué avec succès", {}, 200);
   }
+);
+
+export const deleteUserWishlists = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const { userId } = req.body;
+
+        if (!userId)
+            return next(new ValidationError("L'ID utilisateur est requis."));
+
+        await deleteWishlistsByUserId(userId);
+        return sendSuccess(res, "Liste supprimée", {}, 200);
+    }
 );

@@ -6,7 +6,9 @@ export const internalAuthMiddleware = (
     res: Response,
     next: NextFunction
 ) => {
-    const internalToken = req.headers.authorization?.replace("Bearer ", "");
+    const internalToken =
+        req.headers["x-internal-token"] ||
+        req.headers.authorization?.replace("Bearer ", "");
 
     if (internalToken !== process.env.INTERNAL_API_TOKEN) {
         return next(new AuthError("Accès interdit à la route interne"));

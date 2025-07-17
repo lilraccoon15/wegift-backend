@@ -32,12 +32,7 @@ router.put(
   updateUserProfile
 );
 router.patch("/update-visibility", ...requireAuth, updateProfileVisibility);
-router.delete(
-  "/delete-profile",
-  ...requireAuth,
-  upload.single("picture"),
-  deleteUserProfile
-);
+
 router.get("/profile/:userId", ...requireAuth, getUserProfileById);
 router.get("/check-pseudo", checkPseudoAvailability);
 router.get("/search", ...requireAuth, searchUser);
