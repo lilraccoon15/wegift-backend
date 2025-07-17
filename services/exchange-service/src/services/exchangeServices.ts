@@ -87,6 +87,8 @@ export const createNewExchange = async (
     }));
 
     await Participants.bulkCreate(participantsData);
+
+    // TODO : notifier les participants
   }
 
   if (ruleIds.length > 0) {
@@ -150,6 +152,7 @@ export const updateExchangeById = async (
     }));
 
     await Participants.bulkCreate(newParticipants);
+    // TODO : notififer les nouveaux participants
   }
 
   if (ruleIds.length > 0) {
@@ -269,6 +272,8 @@ export const respondToExchange = async (
     await participant.destroy();
   }
 
+  // TODO : notifier de la réponse ?
+
   return participant;
 };
 
@@ -369,4 +374,5 @@ export const drawExchangeService = async (
   }
 
   await Assigned.bulkCreate(assignments);
+  // TODO : notifier les assignations
 };

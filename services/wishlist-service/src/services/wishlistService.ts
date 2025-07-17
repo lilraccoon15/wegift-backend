@@ -316,6 +316,8 @@ export const addNewWishToWishlist = async (
   });
 
   return wish;
+
+  // TODO : notifier les abonnés à la wishlist
 };
 
 export const modifyWishById = async (
@@ -497,6 +499,8 @@ export const subscribeToWishlistService = async (
   const newCollab = await Subscriber.create({ userId, wishlistId });
 
   return newCollab;
+
+  // TODO : notifier un nouvel abonnement
 };
 
 export const unsubscribeFromWishlistService = async (

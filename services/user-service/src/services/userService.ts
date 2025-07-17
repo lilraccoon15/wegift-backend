@@ -166,7 +166,7 @@ export async function createFriendshipRequest(
 
   try {
     await axios.post(
-      `${config.apiUrls.NOTIFICATION_SERVICE}/send-notification`,
+      `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
       {
         userId: addresseeId,
         type: "friendship",
@@ -320,4 +320,6 @@ export const respondToFriendRequestService = async (
 
   await friendship.save();
   return friendship;
+
+  // TODO : notifier l'acceptation d'amitié
 };

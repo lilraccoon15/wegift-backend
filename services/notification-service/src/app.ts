@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import notificationRoutes from "./routes/notificationRoutes";
 import errorHandler from "./middlewares/errorHandler";
 import setupAssociations from "./models/setupAssociations";
+import internalRoutes from "./routes/internalRoutes";
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 
+app.use("/api/internal/users", internalRoutes);
 app.use("/", notificationRoutes);
 
 app.use(errorHandler);
