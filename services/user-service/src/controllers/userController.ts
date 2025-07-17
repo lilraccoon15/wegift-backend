@@ -12,6 +12,7 @@ import {
   removeFriendship,
   respondToFriendRequestService,
   fetchMyProfile,
+  fetchUserProfileByAuthId,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
@@ -40,7 +41,8 @@ import { getUploadFolderPath } from "../utils/files";
 
 export const getMyProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
+
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const profile = await fetchMyProfile(userId);
@@ -61,7 +63,7 @@ export const createUserProfile = asyncHandler(
       isPublic,
     } = createProfileSchema.parse(req.body);
 
-    const userId = bodyUserId || req.user?.id;
+    const userId = bodyUserId || req.user?.userId;
 
     if (!userId) throw new ValidationError("userId manquant");
 
@@ -86,9 +88,23 @@ export const checkPseudoAvailability = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const getUserProfileByAuthId = asyncHandler(async (req, res, next) => {
+  const { authId } = req.params;
+
+  const user = await fetchUserProfileByAuthId(authId);
+
+  if (!user) {
+    return next(
+      new NotFoundError("Aucun profil associé à cet ID d’authentification.")
+    );
+  }
+
+  sendSuccess(res, "Profil trouvé", { profile: user }, 200);
+});
+
 export const updateUserProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const { pseudo, birthDate, description, picture } =
@@ -131,7 +147,7 @@ export const updateUserProfile = asyncHandler(
 
 export const deleteUserProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     await removeUserProfileByUserId(userId);
@@ -174,7 +190,7 @@ export const getFriendshipStatus = asyncHandler(
 
 export const sendFriendRequest = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const requesterUserId = req.user.id;
+    const requesterUserId = req.user.userId;
     const { addresseeId } = friendRequestSchema.parse(req.body);
     const token = req.cookies.token;
 
@@ -202,11 +218,11 @@ export const sendFriendRequest = asyncHandler(
 
 export const getMyFriendList = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user?.id;
+    const userId = req.user?.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const profileId = await UserProfile.findOne({
-      where: { userId: userId },
+      where: { id: userId },
     });
 
     if (!profileId) return next(new AppError("Profil non trouvé", 404));
@@ -239,17 +255,21 @@ export const getFriendList = asyncHandler(
   }
 );
 
-export const searchUser = asyncHandler(async (req, res, next) => {
-  const { query } = userSearchQuerySchema.parse(req.query);
+export const searchUser = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { query } = userSearchQuerySchema.parse(req.query);
 
-  const results = await searchUserByPseudo(query);
+    const userId = req.user.userId;
 
-  return sendSuccess(res, "Résultats trouvés", { users: results });
-});
+    const results = await searchUserByPseudo(query, userId);
+
+    return sendSuccess(res, "Résultats trouvés", { users: results });
+  }
+);
 
 export const deleteFriend = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const { friendId } = friendIdParamSchema.parse(req.params);
@@ -262,7 +282,7 @@ export const deleteFriend = asyncHandler(
 
 export const respondToFriendRequest = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const { requesterId } = requesterIdParamSchema.parse(req.params);
@@ -281,10 +301,10 @@ export const respondToFriendRequest = asyncHandler(
 
 export const updateProfileVisibility = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     const { isPublic } = req.body;
 
-    const profile = await UserProfile.findOne({ where: { userId } });
+    const profile = await UserProfile.findOne({ where: { id: userId } });
     if (!profile) throw new NotFoundError("Profil introuvable.");
 
     profile.isPublic = isPublic;

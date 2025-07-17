@@ -19,7 +19,7 @@ export const insertUserProfile = async (
   picture?: string | null,
   isPublic?: boolean
 ) => {
-  const existingProfile = await UserProfile.findOne({ where: { userId } });
+  const existingProfile = await UserProfile.findOne({ where: { id: userId } });
   if (existingProfile)
     throw new ConflictError("Un profil existe déjà pour cet utilisateur.");
 
@@ -34,9 +34,15 @@ export const insertUserProfile = async (
   return profile;
 };
 
+export const fetchUserProfileByAuthId = async (authId: string) => {
+  return await UserProfile.findOne({
+    where: { userId: authId },
+  });
+};
+
 export const fetchMyProfile = async (userId: string) => {
   const profile = await UserProfile.findOne({
-    where: { userId },
+    where: { id: userId },
     attributes: [
       "id",
       "pseudo",
@@ -68,7 +74,7 @@ export const updateProfileDetails = async (
   picture?: string,
   description?: string
 ) => {
-  const profile = await UserProfile.findOne({ where: { userId } });
+  const profile = await UserProfile.findOne({ where: { id: userId } });
 
   if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
@@ -83,7 +89,7 @@ export const updateProfileDetails = async (
 };
 
 export const removeUserProfileByUserId = async (userId: string) => {
-  const profile = await UserProfile.findOne({ where: { userId } });
+  const profile = await UserProfile.findOne({ where: { id: userId } });
 
   if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
@@ -224,13 +230,46 @@ export async function fetchFriendsByProfileId(
   return friendProfiles;
 }
 
-export const searchUserByPseudo = async (query: string) => {
+export const searchUserByPseudo = async (query: string, userId: string) => {
   const searchTerm = query.toLowerCase();
 
   const results = await UserProfile.findAll({
-    where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
-      [Op.like]: `%${searchTerm}%`,
-    }),
+    where: {
+      [Op.and]: [
+        Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
+          [Op.like]: `%${searchTerm}%`,
+        }),
+        {
+          [Op.or]: [
+            { isPublic: true },
+            { "$sentFriendships.status$": "accepted" },
+            { "$receivedFriendships.status$": "accepted" },
+          ],
+        },
+      ],
+    },
+    include: [
+      {
+        model: Friendship,
+        as: "sentFriendships",
+        required: false,
+        where: {
+          requesterId: userId,
+          status: "accepted",
+        },
+        attributes: [],
+      },
+      {
+        model: Friendship,
+        as: "receivedFriendships",
+        required: false,
+        where: {
+          addresseeId: userId,
+          status: "accepted",
+        },
+        attributes: [],
+      },
+    ],
   });
 
   return results;

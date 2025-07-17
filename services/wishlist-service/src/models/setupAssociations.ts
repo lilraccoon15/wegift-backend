@@ -1,26 +1,33 @@
 import Wishlist from "./Wishlist";
 import Wish from "./Wish";
 import Collaborators from "./Collaborators";
+import Subscriber from "./Subscribers";
 
 export default function setupAssociations() {
-    Wishlist.hasMany(Wish, {
-        foreignKey: "wishlistId",
-        as: "wishes",
-    });
+  Wishlist.hasMany(Wish, {
+    foreignKey: "wishlistId",
+    as: "wishes",
+  });
 
-    Wish.belongsTo(Wishlist, {
-        foreignKey: "wishlistId",
-        as: "wishlist",
-    });
+  Wish.belongsTo(Wishlist, {
+    foreignKey: "wishlistId",
+    as: "wishlist",
+  });
 
-    Wishlist.hasMany(Collaborators, {
-        foreignKey: "wishlistId",
-        as: "collaborators",
-    });
-    Collaborators.belongsTo(Wishlist, {
-        foreignKey: "wishlistId",
-        as: "wishlist",
-    });
+  Wishlist.hasMany(Collaborators, {
+    foreignKey: "wishlistId",
+    as: "collaborators",
+  });
+  Collaborators.belongsTo(Wishlist, {
+    foreignKey: "wishlistId",
+    as: "wishlist",
+  });
+
+  Wishlist.hasMany(Subscriber, {
+    foreignKey: "wishlistId",
+    as: "subscribers",
+  });
+  Subscriber.belongsTo(Wishlist, { foreignKey: "wishlistId" });
 }
 
-export { Wishlist, Wish };
+export { Wishlist, Wish, Subscriber };

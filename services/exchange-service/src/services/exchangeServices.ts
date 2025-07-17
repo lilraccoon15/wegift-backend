@@ -215,13 +215,28 @@ export const getExchangeById = async (id: string, userId: string) => {
   return exchange;
 };
 
-export const searchExchangeByTitle = async (query: string) => {
+export const searchExchangeByTitle = async (query: string, userId: string) => {
   const searchTerm = query.toLowerCase();
 
   const results = await Exchange.findAll({
-    where: Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
-      [Op.like]: `%${searchTerm}%`,
-    }),
+    where: {
+      [Op.and]: [
+        Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
+          [Op.like]: `%${searchTerm}%`,
+        }),
+        {
+          [Op.or]: [{ userId }, { "$participants.userId$": userId }],
+        },
+      ],
+    },
+    include: [
+      {
+        model: Participants,
+        as: "participants",
+        attributes: [],
+        required: false,
+      },
+    ],
   });
 
   return results;
