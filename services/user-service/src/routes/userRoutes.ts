@@ -18,6 +18,7 @@ import {
   getFriendList,
   deleteFriend,
   updateProfileVisibility,
+  getMyPendingFriendList,
 } from "../controllers/userController";
 
 const router = Router();
@@ -46,6 +47,7 @@ router.patch(
   respondToFriendRequest
 );
 router.get("/my-friends", ...requireAuth, getMyFriendList);
+router.get("/my-pending-friends", ...requireAuth, getMyPendingFriendList);
 router.get("/friends/:userId", ...requireAuth, getFriendList);
 router.delete("/delete-friend/:friendId", ...requireAuth, deleteFriend);
 

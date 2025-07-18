@@ -13,6 +13,7 @@ import {
   respondToFriendRequestService,
   fetchMyProfile,
   fetchUserProfileByAuthId,
+  fetchPendingFriendsByProfileId,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
@@ -233,6 +234,20 @@ export const getMyFriendList = asyncHandler(
       return sendSuccess(res, "Aucun ami trouvé", { friendships: [] });
 
     return sendSuccess(res, "Amitiés récupérées", { friendships });
+  }
+);
+
+export const getMyPendingFriendList = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user?.userId;
+    if (!userId) return next(new ValidationError("ID utilisateur manquant"));
+
+    const pendings = await fetchPendingFriendsByProfileId(userId);
+
+    if (pendings.length === 0)
+      return sendSuccess(res, "Aucun ami trouvé", { pendings: [] });
+
+    return sendSuccess(res, "Amitiés récupérées", { pendings });
   }
 );
 

@@ -5,333 +5,386 @@ import axios from "axios";
 import config from "../config";
 
 class ValidationError extends Error {
-    statusCode: number;
-    constructor(message: string) {
-        super(message);
-        this.statusCode = 400;
-    }
+  statusCode: number;
+  constructor(message: string) {
+    super(message);
+    this.statusCode = 400;
+  }
 }
 
 export const insertUserProfile = async (
-    userId: number,
-    pseudo: string,
-    birthDate: string,
-    picture?: string | null,
-    isPublic?: boolean
+  userId: number,
+  pseudo: string,
+  birthDate: string,
+  picture?: string | null,
+  isPublic?: boolean
 ) => {
-    const existingProfile = await UserProfile.findOne({
-        where: { id: userId },
-    });
-    if (existingProfile)
-        throw new ConflictError("Un profil existe déjà pour cet utilisateur.");
+  const existingProfile = await UserProfile.findOne({
+    where: { id: userId },
+  });
+  if (existingProfile)
+    throw new ConflictError("Un profil existe déjà pour cet utilisateur.");
 
-    const profile = await UserProfile.create({
-        userId,
-        pseudo,
-        birthDate,
-        picture,
-        isPublic,
-    });
+  const profile = await UserProfile.create({
+    userId,
+    pseudo,
+    birthDate,
+    picture,
+    isPublic,
+  });
 
-    return profile;
+  return profile;
 };
 
 export const fetchUserProfileByAuthId = async (authId: string) => {
-    return await UserProfile.findOne({
-        where: { userId: authId },
-    });
+  return await UserProfile.findOne({
+    where: { userId: authId },
+  });
 };
 
 export const fetchMyProfile = async (userId: string) => {
-    const profile = await UserProfile.findOne({
-        where: { id: userId },
-        attributes: [
-            "id",
-            "pseudo",
-            "birthDate",
-            "picture",
-            "description",
-            "isPublic",
-        ],
-    });
-    if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+  const profile = await UserProfile.findOne({
+    where: { id: userId },
+    attributes: [
+      "id",
+      "pseudo",
+      "birthDate",
+      "picture",
+      "description",
+      "isPublic",
+    ],
+  });
+  if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-    return profile;
+  return profile;
 };
 
 export const fetchUserProfileByUserId = async (userId: string) => {
-    const profile = await UserProfile.findOne({
-        where: { id: userId },
-        attributes: ["id", "pseudo", "birthDate", "picture", "description"],
-    });
-    if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+  const profile = await UserProfile.findOne({
+    where: { id: userId },
+    attributes: ["id", "pseudo", "birthDate", "picture", "description"],
+  });
+  if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-    return profile;
+  return profile;
 };
 
 export const updateProfileDetails = async (
-    userId: string,
-    pseudo: string,
-    birthDate: string,
-    picture?: string,
-    description?: string
+  userId: string,
+  pseudo: string,
+  birthDate: string,
+  picture?: string,
+  description?: string
 ) => {
-    const profile = await UserProfile.findOne({ where: { id: userId } });
+  const profile = await UserProfile.findOne({ where: { id: userId } });
 
-    if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+  if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-    profile.pseudo = pseudo;
-    profile.birthDate = new Date(birthDate);
-    if (picture !== undefined) profile.picture = picture;
-    if (description !== undefined) profile.description = description;
+  profile.pseudo = pseudo;
+  profile.birthDate = new Date(birthDate);
+  if (picture !== undefined) profile.picture = picture;
+  if (description !== undefined) profile.description = description;
 
-    await profile.save();
+  await profile.save();
 
-    return profile;
+  return profile;
 };
 
 export const removeUserProfileByUserId = async (userId: string) => {
-    const profile = await UserProfile.findOne({ where: { id: userId } });
+  const profile = await UserProfile.findOne({ where: { id: userId } });
 
-    if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
+  if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-    // todo : supprimer la photo de profil
+  // todo : supprimer la photo de profil
 
-    await profile.destroy();
+  await profile.destroy();
 };
 
 export async function findFriendshipBetweenUsers(user1: string, user2: string) {
-    const friendship = await Friendship.findOne({
-        where: {
-            [Op.or]: [
-                { addresseeId: user1, requesterId: user2 },
-                { addresseeId: user2, requesterId: user1 },
-            ],
-        },
-    });
+  const friendship = await Friendship.findOne({
+    where: {
+      [Op.or]: [
+        { addresseeId: user1, requesterId: user2 },
+        { addresseeId: user2, requesterId: user1 },
+      ],
+    },
+  });
 
-    if (!friendship) throw new NotFoundError("Pas d'amitié trouvée.");
+  if (!friendship) throw new NotFoundError("Pas d'amitié trouvée.");
 
-    return friendship;
+  return friendship;
 }
 
 export async function getFriendshipStatusBetween(
-    requesterId: string,
-    addresseeId: string
+  requesterId: string,
+  addresseeId: string
 ) {
-    let friendship;
-    try {
-        friendship = await findFriendshipBetweenUsers(requesterId, addresseeId);
-    } catch (err) {
-        if (err instanceof NotFoundError) {
-            return "none";
-        }
-        throw err;
+  let friendship;
+  try {
+    friendship = await findFriendshipBetweenUsers(requesterId, addresseeId);
+  } catch (err) {
+    if (err instanceof NotFoundError) {
+      return "none";
     }
+    throw err;
+  }
 
-    if (!friendship) return "none";
+  if (!friendship) return "none";
 
-    if (friendship.status === "accepted") return "friends";
+  if (friendship.status === "accepted") return "friends";
 
-    if (friendship.status === "pending") {
-        return friendship.requesterId === requesterId
-            ? "pending_sent"
-            : "pending_received";
-    }
+  if (friendship.status === "pending") {
+    return friendship.requesterId === requesterId
+      ? "pending_sent"
+      : "pending_received";
+  }
 
-    return "unknown";
+  return "unknown";
 }
 
 export async function createFriendshipRequest(
-    requesterId: string,
-    addresseeId: string,
-    token: string
+  requesterId: string,
+  addresseeId: string,
+  token: string
 ) {
-    if (requesterId === addresseeId) {
-        throw new ValidationError(
-            "Vous ne pouvez pas vous envoyer une demande d'ami."
-        );
+  if (requesterId === addresseeId) {
+    throw new ValidationError(
+      "Vous ne pouvez pas vous envoyer une demande d'ami."
+    );
+  }
+
+  try {
+    await findFriendshipBetweenUsers(requesterId, addresseeId);
+    throw new ConflictError("Une relation existe déjà entre ces utilisateurs");
+  } catch (err) {
+    if (!(err instanceof NotFoundError)) {
+      throw err;
     }
+  }
 
-    try {
-        await findFriendshipBetweenUsers(requesterId, addresseeId);
-        throw new ConflictError(
-            "Une relation existe déjà entre ces utilisateurs"
-        );
-    } catch (err) {
-        if (!(err instanceof NotFoundError)) {
-            throw err;
-        }
-    }
+  const newFriendship = await Friendship.create({
+    requesterId,
+    addresseeId,
+    status: "pending",
+  });
 
-    const newFriendship = await Friendship.create({
-        requesterId,
-        addresseeId,
-        status: "pending",
-    });
+  try {
+    await axios.post(
+      `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+      {
+        userId: addresseeId,
+        type: "friendship",
+        data: { requesterId: requesterId },
+        read: false,
+      },
+      {
+        headers: {
+          "x-internal-token": process.env.INTERNAL_API_TOKEN,
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Erreur envoi notification:", error);
+  }
 
-    try {
-        await axios.post(
-            `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
-            {
-                userId: addresseeId,
-                type: "friendship",
-                data: { requesterId: requesterId },
-                read: false,
-            },
-            {
-                headers: {
-                    "x-internal-token": process.env.INTERNAL_API_TOKEN,
-                },
-            }
-        );
-    } catch (error) {
-        console.error("Erreur envoi notification:", error);
-    }
-
-    return newFriendship;
+  return newFriendship;
 }
 
 export async function fetchFriendsByProfileId(
-    profileId: string
+  profileId: string
 ): Promise<UserProfile[]> {
-    const friendships = await Friendship.findAll({
-        where: {
-            [Op.and]: [
-                {
-                    [Op.or]: [
-                        { requesterId: profileId },
-                        { addresseeId: profileId },
-                    ],
-                },
-                { status: "accepted" },
-            ],
+  const friendships = await Friendship.findAll({
+    where: {
+      [Op.and]: [
+        {
+          [Op.or]: [{ requesterId: profileId }, { addresseeId: profileId }],
         },
-        include: [
-            {
-                model: UserProfile,
-                as: "requester",
-                required: false,
-                attributes: ["id", "pseudo", "picture"],
-            },
-            {
-                model: UserProfile,
-                as: "addressee",
-                required: false,
-                attributes: ["id", "pseudo", "picture"],
-            },
-        ],
-    });
+        { status: "accepted" },
+      ],
+    },
+    include: [
+      {
+        model: UserProfile,
+        as: "requester",
+        required: false,
+        attributes: ["id", "pseudo", "picture"],
+      },
+      {
+        model: UserProfile,
+        as: "addressee",
+        required: false,
+        attributes: ["id", "pseudo", "picture"],
+      },
+    ],
+  });
 
-    if (!friendships || friendships.length === 0) {
-        return [];
-    }
+  if (!friendships || friendships.length === 0) {
+    return [];
+  }
 
-    const friendProfiles = friendships
-        .map((friendship) => {
-            const requester = friendship.requester;
-            const addressee = friendship.addressee;
+  const friendProfiles = friendships
+    .map((friendship) => {
+      const requester = friendship.requester;
+      const addressee = friendship.addressee;
 
-            return requester?.id === profileId ? addressee : requester;
-        })
-        .filter((profile): profile is UserProfile => profile !== undefined);
+      return requester?.id === profileId ? addressee : requester;
+    })
+    .filter((profile): profile is UserProfile => profile !== undefined);
 
-    return friendProfiles;
+  return friendProfiles;
+}
+
+export type PendingFriend = {
+  profile: UserProfile;
+  direction: "sent" | "received";
+};
+
+export async function fetchPendingFriendsByProfileId(
+  profileId: string
+): Promise<PendingFriend[]> {
+  const friendships = await Friendship.findAll({
+    where: {
+      [Op.and]: [
+        {
+          [Op.or]: [{ requesterId: profileId }, { addresseeId: profileId }],
+        },
+        { status: "pending" },
+      ],
+    },
+    include: [
+      {
+        model: UserProfile,
+        as: "requester",
+        required: false,
+        attributes: ["id", "pseudo", "picture"],
+      },
+      {
+        model: UserProfile,
+        as: "addressee",
+        required: false,
+        attributes: ["id", "pseudo", "picture"],
+      },
+    ],
+  });
+
+  if (!friendships || friendships.length === 0) {
+    return [];
+  }
+
+  const pendingList: PendingFriend[] = friendships
+    .map((friendship) => {
+      const requester = friendship.requester;
+      const addressee = friendship.addressee;
+
+      if (!requester || !addressee) return null;
+
+      if (requester.id === profileId) {
+        return {
+          profile: addressee,
+          direction: "sent" as const,
+        };
+      } else {
+        return {
+          profile: requester,
+          direction: "received" as const,
+        };
+      }
+    })
+    .filter((entry): entry is PendingFriend => entry !== null);
+
+  return pendingList;
 }
 
 export const searchUserByPseudo = async (query: string, userId: string) => {
-    const searchTerm = query.toLowerCase();
+  const searchTerm = query.toLowerCase();
 
-    const results = await UserProfile.findAll({
-        where: {
-            [Op.and]: [
-                Sequelize.where(
-                    Sequelize.fn("LOWER", Sequelize.col("pseudo")),
-                    {
-                        [Op.like]: `%${searchTerm}%`,
-                    }
-                ),
-                {
-                    [Op.or]: [
-                        { isPublic: true },
-                        { "$sentFriendships.status$": "accepted" },
-                        { "$receivedFriendships.status$": "accepted" },
-                    ],
-                },
-            ],
+  const results = await UserProfile.findAll({
+    where: {
+      [Op.and]: [
+        Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
+          [Op.like]: `%${searchTerm}%`,
+        }),
+        {
+          [Op.or]: [
+            { isPublic: true },
+            { "$sentFriendships.status$": "accepted" },
+            { "$receivedFriendships.status$": "accepted" },
+          ],
         },
-        include: [
-            {
-                model: Friendship,
-                as: "sentFriendships",
-                required: false,
-                where: {
-                    requesterId: userId,
-                    status: "accepted",
-                },
-                attributes: [],
-            },
-            {
-                model: Friendship,
-                as: "receivedFriendships",
-                required: false,
-                where: {
-                    addresseeId: userId,
-                    status: "accepted",
-                },
-                attributes: [],
-            },
-        ],
-    });
+      ],
+    },
+    include: [
+      {
+        model: Friendship,
+        as: "sentFriendships",
+        required: false,
+        where: {
+          requesterId: userId,
+          status: "accepted",
+        },
+        attributes: [],
+      },
+      {
+        model: Friendship,
+        as: "receivedFriendships",
+        required: false,
+        where: {
+          addresseeId: userId,
+          status: "accepted",
+        },
+        attributes: [],
+      },
+    ],
+  });
 
-    return results;
+  return results;
 };
 
 export const removeFriendship = async (userId1: string, userId2: string) => {
-    const friendship = await Friendship.findOne({
-        where: {
-            [Op.or]: [
-                { requesterId: userId1, addresseeId: userId2 },
-                { requesterId: userId2, addresseeId: userId1 },
-            ],
-            status: "accepted",
-        },
-    });
+  const friendship = await Friendship.findOne({
+    where: {
+      [Op.or]: [
+        { requesterId: userId1, addresseeId: userId2 },
+        { requesterId: userId2, addresseeId: userId1 },
+      ],
+      status: "accepted",
+    },
+  });
 
-    if (!friendship) {
-        throw new NotFoundError("Relation d’amitié non trouvée.");
-    }
+  if (!friendship) {
+    throw new NotFoundError("Relation d’amitié non trouvée.");
+  }
 
-    await friendship.destroy();
+  await friendship.destroy();
 };
 
 export const respondToFriendRequestService = async (
-    userId: string,
-    requesterId: string,
-    action: "accept" | "reject"
+  userId: string,
+  requesterId: string,
+  action: "accept" | "reject"
 ) => {
-    const friendship = await Friendship.findOne({
-        where: {
-            requesterId,
-            addresseeId: userId,
-            status: "pending",
-        },
-    });
+  const friendship = await Friendship.findOne({
+    where: {
+      requesterId,
+      addresseeId: userId,
+      status: "pending",
+    },
+  });
 
-    if (!friendship) {
-        throw new NotFoundError("Demande d'amitié non trouvée.");
-    }
+  if (!friendship) {
+    throw new NotFoundError("Demande d'amitié non trouvée.");
+  }
 
-    if (action === "accept") {
-        friendship.status = "accepted";
-    } else if (action === "reject") {
-        friendship.status = "rejected";
-    } else {
-        throw new ValidationError("Action invalide.");
-    }
+  if (action === "accept") {
+    friendship.status = "accepted";
+  } else if (action === "reject") {
+    friendship.status = "rejected";
+  } else {
+    throw new ValidationError("Action invalide.");
+  }
 
-    await friendship.save();
-    return friendship;
+  await friendship.save();
+  return friendship;
 
-    // TODO : notifier l'acceptation d'amitié
+  // TODO : notifier l'acceptation d'amitié
 };
