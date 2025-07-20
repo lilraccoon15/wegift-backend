@@ -8,7 +8,9 @@ import {
     createExchange,
     deleteExchange,
     drawExchange,
+    getExchange,
     getExchangeRules,
+    getExchanges,
     getMyExchange,
     getMyExchanges,
     respondToExchangeInvitation,
@@ -21,8 +23,11 @@ const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
 // === Récupération / affichage ===
 router.get("/my-exchanges", ...requireAuth, getMyExchanges);
+router.get("/exchanges/:userId", ...requireAuth, getExchanges);
 router.get("/get-rules", ...requireAuth, getExchangeRules);
 router.get("/my-exchange/:id", ...requireAuth, getMyExchange);
+router.get("/exchange/:id", ...requireAuth, getExchange);
+
 router.get("/search", ...requireAuth, searchExchange);
 
 // === Création / modification ===

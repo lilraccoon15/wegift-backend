@@ -5,6 +5,7 @@ import {
     drawExchangeService,
     getAllExchangeRules,
     getAllMyExchanges,
+    getAllUserExchanges,
     getExchangeById,
     respondToExchange,
     searchExchangeByTitle,
@@ -33,6 +34,17 @@ export const getMyExchanges = asyncHandler(
         const exchanges = await getAllMyExchanges(userId);
 
         sendSuccess(res, "Echanges trouvés", { exchanges }, 200);
+    }
+);
+
+export const getExchanges = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.params.userId;
+        const userRole = req.params.role;
+
+        const exchanges = await getAllUserExchanges(userId, userRole);
+
+        sendSuccess(res, "Exchanges trouvés", { exchanges });
     }
 );
 
@@ -81,6 +93,7 @@ export const updateExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { exchangeId } = req.params;
         const userId = req.user.userId;
+        const userRole = req.user.role;
 
         const {
             title,
@@ -106,7 +119,8 @@ export const updateExchange = asyncHandler(
             picture,
             budget ?? undefined,
             participantIds,
-            rules
+            rules,
+            userRole
         );
 
         return sendSuccess(res, "Échange mis à jour", {
@@ -133,8 +147,9 @@ export const searchExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { query } = searchExchangeSchema.parse(req.query);
         const { userId } = req.user.userId;
+        const userRole = req.user.role;
 
-        const results = await searchExchangeByTitle(query, userId);
+        const results = await searchExchangeByTitle(query, userId, userRole);
 
         return sendSuccess(res, "Résultats trouvés", { exchanges: results });
     }
@@ -143,9 +158,29 @@ export const searchExchange = asyncHandler(
 export const getMyExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const userId = req.user.userId;
-        const { exchangeId } = req.params;
+        const { id } = req.params;
 
-        const exchange = await getExchangeById(exchangeId, userId);
+        if (!id)
+            return next(new ValidationError("L'ID de l'échange est requis"));
+
+        const exchange = await getExchangeById(id, userId);
+
+        if (!exchange) return next(new NotFoundError("Echange non trouvée"));
+
+        sendSuccess(res, "Echange trouvée", { exchange });
+    }
+);
+
+export const getExchange = asyncHandler(
+    async (req: AuthenticatedRequest, res, next) => {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const userRole = req.user.role;
+
+        if (!id)
+            return next(new ValidationError("L'ID de l'échange est requis"));
+
+        const exchange = await getExchangeById(id, userId, userRole);
 
         if (!exchange) return next(new NotFoundError("Echange non trouvée"));
 

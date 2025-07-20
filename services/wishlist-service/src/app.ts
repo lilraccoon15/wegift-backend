@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/uploads", express.static("public/uploads"));
-app.use("/api/internal/users", internalRoutes);
+app.use("/api/internal", internalRoutes);
 app.use("/", wishlistRoutes);
 
 app.use(errorHandler);

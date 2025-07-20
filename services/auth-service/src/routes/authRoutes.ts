@@ -86,6 +86,7 @@ router.put("/update-email", ...requireAuth, updateUserEmail);
 router.put("/update-password", ...requireAuth, updateUserPassword);
 router.patch("/update-newsletter", ...requireAuth, updateNewsletterPreference);
 router.delete("/delete-account", ...requireAuth, deleteUserAccount);
+// todo : route pour supprimer en tant qu'admin
 
 // === Google OAuth ===
 router.post(

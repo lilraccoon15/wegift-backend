@@ -9,6 +9,7 @@ import axios from "axios";
 import config from "../config";
 import { Op, Sequelize } from "sequelize";
 import Collaborators from "../models/Collaborators";
+import { tryDeleteLocalImage } from "../utils/files";
 
 interface SearchResult {
     title: string;
@@ -18,7 +19,15 @@ interface SearchResult {
     price?: number | null;
 }
 
-export async function canAccessWishlist(userId: string, wishlistId: string) {
+export async function canAccessWishlist(
+    userId: string,
+    wishlistId: string,
+    isAdmin = false
+) {
+    if (isAdmin) {
+        return Wishlist.findByPk(wishlistId);
+    }
+
     return Wishlist.findOne({
         where: {
             id: wishlistId,
@@ -30,31 +39,34 @@ export async function canAccessWishlist(userId: string, wishlistId: string) {
     });
 }
 
-export const getAllUserWishlists = async (userId: string) => {
+export const getAllUserWishlists = async (userId: string, userRole: string) => {
+    const isAdmin = userRole === "admin";
+
     const wishlists = await Wishlist.findAll({
-        where: {
-            [Op.and]: [
-                { access: "public" },
-                { published: 1 },
-                {
-                    [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
-                },
-            ],
-        },
-        attributes: [
-            "id",
-            "userId",
-            "title",
-            "picture",
-            "description",
-            "mode",
-            [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
-        ],
+        where: isAdmin
+            ? undefined
+            : {
+                  [Op.and]: [
+                      { access: "public" },
+                      { published: 1 },
+                      {
+                          [Op.or]: [
+                              { userId },
+                              Sequelize.literal(`EXISTS (
+              SELECT 1 FROM collaborators 
+              WHERE collaborators.wishlistId = Wishlist.id 
+              AND collaborators.userId = '${userId}'
+            )`),
+                          ],
+                      },
+                  ],
+              },
+        attributes: ["id", "userId", "title", "picture", "description", "mode"],
         include: [
             {
                 model: Wish,
                 as: "wishes",
-                attributes: [],
+                attributes: ["id"],
                 required: false,
             },
             {
@@ -64,9 +76,13 @@ export const getAllUserWishlists = async (userId: string) => {
                 required: false,
             },
         ],
-        group: ["Wishlist.id", "collaborators.userId"],
     });
-    return wishlists;
+
+    return wishlists.map((w) => {
+        const wJson = w.toJSON() as any;
+        wJson.wishesCount = wJson.wishes?.length ?? 0;
+        return wJson;
+    });
 };
 
 export const getAllMyWishlists = async (userId: string) => {
@@ -182,7 +198,7 @@ export const getWishesByWishlistId = async (wishlistId: string) => {
 
     const wishes = await Wish.findAll({
         where: { wishlistId },
-        attributes: ["id", "title"],
+        attributes: ["id", "title", "picture"],
     });
     return wishes;
 };
@@ -305,7 +321,15 @@ export const deleteWishlistById = async (id: string) => {
 
     if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
-    // todo : supprimer la photo de la wishlist et des souhaits
+    const wishes = await Wish.findAll({ where: { wishlistId: wishlist.id } });
+
+    if (wishlist.picture && !wishlist.picture.startsWith("http")) {
+        tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+    }
+
+    for (const wish of wishes) {
+        tryDeleteLocalImage(wish.picture, "wishPictures");
+    }
     await wishlist.destroy();
 };
 
@@ -326,9 +350,45 @@ export const addNewWishToWishlist = async (
         picture,
     });
 
-    return wish;
+    try {
+        const subscribers = await Subscriber.findAll({
+            where: { wishlistId },
+        });
 
-    // TODO : notifier les abonnés à la wishlist
+        await Promise.all(
+            subscribers.map((subscriber) =>
+                axios
+                    .post(
+                        `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+                        {
+                            userId: subscriber.userId,
+                            type: "wishlist-new-wish",
+                            data: {
+                                wishlistId,
+                                wishTitle: title,
+                            },
+                            read: false,
+                        },
+                        {
+                            headers: {
+                                "x-internal-token":
+                                    process.env.INTERNAL_API_TOKEN,
+                            },
+                        }
+                    )
+                    .catch((error) =>
+                        console.error(
+                            `Erreur notif utilisateur ${subscriber.userId} :`,
+                            error
+                        )
+                    )
+            )
+        );
+    } catch (error) {
+        console.error("Erreur lors de l'envoi des notifications :", error);
+    }
+
+    return wish;
 };
 
 export const modifyWishById = async (
@@ -359,7 +419,9 @@ export const deleteWishById = async (id: string) => {
 
     if (!wish) throw new NotFoundError("Wish non trouvée");
 
-    // todo : supprimer la photo du souhait
+    if (wish.picture && !wish.picture.startsWith("http")) {
+        tryDeleteLocalImage(wish.picture, "wishPictures");
+    }
 
     await wish.destroy();
 };
@@ -411,29 +473,42 @@ export async function findProductsByQuery(
     }
 }
 
-export const searchWishlistByTitle = async (query: string, userId: string) => {
+export const searchWishlistByTitle = async (
+    query: string,
+    userId: string,
+    userRole: string
+) => {
+    const isAdmin = userRole === "admin";
     const searchTerm = query.toLowerCase();
 
     const results = await Wishlist.findAll({
-        where: {
-            [Op.and]: [
-                Sequelize.where(
-                    Sequelize.fn("LOWER", Sequelize.col("Wishlist.title")),
-                    {
-                        [Op.like]: `%${searchTerm}%`,
-                    }
-                ),
-                {
-                    [Op.or]: [
-                        {
-                            [Op.and]: [{ access: "public" }, { published: 1 }],
-                        },
-                        { userId },
-                        { "$collaborators.userId$": userId },
-                    ],
-                },
-            ],
-        },
+        where: isAdmin
+            ? undefined
+            : {
+                  [Op.and]: [
+                      Sequelize.where(
+                          Sequelize.fn(
+                              "LOWER",
+                              Sequelize.col("Wishlist.title")
+                          ),
+                          {
+                              [Op.like]: `%${searchTerm}%`,
+                          }
+                      ),
+                      {
+                          [Op.or]: [
+                              {
+                                  [Op.and]: [
+                                      { access: "public" },
+                                      { published: 1 },
+                                  ],
+                              },
+                              { userId },
+                              { "$collaborators.userId$": userId },
+                          ],
+                      },
+                  ],
+              },
         include: [
             {
                 model: Collaborators,
@@ -503,19 +578,28 @@ export const subscribeToWishlistService = async (
         );
     }
 
-    const alreadyCollaborator = await Collaborators.findOne({
-        where: { userId, wishlistId },
-    });
+    const newSub = await Subscriber.create({ userId, wishlistId });
 
-    if (alreadyCollaborator) {
-        throw new ConflictError("Vous êtes déjà abonné à cette wishlist.");
+    try {
+        await axios.post(
+            `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+            {
+                userId: wishlist.userId,
+                type: "wishlist-sub",
+                data: { from: userId },
+                read: false,
+            },
+            {
+                headers: {
+                    "x-internal-token": process.env.INTERNAL_API_TOKEN,
+                },
+            }
+        );
+    } catch (error) {
+        console.error("Erreur envoi notification:", error);
     }
 
-    const newCollab = await Subscriber.create({ userId, wishlistId });
-
-    return newCollab;
-
-    // TODO : notifier un nouvel abonnement
+    return newSub;
 };
 
 export const unsubscribeFromWishlistService = async (
@@ -558,7 +642,20 @@ export const deleteWishlistsByUserId = async (userId: string) => {
         throw new NotFoundError("Aucune liste trouvée pour cet utilisateur.");
     }
 
-    // todo : supprimer la photo des listes et des souhaits
+    const allWishes: Wish[] = [];
+
+    for (const wishlist of wishlists) {
+        tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+
+        const wishes = await Wish.findAll({
+            where: { wishlistId: wishlist.id },
+        });
+        allWishes.push(...wishes);
+    }
+
+    for (const wish of allWishes) {
+        tryDeleteLocalImage(wish.picture, "wishPictures");
+    }
 
     await Promise.all(wishlists.map((wishlist) => wishlist.destroy()));
 };

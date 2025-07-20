@@ -147,7 +147,7 @@ export const authenticateUser = async (
 
     try {
         const response = await axios.get(
-            `${config.apiUrls.USER_SERVICE}/api/internal/users/find-by-auth/${user.id}`,
+            `${config.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${user.id}`,
             {
                 headers: {
                     "x-internal-token": process.env.INTERNAL_API_TOKEN,
@@ -167,6 +167,7 @@ export const authenticateUser = async (
                 userId: userProfileId,
                 email: user.email,
                 twoFA: true,
+                role: user.role,
             },
             config.jwtSecret,
             { expiresIn: "5m" }
@@ -209,7 +210,7 @@ export const setUserAsActive = async (token: string) => {
 
     try {
         await axios.post(
-            `${config.apiUrls.USER_SERVICE}/api/internal/users/create-profile`,
+            `${config.apiUrls.USER_SERVICE}/api/internal/create-profile`,
             {
                 userId: user.id,
                 pseudo: decoded.pseudo,
@@ -469,7 +470,7 @@ export const createPasswordService = async (
 
 export async function deleteUserProfile(userId: string) {
     return await axios.delete(
-        `${config.apiUrls.USER_SERVICE}/api/internal/user/delete-profile`,
+        `${config.apiUrls.USER_SERVICE}/api/internal/delete-profile`,
         {
             headers: {
                 "x-internal-token": process.env.INTERNAL_API_TOKEN!,

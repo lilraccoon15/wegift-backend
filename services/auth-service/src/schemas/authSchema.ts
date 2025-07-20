@@ -12,7 +12,7 @@ export const passwordSchema = z
     .regex(/[A-Z]/, "Une majuscule est requise")
     .regex(/[a-z]/, "Une minuscule est requise")
     .regex(/\d/, "Un chiffre est requis")
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Un caractère spécial est requis");
+    .regex(/[!@#$%^&*(),.?":{}|<>+]/, "Un caractère spécial est requis");
 
 export const createPasswordSchema = z.object({
     password: passwordSchema,

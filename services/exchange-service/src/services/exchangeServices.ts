@@ -15,6 +15,7 @@ import { shuffleArray } from "../utils/shuffleArray";
 import { validateParticipants } from "../utils/validateParticipants";
 import axios from "axios";
 import config from "../config";
+import { tryDeleteLocalImage } from "../utils/files";
 
 export const getAllMyExchanges = async (userId: string) => {
     const exchanges = await Exchange.findAll({
@@ -43,6 +44,42 @@ export const getAllMyExchanges = async (userId: string) => {
         where: {
             [Op.or]: [{ userId }, { "$participants.userId$": userId }],
         },
+        group: ["Exchange.id"],
+    });
+
+    return exchanges;
+};
+
+export const getAllUserExchanges = async (userId: string, userRole: string) => {
+    const isAdmin = userRole === "admin";
+    const exchanges = await Exchange.findAll({
+        attributes: [
+            "id",
+            "userId",
+            "title",
+            "picture",
+            "description",
+            "status",
+            "startDate",
+            "endDate",
+            [
+                Sequelize.fn("COUNT", Sequelize.col("participants.id")),
+                "participantsCount",
+            ],
+        ],
+        include: [
+            {
+                model: Participants,
+                as: "participants",
+                attributes: [],
+                required: false,
+            },
+        ],
+        where: isAdmin
+            ? undefined
+            : {
+                  [Op.or]: [{ userId }, { "$participants.userId$": userId }],
+              },
         group: ["Exchange.id"],
     });
 
@@ -144,8 +181,10 @@ export const updateExchangeById = async (
     picture?: string,
     budget?: number,
     participantIds: string[] = [],
-    ruleIds: string[] = []
+    ruleIds: string[] = [],
+    userRole?: string
 ) => {
+    const isAdmin = userRole === "admin";
     const exchange = await Exchange.findByPk(id, {
         include: [
             { model: Participants, as: "participants" },
@@ -155,7 +194,7 @@ export const updateExchangeById = async (
 
     if (!exchange) throw new NotFoundError("Échange non trouvé");
 
-    if (exchange.userId !== userId) {
+    if (exchange.userId !== userId && !isAdmin) {
         throw new Error("Accès refusé à cet échange.");
     }
 
@@ -237,12 +276,19 @@ export const deleteExchangeById = async (id: string) => {
 
     if (!exchange) throw new NotFoundError("Echange non trouvé");
 
-    // todo : supprimer la photo de l'échange
+    if (exchange.picture && !exchange.picture.startsWith("http")) {
+        tryDeleteLocalImage(exchange.picture, "exchangePictures");
+    }
 
     await exchange.destroy();
 };
 
-export const getExchangeById = async (id: string, userId: string) => {
+export const getExchangeById = async (
+    id: string,
+    userId: string,
+    userRole?: string
+) => {
+    const isAdmin = userRole === "admin";
     const exchange = await Exchange.findOne({
         attributes: [
             "id",
@@ -266,35 +312,65 @@ export const getExchangeById = async (id: string, userId: string) => {
                 required: false,
             },
         ],
-        where: {
-            [Op.and]: [
-                {
-                    [Op.or]: [{ userId }, { "$participants.userId$": userId }],
-                },
-                { id },
-            ],
-        },
-
+        where: isAdmin
+            ? undefined
+            : {
+                  [Op.and]: [
+                      {
+                          [Op.or]: [
+                              { userId },
+                              { "$participants.userId$": userId },
+                          ],
+                      },
+                      { id },
+                  ],
+              },
         group: ["Exchange.id"],
+        subQuery: false,
     });
 
-    return exchange;
+    if (!exchange) return null;
+
+    const exchangeJson = exchange.toJSON() as any;
+    exchangeJson.participantsCount = parseInt(
+        exchangeJson.participantsCount ?? "0",
+        10
+    );
+
+    return exchangeJson;
 };
 
-export const searchExchangeByTitle = async (query: string, userId: string) => {
+export const searchExchangeByTitle = async (
+    query: string,
+    userId: string,
+    userRole: string
+) => {
+    const isAdmin = userRole === "admin";
     const searchTerm = query.toLowerCase();
 
+    const baseTitleCondition = Sequelize.where(
+        Sequelize.fn("LOWER", Sequelize.col("title")),
+        {
+            [Op.like]: `%${searchTerm}%`,
+        }
+    );
+
+    const whereClause = isAdmin
+        ? baseTitleCondition
+        : {
+              [Op.and]: [
+                  baseTitleCondition,
+                  {
+                      [Op.or]: [
+                          { userId },
+                          { "$participants.userId$": userId },
+                      ],
+                  },
+              ],
+          };
+
     const results = await Exchange.findAll({
-        where: {
-            [Op.and]: [
-                Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("title")), {
-                    [Op.like]: `%${searchTerm}%`,
-                }),
-                {
-                    [Op.or]: [{ userId }, { "$participants.userId$": userId }],
-                },
-            ],
-        },
+        where: whereClause,
         include: [
             {
                 model: Participants,
@@ -328,14 +404,38 @@ export const respondToExchange = async (
         throw new ValidationError("Invitation déjà acceptée.");
     }
 
+    let notificationType: "exchange-accept" | "exchange-reject" | null = null;
+
     if (action === "accept") {
         participant.acceptedAt = new Date();
         await participant.save();
+        notificationType = "exchange-accept";
     } else if (action === "reject") {
         await participant.destroy();
+        notificationType = "exchange-reject";
     }
 
-    // TODO : notifier de la réponse ?
+    try {
+        const exchange = await Exchange.findByPk(exchangeId);
+        if (!exchange) throw new NotFoundError("Échange introuvable.");
+
+        await axios.post(
+            `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+            {
+                userId: exchange.userId,
+                type: notificationType,
+                data: { from: userId },
+                read: false,
+            },
+            {
+                headers: {
+                    "x-internal-token": process.env.INTERNAL_API_TOKEN,
+                },
+            }
+        );
+    } catch (error) {
+        console.error("Erreur envoi notification:", error);
+    }
 
     return participant;
 };
@@ -442,7 +542,32 @@ export const drawExchangeService = async (
     }
 
     await Assigned.bulkCreate(assignments);
-    // TODO : notifier les assignations
+
+    await Promise.all(
+        assignments.map((assignment) =>
+            axios
+                .post(
+                    `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+                    {
+                        userId: assignment.userId,
+                        type: "exchange-assign",
+                        data: { assignedUserId: assignment.assignedUserId },
+                        read: false,
+                    },
+                    {
+                        headers: {
+                            "x-internal-token": process.env.INTERNAL_API_TOKEN,
+                        },
+                    }
+                )
+                .catch((error) =>
+                    console.error(
+                        `Erreur notif utilisateur ${assignment.userId} :`,
+                        error
+                    )
+                )
+        )
+    );
 };
 
 export const deleteExchangesByUserId = async (userId: string) => {
@@ -456,6 +581,8 @@ export const deleteExchangesByUserId = async (userId: string) => {
         throw new NotFoundError("Aucun échange trouvé pour cet utilisateur.");
     }
 
-    // todo : supprimer la photo de l'échange
+    for (const exchange of exchanges) {
+        tryDeleteLocalImage(exchange.picture, "exchangePictures");
+    }
     await Promise.all(exchanges.map((exchange) => exchange.destroy()));
 };

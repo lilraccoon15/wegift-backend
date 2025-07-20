@@ -30,7 +30,6 @@ import {
     NotFoundError,
     ValidationError,
 } from "../errors/CustomErrors";
-import currentConfig from "../config";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import {
     activationTokenSchema,

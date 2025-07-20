@@ -16,22 +16,22 @@ const app = express();
 setupAssociations();
 
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: "http://localhost:3000",
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
 app.use(express.json());
 
-app.use("/api/internal/users", internalRoutes);
+app.use("/api/internal", internalRoutes);
 app.use("/", notificationRoutes);
 
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-  res.send("Notification service is running!");
+    res.send("Notification service is running!");
 });
 
 export default app;

@@ -66,7 +66,7 @@ passport.use(
 
                 // Créer le profil dans user-service
                 await axios.post(
-                    `${currentConfig.apiUrls.USER_SERVICE}/api/internal/users/create-profile`,
+                    `${currentConfig.apiUrls.USER_SERVICE}/api/internal/create-profile`,
                     {
                         userId: newUser.id,
                         pseudo: generatePseudo(profile),
