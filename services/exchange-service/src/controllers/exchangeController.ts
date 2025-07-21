@@ -146,7 +146,7 @@ export const deleteExchange = asyncHandler(
 export const searchExchange = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
         const { query } = searchExchangeSchema.parse(req.query);
-        const { userId } = req.user.userId;
+        const userId = req.user.userId;
         const userRole = req.user.role;
 
         const results = await searchExchangeByTitle(query, userId, userRole);

@@ -44,7 +44,9 @@ type LoginResponse =
 export function generateJWTForUser(user: User): string {
     const payload = {
         id: user.id,
+        userId: (user as any).userId,
         email: user.email,
+        role: user.role,
     };
 
     const options: SignOptions = {
@@ -177,7 +179,12 @@ export const authenticateUser = async (
     }
 
     const token = jwt.sign(
-        { id: user.id, userId: userProfileId, email: user.email },
+        {
+            id: user.id,
+            userId: userProfileId,
+            email: user.email,
+            role: user.role,
+        },
         config.jwtSecret,
         {
             expiresIn: "1h",

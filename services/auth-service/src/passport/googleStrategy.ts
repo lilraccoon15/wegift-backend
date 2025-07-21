@@ -34,21 +34,95 @@ passport.use(
                     const currentUser = req.user as User;
                     currentUser.googleId = googleId;
                     await currentUser.save();
-                    return done(null, currentUser);
+
+                    // 🔁 Récupérer profil
+                    let userProfileId: string | null = null;
+                    try {
+                        const response = await axios.get(
+                            `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${currentUser.id}`,
+                            {
+                                headers: {
+                                    "x-internal-token":
+                                        process.env.INTERNAL_API_TOKEN,
+                                },
+                            }
+                        );
+                        userProfileId =
+                            response.data?.data?.profile?.id ?? null;
+                    } catch (error) {
+                        console.error(
+                            "Erreur lors de la récupération du profil :",
+                            error
+                        );
+                    }
+
+                    return done(null, {
+                        ...currentUser.toJSON(),
+                        userId: userProfileId,
+                    });
                 }
 
                 // 1. Connexion si déjà lié à Google
                 const userByGoogle = await User.findOne({
                     where: { googleId },
                 });
-                if (userByGoogle) return done(null, userByGoogle);
+                if (userByGoogle) {
+                    let userProfileId: string | null = null;
+                    try {
+                        const response = await axios.get(
+                            `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${userByGoogle.id}`,
+                            {
+                                headers: {
+                                    "x-internal-token":
+                                        process.env.INTERNAL_API_TOKEN,
+                                },
+                            }
+                        );
+                        userProfileId =
+                            response.data?.data?.profile?.id ?? null;
+                    } catch (error) {
+                        console.error(
+                            "Erreur lors de la récupération du profil :",
+                            error
+                        );
+                    }
+
+                    return done(null, {
+                        ...userByGoogle.toJSON(),
+                        userId: userProfileId,
+                    });
+                }
 
                 // 2. Liaison automatique si email déjà utilisé
                 const userByEmail = await User.findOne({ where: { email } });
                 if (userByEmail) {
                     userByEmail.googleId = googleId;
                     await userByEmail.save();
-                    return done(null, userByEmail);
+
+                    let userProfileId: string | null = null;
+                    try {
+                        const response = await axios.get(
+                            `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${userByEmail.id}`,
+                            {
+                                headers: {
+                                    "x-internal-token":
+                                        process.env.INTERNAL_API_TOKEN,
+                                },
+                            }
+                        );
+                        userProfileId =
+                            response.data?.data?.profile?.id ?? null;
+                    } catch (error) {
+                        console.error(
+                            "Erreur lors de la récupération du profil :",
+                            error
+                        );
+                    }
+
+                    return done(null, {
+                        ...userByEmail.toJSON(),
+                        userId: userProfileId,
+                    });
                 }
 
                 // 3. Nouveau compte
@@ -80,7 +154,29 @@ passport.use(
                     }
                 );
 
-                return done(null, newUser);
+                let userProfileId: string | null = null;
+                try {
+                    const response = await axios.get(
+                        `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${newUser.id}`,
+                        {
+                            headers: {
+                                "x-internal-token":
+                                    process.env.INTERNAL_API_TOKEN,
+                            },
+                        }
+                    );
+                    userProfileId = response.data?.data?.profile?.id ?? null;
+                } catch (error) {
+                    console.error(
+                        "Erreur lors de la récupération du profil :",
+                        error
+                    );
+                }
+
+                return done(null, {
+                    ...newUser.toJSON(),
+                    userId: userProfileId,
+                });
             } catch (error) {
                 console.error("❌ Erreur dans googleStrategy :", error);
                 return done(error);
