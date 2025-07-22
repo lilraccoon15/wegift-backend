@@ -24,6 +24,9 @@ import {
   unsubscribeFromWishlist,
   scrapAndCreateWish,
   getSubscriptionStatus,
+  reserveWish,
+  cancelReserveWish,
+  getMyReservedWishes,
 } from "../controllers/wishlistController";
 
 const router = Router();
@@ -58,8 +61,10 @@ router.post(
   createWish
 );
 router.post("/scrap-wish", ...requireAuth, scrapAndCreateWish);
+router.post("/reserve/;id", ...requireAuth, reserveWish);
 router.get("/my-wish/:id", ...requireAuth, getMyWish);
 router.get("/wish/:id", ...requireAuth, getWish);
+router.get("/my-reserved-wishes", ...requireAuth, getMyReservedWishes);
 router.put(
   "/update-wish/:id",
   ...requireAuth,
@@ -67,6 +72,7 @@ router.put(
   updateWish
 );
 router.delete("/delete-wish/:id", ...requireAuth, deleteWish);
+router.delete("/cancel-reserve/:id", ...requireAuth, cancelReserveWish);
 
 // === Recherche ===
 router.get("/search", ...requireAuth, searchWishlist);

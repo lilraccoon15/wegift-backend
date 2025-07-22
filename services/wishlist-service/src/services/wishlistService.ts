@@ -1,661 +1,703 @@
 import { Subscriber, Wish, Wishlist } from "../models/setupAssociations";
 import {
-    AuthError,
-    ConflictError,
-    NotFoundError,
-    ValidationError,
+  AuthError,
+  ConflictError,
+  NotFoundError,
+  ValidationError,
 } from "../errors/CustomErrors";
 import axios from "axios";
 import config from "../config";
 import { Op, Sequelize } from "sequelize";
 import Collaborators from "../models/Collaborators";
 import { tryDeleteLocalImage } from "../utils/files";
+import WishReservation from "src/models/WishReservation";
 
 interface SearchResult {
-    title: string;
-    link: string;
-    snippet: string;
-    image?: string | null;
-    price?: number | null;
+  title: string;
+  link: string;
+  snippet: string;
+  image?: string | null;
+  price?: number | null;
 }
 
 export async function canAccessWishlist(
-    userId: string,
-    wishlistId: string,
-    isAdmin = false
+  userId: string,
+  wishlistId: string,
+  isAdmin = false
 ) {
-    if (isAdmin) {
-        return Wishlist.findByPk(wishlistId);
-    }
+  if (isAdmin) {
+    return Wishlist.findByPk(wishlistId);
+  }
 
-    return Wishlist.findOne({
-        where: {
-            id: wishlistId,
-            [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
-        },
-        include: [
-            { model: Collaborators, as: "collaborators", attributes: [] },
-        ],
-    });
+  return Wishlist.findOne({
+    where: {
+      id: wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
 }
 
 export const getAllUserWishlists = async (userId: string, userRole: string) => {
-    const isAdmin = userRole === "admin";
+  const isAdmin = userRole === "admin";
 
-    const wishlists = await Wishlist.findAll({
-        where: isAdmin
-            ? undefined
-            : {
-                  [Op.and]: [
-                      { access: "public" },
-                      { published: 1 },
-                      {
-                          [Op.or]: [
-                              { userId },
-                              Sequelize.literal(`EXISTS (
+  const wishlists = await Wishlist.findAll({
+    where: isAdmin
+      ? undefined
+      : {
+          [Op.and]: [
+            { access: "public" },
+            { published: 1 },
+            {
+              [Op.or]: [
+                { userId },
+                Sequelize.literal(`EXISTS (
               SELECT 1 FROM collaborators 
               WHERE collaborators.wishlistId = Wishlist.id 
               AND collaborators.userId = '${userId}'
             )`),
-                          ],
-                      },
-                  ],
-              },
-        attributes: ["id", "userId", "title", "picture", "description", "mode"],
-        include: [
-            {
-                model: Wish,
-                as: "wishes",
-                attributes: ["id"],
-                required: false,
+              ],
             },
-            {
-                model: Collaborators,
-                as: "collaborators",
-                attributes: ["userId"],
-                required: false,
-            },
-        ],
-    });
+          ],
+        },
+    attributes: ["id", "userId", "title", "picture", "description", "mode"],
+    include: [
+      {
+        model: Wish,
+        as: "wishes",
+        attributes: ["id"],
+        required: false,
+      },
+      {
+        model: Collaborators,
+        as: "collaborators",
+        attributes: ["userId"],
+        required: false,
+      },
+    ],
+  });
 
-    return wishlists.map((w) => {
-        const wJson = w.toJSON() as any;
-        wJson.wishesCount = wJson.wishes?.length ?? 0;
-        return wJson;
-    });
+  return wishlists.map((w) => {
+    const wJson = w.toJSON() as any;
+    wJson.wishesCount = wJson.wishes?.length ?? 0;
+    return wJson;
+  });
 };
 
 export const getAllMyWishlists = async (userId: string) => {
-    const wishlists = await Wishlist.findAll({
-        where: { [Op.or]: [{ userId }, { "$collaborators.userId$": userId }] },
-        attributes: [
-            "id",
-            "userId",
-            "title",
-            "access",
-            "picture",
-            "description",
-            "published",
-            "mode",
-            [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
-        ],
-        include: [
-            {
-                model: Wish,
-                as: "wishes",
-                attributes: [],
-                required: false,
-            },
-            {
-                model: Collaborators,
-                as: "collaborators",
-                attributes: ["userId"],
-                required: false,
-            },
-        ],
-        group: ["Wishlist.id", "collaborators.userId"],
-    });
-    return wishlists;
+  const wishlists = await Wishlist.findAll({
+    where: { [Op.or]: [{ userId }, { "$collaborators.userId$": userId }] },
+    attributes: [
+      "id",
+      "userId",
+      "title",
+      "access",
+      "picture",
+      "description",
+      "published",
+      "mode",
+      [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
+    ],
+    include: [
+      {
+        model: Wish,
+        as: "wishes",
+        attributes: [],
+        required: false,
+      },
+      {
+        model: Collaborators,
+        as: "collaborators",
+        attributes: ["userId"],
+        required: false,
+      },
+    ],
+    group: ["Wishlist.id", "collaborators.userId"],
+  });
+  return wishlists;
 };
 
 export const getMyWishlistById = async (id: string, userId: string) => {
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id,
-            [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
-        },
-        attributes: [
-            "id",
-            "userId",
-            "title",
-            "access",
-            "picture",
-            "description",
-            "published",
-            "mode",
-        ],
-        include: [{ model: Collaborators, as: "collaborators" }],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    attributes: [
+      "id",
+      "userId",
+      "title",
+      "access",
+      "picture",
+      "description",
+      "published",
+      "mode",
+    ],
+    include: [{ model: Collaborators, as: "collaborators" }],
+  });
 
-    return wishlist;
+  return wishlist;
 };
 
 export const getWishlistById = async (id: string) => {
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id,
-        },
-        attributes: [
-            "id",
-            "userId",
-            "title",
-            "access",
-            "picture",
-            "description",
-            "published",
-            "mode",
-        ],
-        include: [{ model: Collaborators, as: "collaborators" }],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id,
+    },
+    attributes: [
+      "id",
+      "userId",
+      "title",
+      "access",
+      "picture",
+      "description",
+      "published",
+      "mode",
+    ],
+    include: [{ model: Collaborators, as: "collaborators" }],
+  });
 
-    return wishlist;
+  return wishlist;
 };
 
 export const getMyWishesByWishlistId = async (
-    wishlistId: string,
-    userId: string
+  wishlistId: string,
+  userId: string
 ) => {
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id: wishlistId,
-            [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
-        },
-        include: [
-            { model: Collaborators, as: "collaborators", attributes: [] },
-        ],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
 
-    if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
+  if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
 
-    const wishes = await Wish.findAll({
-        where: { wishlistId },
-        attributes: ["id", "title", "picture"],
-    });
-    return wishes;
+  const wishes = await Wish.findAll({
+    where: { wishlistId },
+    attributes: ["id", "title", "picture"],
+  });
+  return wishes;
 };
 
 export const getWishesByWishlistId = async (wishlistId: string) => {
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id: wishlistId,
-        },
-        include: [
-            { model: Collaborators, as: "collaborators", attributes: [] },
-        ],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wishlistId,
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
 
-    if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
+  if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
 
-    const wishes = await Wish.findAll({
-        where: { wishlistId },
-        attributes: ["id", "title", "picture"],
-    });
-    return wishes;
+  const wishes = await Wish.findAll({
+    where: { wishlistId },
+    attributes: ["id", "title", "picture"],
+  });
+  return wishes;
 };
 
 export const findMyWishById = async (id: string, userId: string) => {
-    const wish = await Wish.findByPk(id);
-    if (!wish) return null;
+  const wish = await Wish.findByPk(id);
+  if (!wish) return null;
 
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id: wish.wishlistId,
-            [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
-        },
-        include: [
-            { model: Collaborators, as: "collaborators", attributes: [] },
-        ],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wish.wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
 
-    if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
+  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
-    return wish;
+  return wish;
 };
 
 export const findWishById = async (id: string) => {
-    const wish = await Wish.findByPk(id);
-    if (!wish) return null;
+  const wish = await Wish.findByPk(id);
+  if (!wish) return null;
 
-    const wishlist = await Wishlist.findOne({
-        where: {
-            id: wish.wishlistId,
-        },
-        include: [
-            { model: Collaborators, as: "collaborators", attributes: [] },
-        ],
-    });
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wish.wishlistId,
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
 
-    if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
+  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
-    return wish;
+  return wish;
 };
 
 export const createNewWishlist = async (
-    userId: string,
-    title: string,
-    published: number = 1,
-    access: string,
-    mode: string,
-    description?: string,
-    picture?: string,
-    participantIds: string[] = []
+  userId: string,
+  title: string,
+  published: number = 1,
+  access: string,
+  mode: string,
+  description?: string,
+  picture?: string,
+  participantIds: string[] = []
 ) => {
-    const wishlist = await Wishlist.create({
-        userId,
-        title,
-        description,
-        picture,
-        published,
-        access,
-        mode,
-    });
+  const wishlist = await Wishlist.create({
+    userId,
+    title,
+    description,
+    picture,
+    published,
+    access,
+    mode,
+  });
 
-    if (participantIds.length > 0) {
-        const participantsData = participantIds.map((participantId) => ({
-            userId: participantId,
-            wishlistId: wishlist.id,
-        }));
-        await Collaborators.bulkCreate(participantsData);
-    }
+  if (participantIds.length > 0) {
+    const participantsData = participantIds.map((participantId) => ({
+      userId: participantId,
+      wishlistId: wishlist.id,
+    }));
+    await Collaborators.bulkCreate(participantsData);
+  }
 
-    await wishlist.reload({
-        include: [{ model: Collaborators, as: "collaborators" }],
-    });
+  await wishlist.reload({
+    include: [{ model: Collaborators, as: "collaborators" }],
+  });
 
-    return wishlist;
+  return wishlist;
 };
 
 export const modifyWishlistById = async (
-    id: string,
-    title?: string,
-    access?: string,
-    published?: number,
-    mode?: string,
-    description?: string,
-    picture?: string,
-    participantIds: string[] = []
+  id: string,
+  title?: string,
+  access?: string,
+  published?: number,
+  mode?: string,
+  description?: string,
+  picture?: string,
+  participantIds: string[] = []
 ) => {
-    const wishlist = await Wishlist.findByPk(id);
+  const wishlist = await Wishlist.findByPk(id);
 
-    if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+  if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
-    if (title !== undefined) wishlist.title = title;
-    if (description !== undefined) wishlist.description = description;
-    if (picture !== undefined) wishlist.picture = picture;
-    if (access !== undefined) wishlist.access = access;
-    if (published !== undefined) wishlist.published = published;
-    if (mode !== undefined)
-        wishlist.mode = mode as "individual" | "collaborative";
+  if (title !== undefined) wishlist.title = title;
+  if (description !== undefined) wishlist.description = description;
+  if (picture !== undefined) wishlist.picture = picture;
+  if (access !== undefined) wishlist.access = access;
+  if (published !== undefined) wishlist.published = published;
+  if (mode !== undefined)
+    wishlist.mode = mode as "individual" | "collaborative";
 
-    await wishlist.save();
+  await wishlist.save();
 
-    await Collaborators.destroy({ where: { wishlistId: wishlist.id } });
+  await Collaborators.destroy({ where: { wishlistId: wishlist.id } });
 
-    if (participantIds.length > 0) {
-        const collaboratorsData = participantIds.map((participantId) => ({
-            userId: participantId,
-            wishlistId: wishlist.id,
-        }));
-        await Collaborators.bulkCreate(collaboratorsData);
-    }
+  if (participantIds.length > 0) {
+    const collaboratorsData = participantIds.map((participantId) => ({
+      userId: participantId,
+      wishlistId: wishlist.id,
+    }));
+    await Collaborators.bulkCreate(collaboratorsData);
+  }
 
-    await wishlist.reload({
-        include: [{ model: Collaborators, as: "collaborators" }],
-    });
+  await wishlist.reload({
+    include: [{ model: Collaborators, as: "collaborators" }],
+  });
 
-    return wishlist;
+  return wishlist;
 };
 
 export const deleteWishlistById = async (id: string) => {
-    const wishlist = await Wishlist.findByPk(id);
+  const wishlist = await Wishlist.findByPk(id);
 
-    if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+  if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
-    const wishes = await Wish.findAll({ where: { wishlistId: wishlist.id } });
+  const wishes = await Wish.findAll({ where: { wishlistId: wishlist.id } });
 
-    if (wishlist.picture && !wishlist.picture.startsWith("http")) {
-        tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
-    }
+  if (wishlist.picture && !wishlist.picture.startsWith("http")) {
+    tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+  }
 
-    for (const wish of wishes) {
-        tryDeleteLocalImage(wish.picture, "wishPictures");
-    }
-    await wishlist.destroy();
+  for (const wish of wishes) {
+    tryDeleteLocalImage(wish.picture, "wishPictures");
+  }
+  await wishlist.destroy();
 };
 
 export const addNewWishToWishlist = async (
-    title: string,
-    wishlistId: string,
-    description?: string,
-    price?: number,
-    link?: string,
-    picture?: string
+  title: string,
+  wishlistId: string,
+  description?: string,
+  price?: number,
+  link?: string,
+  picture?: string
 ) => {
-    const wish = await Wish.create({
-        title,
-        wishlistId,
-        description,
-        price,
-        link,
-        picture,
+  const wish = await Wish.create({
+    title,
+    wishlistId,
+    description,
+    price,
+    link,
+    picture,
+  });
+
+  try {
+    const subscribers = await Subscriber.findAll({
+      where: { wishlistId },
     });
 
-    try {
-        const subscribers = await Subscriber.findAll({
-            where: { wishlistId },
-        });
-
-        await Promise.all(
-            subscribers.map((subscriber) =>
-                axios
-                    .post(
-                        `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
-                        {
-                            userId: subscriber.userId,
-                            type: "wishlist-new-wish",
-                            data: {
-                                wishlistId,
-                                wishTitle: title,
-                            },
-                            read: false,
-                        },
-                        {
-                            headers: {
-                                "x-internal-token":
-                                    process.env.INTERNAL_API_TOKEN,
-                            },
-                        }
-                    )
-                    .catch((error) =>
-                        console.error(
-                            `Erreur notif utilisateur ${subscriber.userId} :`,
-                            error
-                        )
-                    )
+    await Promise.all(
+      subscribers.map((subscriber) =>
+        axios
+          .post(
+            `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+            {
+              userId: subscriber.userId,
+              type: "wishlist-new-wish",
+              data: {
+                wishlistId,
+                wishTitle: title,
+              },
+              read: false,
+            },
+            {
+              headers: {
+                "x-internal-token": process.env.INTERNAL_API_TOKEN,
+              },
+            }
+          )
+          .catch((error) =>
+            console.error(
+              `Erreur notif utilisateur ${subscriber.userId} :`,
+              error
             )
-        );
-    } catch (error) {
-        console.error("Erreur lors de l'envoi des notifications :", error);
-    }
+          )
+      )
+    );
+  } catch (error) {
+    console.error("Erreur lors de l'envoi des notifications :", error);
+  }
 
-    return wish;
+  return wish;
 };
 
 export const modifyWishById = async (
-    id: string,
-    title?: string,
-    link?: string,
-    price?: number,
-    description?: string,
-    picture?: string
+  id: string,
+  title?: string,
+  link?: string,
+  price?: number,
+  description?: string,
+  picture?: string
 ) => {
-    const wish = await Wish.findByPk(id);
+  const wish = await Wish.findByPk(id);
 
-    if (!wish) throw new NotFoundError("Wish non trouvée");
+  if (!wish) throw new NotFoundError("Wish non trouvée");
 
-    if (title !== undefined) wish.title = title;
-    if (description !== undefined) wish.description = description;
-    if (picture !== undefined) wish.picture = picture;
-    if (link !== undefined) wish.link = link;
-    if (price !== undefined) wish.price = price;
+  if (title !== undefined) wish.title = title;
+  if (description !== undefined) wish.description = description;
+  if (picture !== undefined) wish.picture = picture;
+  if (link !== undefined) wish.link = link;
+  if (price !== undefined) wish.price = price;
 
-    await wish.save();
+  await wish.save();
 
-    return wish;
+  return wish;
 };
 
 export const deleteWishById = async (id: string) => {
-    const wish = await Wish.findByPk(id);
+  const wish = await Wish.findByPk(id);
 
-    if (!wish) throw new NotFoundError("Wish non trouvée");
+  if (!wish) throw new NotFoundError("Wish non trouvée");
 
-    if (wish.picture && !wish.picture.startsWith("http")) {
-        tryDeleteLocalImage(wish.picture, "wishPictures");
-    }
+  if (wish.picture && !wish.picture.startsWith("http")) {
+    tryDeleteLocalImage(wish.picture, "wishPictures");
+  }
 
-    await wish.destroy();
+  await wish.destroy();
 };
 
 export async function findProductsByQuery(
-    url: string,
-    wishlistId: string
+  url: string,
+  wishlistId: string
 ): Promise<SearchResult[]> {
-    const apiKey = config.googleApiKey;
-    const cx = config.googleCseId;
+  const apiKey = config.googleApiKey;
+  const cx = config.googleCseId;
 
-    if (!apiKey || !cx) {
-        throw new Error("Clé API Google ou ID moteur de recherche manquant.");
-    }
+  if (!apiKey || !cx) {
+    throw new Error("Clé API Google ou ID moteur de recherche manquant.");
+  }
 
-    const api = `https://www.googleapis.com/customsearch/v1`;
+  const api = `https://www.googleapis.com/customsearch/v1`;
 
-    try {
-        const response = await axios.get(api, {
-            params: {
-                q: url,
-                key: apiKey,
-                cx,
-            },
-        });
+  try {
+    const response = await axios.get(api, {
+      params: {
+        q: url,
+        key: apiKey,
+        cx,
+      },
+    });
 
-        if (!response.data.items) return [];
+    if (!response.data.items) return [];
 
-        return response.data.items.map((item: any) => {
-            const image = item.pagemap?.cse_image?.[0]?.src ?? null;
+    return response.data.items.map((item: any) => {
+      const image = item.pagemap?.cse_image?.[0]?.src ?? null;
 
-            const priceMatch =
-                item.snippet?.match(/(\d+)[\s]*€/) ||
-                item.snippet?.match(/€[\s]*(\d+)/);
+      const priceMatch =
+        item.snippet?.match(/(\d+)[\s]*€/) ||
+        item.snippet?.match(/€[\s]*(\d+)/);
 
-            const price = priceMatch ? parseInt(priceMatch[1], 10) : null;
+      const price = priceMatch ? parseInt(priceMatch[1], 10) : null;
 
-            return {
-                title: item.title,
-                link: item.link,
-                snippet: item.snippet,
-                image,
-                price,
-            };
-        });
-    } catch (error) {
-        console.error("Erreur lors de la recherche Google:", error);
-        throw error;
-    }
+      return {
+        title: item.title,
+        link: item.link,
+        snippet: item.snippet,
+        image,
+        price,
+      };
+    });
+  } catch (error) {
+    console.error("Erreur lors de la recherche Google:", error);
+    throw error;
+  }
 }
 
 export const searchWishlistByTitle = async (
-    query: string,
-    userId: string,
-    userRole: string
+  query: string,
+  userId: string,
+  userRole: string
 ) => {
-    const isAdmin = userRole === "admin";
-    const searchTerm = query.toLowerCase();
+  const isAdmin = userRole === "admin";
+  const searchTerm = query.toLowerCase();
 
-    const results = await Wishlist.findAll({
-        where: isAdmin
-            ? undefined
-            : {
-                  [Op.and]: [
-                      Sequelize.where(
-                          Sequelize.fn(
-                              "LOWER",
-                              Sequelize.col("Wishlist.title")
-                          ),
-                          {
-                              [Op.like]: `%${searchTerm}%`,
-                          }
-                      ),
-                      {
-                          [Op.or]: [
-                              {
-                                  [Op.and]: [
-                                      { access: "public" },
-                                      { published: 1 },
-                                  ],
-                              },
-                              { userId },
-                              { "$collaborators.userId$": userId },
-                          ],
-                      },
-                  ],
-              },
-        include: [
+  const results = await Wishlist.findAll({
+    where: isAdmin
+      ? undefined
+      : {
+          [Op.and]: [
+            Sequelize.where(
+              Sequelize.fn("LOWER", Sequelize.col("Wishlist.title")),
+              {
+                [Op.like]: `%${searchTerm}%`,
+              }
+            ),
             {
-                model: Collaborators,
-                as: "collaborators",
-                attributes: [],
-                required: false,
+              [Op.or]: [
+                {
+                  [Op.and]: [{ access: "public" }, { published: 1 }],
+                },
+                { userId },
+                { "$collaborators.userId$": userId },
+              ],
             },
-            {
-                model: Wish,
-                as: "wishes",
-                attributes: [],
-                required: false,
-            },
-        ],
-        attributes: [
-            "id",
-            "userId",
-            "title",
-            "picture",
-            "description",
-            "mode",
-            [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
-        ],
-        group: ["Wishlist.id"],
-    });
+          ],
+        },
+    include: [
+      {
+        model: Collaborators,
+        as: "collaborators",
+        attributes: [],
+        required: false,
+      },
+      {
+        model: Wish,
+        as: "wishes",
+        attributes: [],
+        required: false,
+      },
+    ],
+    attributes: [
+      "id",
+      "userId",
+      "title",
+      "picture",
+      "description",
+      "mode",
+      [Sequelize.fn("COUNT", Sequelize.col("wishes.id")), "wishesCount"],
+    ],
+    group: ["Wishlist.id"],
+  });
 
-    return results;
+  return results;
 };
 
 export const leaveWishlistAsCollaborator = async (
-    wishlistId: string,
-    userId: string
+  wishlistId: string,
+  userId: string
 ) => {
-    const wishlist = await Wishlist.findByPk(wishlistId, {
-        include: [{ model: Collaborators, as: "collaborators" }],
-    });
+  const wishlist = await Wishlist.findByPk(wishlistId, {
+    include: [{ model: Collaborators, as: "collaborators" }],
+  });
 
-    if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+  if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
 
-    const isCollaborator = wishlist.collaborators?.some(
-        (c) => c.userId === userId
-    );
+  const isCollaborator = wishlist.collaborators?.some(
+    (c) => c.userId === userId
+  );
 
-    if (!isCollaborator)
-        throw new AuthError("Vous n’êtes pas collaborateur de cette wishlist.");
+  if (!isCollaborator)
+    throw new AuthError("Vous n’êtes pas collaborateur de cette wishlist.");
 
-    await Collaborators.destroy({
-        where: { userId, wishlistId },
-    });
+  await Collaborators.destroy({
+    where: { userId, wishlistId },
+  });
 };
 
 export const subscribeToWishlistService = async (
-    userId: string,
-    wishlistId: string
+  userId: string,
+  wishlistId: string
 ) => {
-    const wishlist = await Wishlist.findOne({
-        where: { id: wishlistId, access: "public", published: 1 },
-    });
+  const wishlist = await Wishlist.findOne({
+    where: { id: wishlistId, access: "public", published: 1 },
+  });
 
-    if (!wishlist) {
-        throw new NotFoundError("Wishlist non trouvée ou non accessible.");
-    }
+  if (!wishlist) {
+    throw new NotFoundError("Wishlist non trouvée ou non accessible.");
+  }
 
-    if (wishlist.userId === userId) {
-        throw new ValidationError(
-            "Vous êtes déjà propriétaire de cette wishlist."
-        );
-    }
+  if (wishlist.userId === userId) {
+    throw new ValidationError("Vous êtes déjà propriétaire de cette wishlist.");
+  }
 
-    const newSub = await Subscriber.create({ userId, wishlistId });
+  const newSub = await Subscriber.create({ userId, wishlistId });
 
-    try {
-        await axios.post(
-            `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
-            {
-                userId: wishlist.userId,
-                type: "wishlist-sub",
-                data: { from: userId },
-                read: false,
-            },
-            {
-                headers: {
-                    "x-internal-token": process.env.INTERNAL_API_TOKEN,
-                },
-            }
-        );
-    } catch (error) {
-        console.error("Erreur envoi notification:", error);
-    }
+  try {
+    await axios.post(
+      `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
+      {
+        userId: wishlist.userId,
+        type: "wishlist-sub",
+        data: { from: userId },
+        read: false,
+      },
+      {
+        headers: {
+          "x-internal-token": process.env.INTERNAL_API_TOKEN,
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Erreur envoi notification:", error);
+  }
 
-    return newSub;
+  return newSub;
 };
 
 export const unsubscribeFromWishlistService = async (
-    userId: string,
-    wishlistId: string
+  userId: string,
+  wishlistId: string
 ) => {
-    const wishlist = await Wishlist.findByPk(wishlistId);
+  const wishlist = await Wishlist.findByPk(wishlistId);
 
-    if (!wishlist) {
-        throw new NotFoundError("Wishlist non trouvée.");
-    }
+  if (!wishlist) {
+    throw new NotFoundError("Wishlist non trouvée.");
+  }
 
-    if (wishlist.userId === userId) {
-        throw new ValidationError("Vous êtes propriétaire de cette wishlist.");
-    }
+  if (wishlist.userId === userId) {
+    throw new ValidationError("Vous êtes propriétaire de cette wishlist.");
+  }
 
-    const collaborator = await Subscriber.findOne({
-        where: { userId, wishlistId },
-    });
+  const collaborator = await Subscriber.findOne({
+    where: { userId, wishlistId },
+  });
 
-    if (!collaborator) {
-        throw new NotFoundError(
-            "Vous n'êtes pas collaborateur de cette wishlist."
-        );
-    }
+  if (!collaborator) {
+    throw new NotFoundError("Vous n'êtes pas collaborateur de cette wishlist.");
+  }
 
-    await collaborator.destroy();
+  await collaborator.destroy();
 
-    return { success: true };
+  return { success: true };
 };
 
 export const deleteWishlistsByUserId = async (userId: string) => {
-    const wishlists = await Wishlist.findAll({
-        where: {
-            userId,
-        },
+  const wishlists = await Wishlist.findAll({
+    where: {
+      userId,
+    },
+  });
+
+  if (!wishlists || wishlists.length === 0) {
+    throw new NotFoundError("Aucune liste trouvée pour cet utilisateur.");
+  }
+
+  const allWishes: Wish[] = [];
+
+  for (const wishlist of wishlists) {
+    tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+
+    const wishes = await Wish.findAll({
+      where: { wishlistId: wishlist.id },
     });
+    allWishes.push(...wishes);
+  }
 
-    if (!wishlists || wishlists.length === 0) {
-        throw new NotFoundError("Aucune liste trouvée pour cet utilisateur.");
-    }
+  for (const wish of allWishes) {
+    tryDeleteLocalImage(wish.picture, "wishPictures");
+  }
 
-    const allWishes: Wish[] = [];
+  await Promise.all(wishlists.map((wishlist) => wishlist.destroy()));
+};
 
-    for (const wishlist of wishlists) {
-        tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+export const reserveWishService = async (
+  wishId: string,
+  userId: string,
+  isAnonymous: boolean
+) => {
+  const wish = await Wish.findByPk(wishId);
+  if (!wish) throw new NotFoundError("Souhait non trouvé");
 
-        const wishes = await Wish.findAll({
-            where: { wishlistId: wishlist.id },
-        });
-        allWishes.push(...wishes);
-    }
+  if (wish.status === "reserved") {
+    throw new ConflictError("Ce souhait est déjà réservé");
+  }
 
-    for (const wish of allWishes) {
-        tryDeleteLocalImage(wish.picture, "wishPictures");
-    }
+  await WishReservation.create({
+    wishId,
+    userId,
+    isAnonymous,
+  });
 
-    await Promise.all(wishlists.map((wishlist) => wishlist.destroy()));
+  wish.status = "reserved";
+  await wish.save();
+
+  return wish;
+};
+
+export const cancelReservationService = async (
+  wishId: string,
+  userId: string
+) => {
+  const wish = await Wish.findByPk(wishId);
+  if (!wish) throw new NotFoundError("Souhait non trouvé");
+
+  const reservation = await WishReservation.findOne({
+    where: { wishId, userId },
+  });
+
+  if (!reservation) {
+    throw new ConflictError("Aucune réservation trouvée pour ce souhait");
+  }
+
+  await reservation.destroy();
+
+  wish.status = "available";
+  await wish.save();
+
+  return wish;
+};
+
+export const getReservedWishesByUser = async (userId: string) => {
+  const reservations = await WishReservation.findAll({
+    where: { userId },
+    include: [
+      {
+        model: Wish,
+        as: "wish",
+        required: true,
+      },
+    ],
+  });
+
+  return reservations.map((r) => r.wish);
 };
