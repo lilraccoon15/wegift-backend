@@ -261,8 +261,9 @@ export const getMyWish = asyncHandler(
 export const getWish = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const id = req.params.id;
+    const userId = req.user.userId;
 
-    const wish = await findWishById(id);
+    const wish = await findWishById(id, userId);
     if (!wish) return next(new NotFoundError("Wish non trouvé"));
 
     sendSuccess(res, "Wish trouvé", { wish });

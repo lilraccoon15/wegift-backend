@@ -8,6 +8,9 @@ class WishReservation extends Model {
   public userId!: string;
   public isAnonymous!: boolean;
 
+  public createdAt!: Date;
+  public updatedAt!: Date;
+
   public wish?: Wish;
 }
 

@@ -61,7 +61,7 @@ router.post(
   createWish
 );
 router.post("/scrap-wish", ...requireAuth, scrapAndCreateWish);
-router.post("/reserve/;id", ...requireAuth, reserveWish);
+router.post("/reserve/:id", ...requireAuth, reserveWish);
 router.get("/my-wish/:id", ...requireAuth, getMyWish);
 router.get("/wish/:id", ...requireAuth, getWish);
 router.get("/my-reserved-wishes", ...requireAuth, getMyReservedWishes);

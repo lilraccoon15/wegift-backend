@@ -10,7 +10,7 @@ import config from "../config";
 import { Op, Sequelize } from "sequelize";
 import Collaborators from "../models/Collaborators";
 import { tryDeleteLocalImage } from "../utils/files";
-import WishReservation from "src/models/WishReservation";
+import WishReservation from "../models/WishReservation";
 
 interface SearchResult {
   title: string;
@@ -215,18 +215,18 @@ export const findMyWishById = async (id: string, userId: string) => {
   return wish;
 };
 
-export const findWishById = async (id: string) => {
-  const wish = await Wish.findByPk(id);
-  if (!wish) return null;
-
-  const wishlist = await Wishlist.findOne({
-    where: {
-      id: wish.wishlistId,
-    },
-    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+export const findWishById = async (id: string, userId: string) => {
+  const wish = await Wish.findByPk(id, {
+    include: [
+      {
+        model: WishReservation,
+        as: "reservation",
+        where: { userId },
+        required: false,
+        attributes: ["id", "isAnonymous", "userId"], // ou tous
+      },
+    ],
   });
-
-  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
   return wish;
 };
@@ -699,5 +699,16 @@ export const getReservedWishesByUser = async (userId: string) => {
     ],
   });
 
-  return reservations.map((r) => r.wish);
+  return reservations
+    .filter((r) => r.wish) // sécurité au cas où
+    .map((r) => ({
+      wish: r.wish,
+      reservation: {
+        id: r.id,
+        wishId: r.wishId,
+        userId: r.userId,
+        isAnonymous: r.isAnonymous,
+        createdAt: r.createdAt,
+      },
+    }));
 };
