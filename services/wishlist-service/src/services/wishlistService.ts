@@ -139,7 +139,7 @@ export const getMyWishlistById = async (id: string, userId: string) => {
   return wishlist;
 };
 
-export const getWishlistById = async (id: string) => {
+export const getWishlistById = async (id: string, userId: string) => {
   const wishlist = await Wishlist.findOne({
     where: {
       id,
@@ -156,6 +156,14 @@ export const getWishlistById = async (id: string) => {
     ],
     include: [{ model: Collaborators, as: "collaborators" }],
   });
+
+  if (
+    !wishlist?.published &&
+    wishlist?.access !== "public" &&
+    wishlist?.userId !== userId
+  ) {
+    throw new AuthError("Accès non autorisé à cette wishlist");
+  }
 
   return wishlist;
 };
@@ -181,7 +189,10 @@ export const getMyWishesByWishlistId = async (
   return wishes;
 };
 
-export const getWishesByWishlistId = async (wishlistId: string) => {
+export const getWishesByWishlistId = async (
+  wishlistId: string,
+  userId: string
+) => {
   const wishlist = await Wishlist.findOne({
     where: {
       id: wishlistId,
@@ -190,6 +201,14 @@ export const getWishesByWishlistId = async (wishlistId: string) => {
   });
 
   if (!wishlist) throw new NotFoundError("Accès interdit à cette wishlist");
+
+  if (
+    !wishlist.published &&
+    wishlist.access !== "public" &&
+    wishlist.userId !== userId
+  ) {
+    throw new AuthError("Accès non autorisé à cette wishlist");
+  }
 
   const wishes = await Wish.findAll({
     where: { wishlistId },
@@ -268,6 +287,7 @@ export const createNewWishlist = async (
 
 export const modifyWishlistById = async (
   id: string,
+  userId: string,
   title?: string,
   access?: string,
   published?: number,
@@ -279,6 +299,10 @@ export const modifyWishlistById = async (
   const wishlist = await Wishlist.findByPk(id);
 
   if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+
+  if (wishlist.userId !== userId) {
+    throw new AuthError("Vous n’êtes pas autorisé à modifier cette wishlist");
+  }
 
   if (title !== undefined) wishlist.title = title;
   if (description !== undefined) wishlist.description = description;
@@ -307,10 +331,14 @@ export const modifyWishlistById = async (
   return wishlist;
 };
 
-export const deleteWishlistById = async (id: string) => {
+export const deleteWishlistById = async (id: string, userId: string) => {
   const wishlist = await Wishlist.findByPk(id);
 
   if (!wishlist) throw new NotFoundError("Wishlist non trouvée");
+
+  if (wishlist.userId !== userId) {
+    throw new AuthError("Vous n’êtes pas autorisé à supprimer cette wishlist");
+  }
 
   const wishes = await Wish.findAll({ where: { wishlistId: wishlist.id } });
 
@@ -383,6 +411,7 @@ export const addNewWishToWishlist = async (
 
 export const modifyWishById = async (
   id: string,
+  userId: string,
   title?: string,
   link?: string,
   price?: number,
@@ -391,7 +420,17 @@ export const modifyWishById = async (
 ) => {
   const wish = await Wish.findByPk(id);
 
-  if (!wish) throw new NotFoundError("Wish non trouvée");
+  if (!wish) throw new NotFoundError("Wish non trouvé");
+
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wish.wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
+
+  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
   if (title !== undefined) wish.title = title;
   if (description !== undefined) wish.description = description;
@@ -404,10 +443,20 @@ export const modifyWishById = async (
   return wish;
 };
 
-export const deleteWishById = async (id: string) => {
+export const deleteWishById = async (id: string, userId: string) => {
   const wish = await Wish.findByPk(id);
 
   if (!wish) throw new NotFoundError("Wish non trouvée");
+
+  const wishlist = await Wishlist.findOne({
+    where: {
+      id: wish.wishlistId,
+      [Op.or]: [{ userId }, { "$collaborators.userId$": userId }],
+    },
+    include: [{ model: Collaborators, as: "collaborators", attributes: [] }],
+  });
+
+  if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
   if (wish.picture && !wish.picture.startsWith("http")) {
     tryDeleteLocalImage(wish.picture, "wishPictures");
@@ -598,15 +647,13 @@ export const unsubscribeFromWishlistService = async (
     throw new ValidationError("Vous êtes propriétaire de cette wishlist.");
   }
 
-  const collaborator = await Subscriber.findOne({
+  const subscription = await Subscriber.findOne({
     where: { userId, wishlistId },
   });
 
-  if (!collaborator) {
-    throw new NotFoundError("Vous n'êtes pas collaborateur de cette wishlist.");
+  if (!subscription) {
+    throw new NotFoundError("Vous n'êtes pas abonné à cette wishlist.");
   }
-
-  await collaborator.destroy();
 
   return { success: true };
 };

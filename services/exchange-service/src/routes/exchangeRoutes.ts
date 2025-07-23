@@ -5,17 +5,18 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { upload } from "../middlewares/upload";
 
 import {
-    createExchange,
-    deleteExchange,
-    drawExchange,
-    getExchange,
-    getExchangeRules,
-    getExchanges,
-    getMyExchange,
-    getMyExchanges,
-    respondToExchangeInvitation,
-    searchExchange,
-    updateExchange,
+  cancelDrawExchange,
+  createExchange,
+  deleteExchange,
+  drawExchange,
+  getExchange,
+  getExchangeRules,
+  getExchanges,
+  getMyExchange,
+  getMyExchanges,
+  respondToExchangeInvitation,
+  searchExchange,
+  updateExchange,
 } from "../controllers/exchangeController";
 
 const router = Router();
@@ -32,16 +33,16 @@ router.get("/search", ...requireAuth, searchExchange);
 
 // === Création / modification ===
 router.post(
-    "/create-exchange",
-    ...requireAuth,
-    upload.single("picture"),
-    createExchange
+  "/create-exchange",
+  ...requireAuth,
+  upload.single("picture"),
+  createExchange
 );
 router.put(
-    "/update-exchange/:id",
-    ...requireAuth,
-    upload.single("picture"),
-    updateExchange
+  "/update-exchange/:id",
+  ...requireAuth,
+  upload.single("picture"),
+  updateExchange
 );
 
 // === Suppression ===
@@ -49,10 +50,11 @@ router.delete("/delete-exchange/:id", ...requireAuth, deleteExchange);
 
 // === Invitations / tirage au sort ===
 router.patch(
-    "/exchange/:requesterId/respond",
-    ...requireAuth,
-    respondToExchangeInvitation
+  "/exchange/:requesterId/respond",
+  ...requireAuth,
+  respondToExchangeInvitation
 );
 router.post("/draw/:exchangeId", ...requireAuth, drawExchange);
+router.delete("/cancel-draw/:exchangeId", ...requireAuth, cancelDrawExchange);
 
 export default router;

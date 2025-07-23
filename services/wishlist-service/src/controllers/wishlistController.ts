@@ -113,8 +113,9 @@ export const getMyWishlist = asyncHandler(
 export const getWishlist = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const id = req.params.id;
+    const userId = req.user.userId;
 
-    const wishlist = await getWishlistById(id);
+    const wishlist = await getWishlistById(id, userId);
 
     if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
@@ -141,8 +142,9 @@ export const getMyWishesFromWishlist = asyncHandler(
 export const getWishesFromWishlist = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const { wishlistId } = getWishesSchema.parse(req.query);
+    const userId = req.user.userId;
 
-    const wishes = await getWishesByWishlistId(wishlistId);
+    const wishes = await getWishesByWishlistId(wishlistId, userId);
 
     sendSuccess(res, "Souhaits trouvés", { wishes: wishes || [] }, 200);
   }
@@ -153,6 +155,7 @@ export const updateWishlist = asyncHandler(
     const id = req.params.id;
     const userRole = req.user.role;
     const isAdmin = userRole === "admin";
+    const userId = req.user.userId;
 
     const { title, description, access, published, mode, participantIds } =
       updateWishlistSchema.parse(req.body);
@@ -183,6 +186,7 @@ export const updateWishlist = asyncHandler(
 
     const updatedWishlist = await modifyWishlistById(
       id,
+      userId,
       title,
       access,
       Number(published),
@@ -210,7 +214,7 @@ export const deleteWishlist = asyncHandler(
     if (!wishlist) return next(new NotFoundError("Wishlist non trouvée"));
 
     if (wishlist.userId === userId || isAdmin) {
-      await deleteWishlistById(id);
+      await deleteWishlistById(id, userId);
       return sendSuccess(res, "Wishlist supprimée", {}, 200);
     }
 
@@ -275,6 +279,7 @@ export const updateWish = asyncHandler(
     const id = req.params.id;
     const userRole = req.user.role;
     const isAdmin = userRole === "admin";
+    const userId = req.user.userId;
 
     const { title, description, price, link } = updateWishSchema.parse(
       req.body
@@ -311,6 +316,7 @@ export const updateWish = asyncHandler(
 
     const updatedWish = await modifyWishById(
       id,
+      userId,
       title,
       link,
       Number(price),
@@ -326,6 +332,7 @@ export const deleteWish = asyncHandler(
     const { id } = req.params;
     const userRole = req.user.role;
     const isAdmin = userRole === "admin";
+    const userId = req.user.userId;
 
     if (!id) return next(new AppError("wishId manquant dans la requête", 400));
 
@@ -341,7 +348,7 @@ export const deleteWish = asyncHandler(
     if (!wishlist)
       return next(new AuthError("Accès interdit à cette wishlist."));
 
-    await deleteWishById(id);
+    await deleteWishById(id, userId);
     return sendSuccess(res, "Souhait supprimé", {}, 200);
   }
 );
