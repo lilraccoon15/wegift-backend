@@ -21,8 +21,7 @@ export const insertUserProfile = async (
   userId: number,
   pseudo: string,
   birthDate: string,
-  picture?: string | null,
-  isPublic?: boolean
+  picture?: string | null
 ) => {
   const existingProfile = await UserProfile.findOne({
     where: { id: userId },
@@ -35,7 +34,6 @@ export const insertUserProfile = async (
     pseudo,
     birthDate,
     picture,
-    isPublic,
   });
 
   return profile;
@@ -50,14 +48,7 @@ export const fetchUserProfileByAuthId = async (authId: string) => {
 export const fetchMyProfile = async (userId: string) => {
   const profile = await UserProfile.findOne({
     where: { id: userId },
-    attributes: [
-      "id",
-      "pseudo",
-      "birthDate",
-      "picture",
-      "description",
-      "isPublic",
-    ],
+    attributes: ["id", "pseudo", "birthDate", "picture", "description"],
   });
   if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
@@ -376,7 +367,6 @@ export const searchUserByPseudo = async (
           basePseudoCondition,
           {
             [Op.or]: [
-              { isPublic: true },
               { "$sentFriendships.status$": "accepted" },
               { "$receivedFriendships.status$": "accepted" },
             ],

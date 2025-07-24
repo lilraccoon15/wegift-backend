@@ -23,7 +23,6 @@ export const publicProfileSchema = z.object({
   birthDate: birthDateSchema,
   description: z.string().optional(),
   picture: optionalUrl,
-  isPublic: z.boolean().optional(),
 });
 
 export const internalProfileSchema = publicProfileSchema.extend({

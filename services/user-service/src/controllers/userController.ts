@@ -62,20 +62,13 @@ export const createUserProfile = asyncHandler(
       birthDate,
       picture,
       description,
-      isPublic,
     } = createProfileSchema.parse(req.body);
 
     const userId = bodyUserId || req.user?.userId;
 
     if (!userId) throw new ValidationError("userId manquant");
 
-    const profile = await insertUserProfile(
-      userId,
-      pseudo,
-      birthDate,
-      picture,
-      isPublic
-    );
+    const profile = await insertUserProfile(userId, pseudo, birthDate, picture);
 
     return sendSuccess(res, "Profil créé", { profile });
   }
@@ -325,20 +318,5 @@ export const respondToFriendRequest = asyncHandler(
       {},
       200
     );
-  }
-);
-
-export const updateProfileVisibility = asyncHandler(
-  async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.user.userId;
-    const { isPublic } = req.body;
-
-    const profile = await UserProfile.findOne({ where: { id: userId } });
-    if (!profile) throw new NotFoundError("Profil introuvable.");
-
-    profile.isPublic = isPublic;
-    await profile.save();
-
-    sendSuccess(res, "Visibilité mise à jour", { isPublic }, 200);
   }
 );

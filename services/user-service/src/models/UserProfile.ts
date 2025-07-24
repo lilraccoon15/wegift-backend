@@ -6,7 +6,6 @@ class UserProfile extends Model {
   public userId!: string;
   public pseudo!: string;
   public birthDate!: Date;
-  public isPublic!: boolean;
   public picture!: string | null;
   public description!: string | null;
 }
@@ -31,11 +30,6 @@ UserProfile.init(
     birthDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-    },
-    isPublic: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
     },
     picture: {
       type: DataTypes.STRING,
