@@ -546,7 +546,12 @@ export const drawExchangeService = async (
           {
             userId: assignment.userId,
             type: "exchange-assign",
-            data: { assignedUserId: assignment.assignedUserId },
+            data: {
+              assignedUserId: assignment.assignedUserId,
+              exchangeId: exchange.id,
+              exchangePicture: exchange.picture,
+              exchangeTitle: exchange.title,
+            },
             read: false,
           },
           {

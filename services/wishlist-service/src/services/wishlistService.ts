@@ -38,28 +38,35 @@ export async function canAccessWishlist(
   });
 }
 
-export const getAllUserWishlists = async (userId: string, userRole: string) => {
-  const isAdmin = userRole === "admin";
+export const getAllUserWishlists = async (
+  targetUserId: string,
+  currentUserRole: string,
+  currentUserId: string
+) => {
+  const isAdmin = currentUserRole === "admin";
+
+  const whereClause = isAdmin
+    ? { userId: targetUserId }
+    : {
+        [Op.and]: [
+          { userId: targetUserId },
+          {
+            [Op.or]: [
+              {
+                [Op.and]: [{ access: "public" }, { published: 1 }],
+              },
+              Sequelize.literal(`EXISTS (
+                SELECT 1 FROM collaborators 
+                WHERE collaborators.wishlistId = Wishlist.id 
+                AND collaborators.userId = '${currentUserId}'
+              )`),
+            ],
+          },
+        ],
+      };
 
   const wishlists = await Wishlist.findAll({
-    where: isAdmin
-      ? undefined
-      : {
-          [Op.and]: [
-            { access: "public" },
-            { published: 1 },
-            {
-              [Op.or]: [
-                { userId },
-                Sequelize.literal(`EXISTS (
-              SELECT 1 FROM collaborators 
-              WHERE collaborators.wishlistId = Wishlist.id 
-              AND collaborators.userId = '${userId}'
-            )`),
-              ],
-            },
-          ],
-        },
+    where: whereClause,
     attributes: ["id", "userId", "title", "picture", "description", "mode"],
     include: [
       {
@@ -514,34 +521,35 @@ export async function findProductsByQuery(
 
 export const searchWishlistByTitle = async (
   query: string,
-  userId: string,
-  userRole: string
+  currentUserId: string,
+  currentUserRole: string
 ) => {
-  const isAdmin = userRole === "admin";
+  const isAdmin = currentUserRole === "admin";
   const searchTerm = query.toLowerCase();
 
+  const baseTitleCondition = Sequelize.where(
+    Sequelize.fn("LOWER", Sequelize.col("Wishlist.title")),
+    {
+      [Op.like]: `%${searchTerm}%`,
+    }
+  );
+
+  const accessCondition = {
+    [Op.or]: [
+      {
+        [Op.and]: [{ access: "public" }, { published: 1 }],
+      },
+      { userId: currentUserId },
+      { "$collaborators.userId$": currentUserId },
+    ],
+  };
+
+  const whereClause = {
+    [Op.and]: [baseTitleCondition, ...(isAdmin ? [] : [accessCondition])],
+  };
+
   const results = await Wishlist.findAll({
-    where: isAdmin
-      ? undefined
-      : {
-          [Op.and]: [
-            Sequelize.where(
-              Sequelize.fn("LOWER", Sequelize.col("Wishlist.title")),
-              {
-                [Op.like]: `%${searchTerm}%`,
-              }
-            ),
-            {
-              [Op.or]: [
-                {
-                  [Op.and]: [{ access: "public" }, { published: 1 }],
-                },
-                { userId },
-                { "$collaborators.userId$": userId },
-              ],
-            },
-          ],
-        },
+    where: whereClause,
     include: [
       {
         model: Collaborators,

@@ -262,9 +262,8 @@ export const searchUser = asyncHandler(
     const { query } = userSearchQuerySchema.parse(req.query);
 
     const userId = req.user.userId;
-    const userRole = req.user.role;
 
-    const results = await searchUserByPseudo(query, userId, userRole);
+    const results = await searchUserByPseudo(query, userId);
 
     return sendSuccess(res, "Résultats trouvés", { users: results });
   }

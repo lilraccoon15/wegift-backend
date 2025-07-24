@@ -345,59 +345,22 @@ export async function fetchPendingFriendsByProfileId(
   return pendingList;
 }
 
-export const searchUserByPseudo = async (
-  query: string,
-  userId: string,
-  userRole: string
-) => {
-  const isAdmin = userRole === "admin";
+export const searchUserByPseudo = async (query: string, userId: string) => {
   const searchTerm = query.toLowerCase();
 
-  const basePseudoCondition = Sequelize.where(
-    Sequelize.fn("LOWER", Sequelize.col("pseudo")),
-    {
-      [Op.like]: `%${searchTerm}%`,
-    }
-  );
-
-  const whereClause = isAdmin
-    ? basePseudoCondition
-    : {
-        [Op.and]: [
-          basePseudoCondition,
-          {
-            [Op.or]: [
-              { "$sentFriendships.status$": "accepted" },
-              { "$receivedFriendships.status$": "accepted" },
-            ],
-          },
-        ],
-      };
-
   const results = await UserProfile.findAll({
-    where: whereClause,
-    include: [
-      {
-        model: Friendship,
-        as: "sentFriendships",
-        required: false,
-        where: {
-          requesterId: userId,
-          status: "accepted",
+    where: {
+      [Op.and]: [
+        Sequelize.where(Sequelize.fn("LOWER", Sequelize.col("pseudo")), {
+          [Op.like]: `%${searchTerm}%`,
+        }),
+        {
+          id: {
+            [Op.ne]: userId,
+          },
         },
-        attributes: [],
-      },
-      {
-        model: Friendship,
-        as: "receivedFriendships",
-        required: false,
-        where: {
-          addresseeId: userId,
-          status: "accepted",
-        },
-        attributes: [],
-      },
-    ],
+      ],
+    },
   });
 
   return results;

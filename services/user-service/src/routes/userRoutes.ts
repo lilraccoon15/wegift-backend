@@ -31,7 +31,7 @@ router.put(
   upload.single("picture"),
   updateUserProfile
 );
-// todo : route pour update en tant qu'admin
+// todo : route pour update le profil en tant qu'admin
 
 router.get("/profile/:userId", ...requireAuth, getUserProfileById);
 router.get("/check-pseudo", checkPseudoAvailability);

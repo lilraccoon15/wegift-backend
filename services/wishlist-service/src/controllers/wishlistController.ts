@@ -62,10 +62,15 @@ export const getMyWishlists = asyncHandler(
 
 export const getWishlists = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const userId = req.params.userId;
-    const userRole = req.params.role;
+    const targetUserId = req.params.userId;
+    const currentUserRole = req.user.role;
+    const currentUserId = req.user.userId;
 
-    const wishlists = await getAllUserWishlists(userId, userRole);
+    const wishlists = await getAllUserWishlists(
+      targetUserId,
+      currentUserRole,
+      currentUserId
+    );
 
     sendSuccess(res, "Wishlists trouvées", { wishlists });
   }
