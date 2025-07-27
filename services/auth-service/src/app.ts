@@ -25,6 +25,7 @@ app.use(express.json());
 
 app.use(passport.initialize());
 
+app.use("/img", express.static("public/img"));
 app.use("/", authRoutes);
 
 app.use(errorHandler);

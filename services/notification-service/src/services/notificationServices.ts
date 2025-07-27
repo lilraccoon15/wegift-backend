@@ -21,6 +21,8 @@ export async function findNotificationsByUserId(userId: string) {
                 attributes: ["type", "text"],
             },
         ],
+        order: [["createdAt", "DESC"]],
+        limit: 20,
     });
 }
 
