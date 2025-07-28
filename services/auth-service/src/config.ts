@@ -33,6 +33,9 @@ const config = {
     apiUrls: {
         AUTH_SERVICE: required("AUTH_SERVICE"),
         USER_SERVICE: required("USER_SERVICE"),
+        WISHLIST_SERVICE: required("WISHLIST_SERVICE"),
+        EXCHANGE_SERVICE: required("EXCHANGE_SERVICE"),
+        NOTIFICATION_SERVICE: required("NOTIFICATION_SERVICE"),
     },
 };
 
