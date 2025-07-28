@@ -1,4 +1,3 @@
-import path from "path";
 import iconv from "iconv-lite";
 import encodings from "iconv-lite/encodings";
 (iconv as any).encodings = encodings;
@@ -25,13 +24,8 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(passport.initialize());
-console.log(
-    "📁 img path served from:",
-    path.resolve(__dirname, "../public/img")
-);
 
-app.use("/img", express.static(path.resolve(__dirname, "../public/img")));
-
+app.use("/img", express.static("public/img"));
 app.use("/", authRoutes);
 
 app.use(errorHandler);
