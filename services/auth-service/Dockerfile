@@ -26,4 +26,6 @@ COPY --from=builder /app/public ./public
 
 EXPOSE 3001
 
+RUN ls -R ./public
+
 CMD ["node", "dist/server.js"]
