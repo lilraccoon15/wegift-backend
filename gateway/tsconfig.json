@@ -1,13 +1,13 @@
 {
     "compilerOptions": {
+        "target": "ES2020",
+        "module": "CommonJS",
         "rootDir": ".",
         "outDir": "dist",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
-        "skipLibCheck": true,
-        "target": "es2016",
-        "module": "commonjs"
+        "skipLibCheck": true
     },
-    "include": ["."]
+    "include": ["index.ts", "config.ts"]
 }

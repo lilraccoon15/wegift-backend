@@ -9,9 +9,7 @@ services:
             - "4000:4000"
         restart: unless-stopped
         env_file:
-            - ./gateway/.env
-        environment:
-            - NODE_ENV=docker
+            - ./gateway/.env.docker
 
     auth-service:
         build:
@@ -21,9 +19,23 @@ services:
             - "3001:3001"
         restart: unless-stopped
         env_file:
-            - ./services/auth-service/.env
+            - ./services/auth-service/.env.docker
+        volumes:
+            - ./services/auth-service/public/uploads:/app/public/uploads
+
+    auth-db:
+        image: mariadb:10.11
+        container_name: wegift-auth-db
+        restart: unless-stopped
         environment:
-            - NODE_ENV=docker
+            MARIADB_ROOT_PASSWORD: root
+            MARIADB_DATABASE: wegift_auth
+            MARIADB_USER: postgres
+            MARIADB_PASSWORD: postgres
+        ports:
+            - "3307:3306"
+        volumes:
+            - auth-db-data:/var/lib/mysql
 
     user-service:
         build:
@@ -33,11 +45,23 @@ services:
             - "3003:3003"
         restart: unless-stopped
         env_file:
-            - ./services/user-service/.env
-        environment:
-            - NODE_ENV=docker
+            - ./services/user-service/.env.docker
         volumes:
             - ./services/user-service/public/uploads:/app/public/uploads
+
+    user-db:
+        image: mariadb:10.11
+        container_name: wegift-user-db
+        restart: unless-stopped
+        environment:
+            MARIADB_ROOT_PASSWORD: root
+            MARIADB_DATABASE: wegift_user
+            MARIADB_USER: postgres
+            MARIADB_PASSWORD: postgres
+        ports:
+            - "3308:3306"
+        volumes:
+            - user-db-data:/var/lib/mysql
 
     wishlist-service:
         build:
@@ -47,9 +71,23 @@ services:
             - "3004:3004"
         restart: unless-stopped
         env_file:
-            - ./services/wishlist-service/.env
+            - ./services/wishlist-service/.env.docker
+        volumes:
+            - ./services/wishlist-service/public/uploads:/app/public/uploads
+
+    wishlist-db:
+        image: mariadb:10.11
+        container_name: wegift-wishlist-db
+        restart: unless-stopped
         environment:
-            - NODE_ENV=docker
+            MARIADB_ROOT_PASSWORD: root
+            MARIADB_DATABASE: wegift_wishlist
+            MARIADB_USER: postgres
+            MARIADB_PASSWORD: postgres
+        ports:
+            - "3309:3306"
+        volumes:
+            - wishlist-db-data:/var/lib/mysql
 
     exchange-service:
         build:
@@ -59,9 +97,23 @@ services:
             - "3002:3002"
         restart: unless-stopped
         env_file:
-            - ./services/exchange-service/.env
+            - ./services/exchange-service/.env.docker
+        volumes:
+            - ./services/exchange-service/public/uploads:/app/public/uploads
+
+    exchange-db:
+        image: mariadb:10.11
+        container_name: wegift-exchange-db
+        restart: unless-stopped
         environment:
-            - NODE_ENV=docker
+            MARIADB_ROOT_PASSWORD: root
+            MARIADB_DATABASE: wegift_exchange
+            MARIADB_USER: postgres
+            MARIADB_PASSWORD: postgres
+        ports:
+            - "3310:3306"
+        volumes:
+            - exchange-db-data:/var/lib/mysql
 
     notification-service:
         build:
@@ -71,6 +123,25 @@ services:
             - "3005:3005"
         restart: unless-stopped
         env_file:
-            - ./services/notification-service/.env
+            - ./services/notification-service/.env.docker
+
+    notification-db:
+        image: mariadb:10.11
+        container_name: wegift-notification-db
+        restart: unless-stopped
         environment:
-            - NODE_ENV=docker
+            MARIADB_ROOT_PASSWORD: root
+            MARIADB_DATABASE: wegift_notification
+            MARIADB_USER: postgres
+            MARIADB_PASSWORD: postgres
+        ports:
+            - "3311:3306"
+        volumes:
+            - notification-db-data:/var/lib/mysql
+
+volumes:
+    auth-db-data:
+    user-db-data:
+    wishlist-db-data:
+    exchange-db-data:
+    notification-db-data:

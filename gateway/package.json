@@ -1,39 +1,36 @@
 {
-  "name": "gateway",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && tsc",
-    "test": "echo \"No tests yet\" && exit 0",
-    "dev": "ts-node index.ts",
-    "start": "node dist/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "http-proxy-middleware": "^3.0.5",
-    "jsonwebtoken": "^9.0.2"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/cookie-parser": "^1.4.8",
-    "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.2",
-    "@types/http-proxy-middleware": "^1.0.0",
-    "@types/jest": "^29.5.14",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@types/multer": "^1.4.12",
-    "@types/node": "^22.15.24",
-    "@types/supertest": "^6.0.3",
-    "rimraf": "^6.0.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
-  }
+    "name": "gateway",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "npm run clean && tsc",
+        "test": "echo \"No tests yet\" && exit 0",
+        "dev": "cross-env NODE_ENV=development ts-node index.ts",
+        "start": "NODE_ENV=production node dist/index.js"
+    },
+    "dependencies": {
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.5",
+        "dotenv": "^16.5.0",
+        "express": "^5.1.0",
+        "http-proxy-middleware": "^3.0.5",
+        "jsonwebtoken": "^9.0.2"
+    },
+    "devDependencies": {
+        "@types/bcrypt": "^5.0.2",
+        "@types/cookie-parser": "^1.4.8",
+        "@types/cors": "^2.8.18",
+        "@types/express": "^5.0.2",
+        "@types/http-proxy-middleware": "^1.0.0",
+        "@types/jest": "^29.5.14",
+        "@types/jsonwebtoken": "^9.0.9",
+        "@types/multer": "^1.4.12",
+        "@types/node": "^22.15.24",
+        "@types/supertest": "^6.0.3",
+        "cross-env": "^10.0.0",
+        "rimraf": "^6.0.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8.3"
+    }
 }

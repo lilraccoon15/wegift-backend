@@ -15,11 +15,12 @@ const app = express();
 
 setupAssociations();
 
+const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
+    cors({
+        origin: allowedOrigin,
+        credentials: true,
+    })
 );
 
 app.use(cookieParser());
@@ -32,7 +33,7 @@ app.use("/", exchangeRoutes);
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-  res.send("Exchange service is running!");
+    res.send("Exchange service is running!");
 });
 
 export default app;

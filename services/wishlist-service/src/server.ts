@@ -2,7 +2,7 @@ import app from "./app";
 import sequelize from "./config/database";
 import logger from "./utils/logger";
 
-const PORT = process.env.PORT || 3004;
+const PORT = Number(process.env.PORT) || 3004;
 
 (async () => {
     try {

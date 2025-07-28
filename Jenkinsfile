@@ -30,12 +30,12 @@ pipeline {
                     file(credentialsId: 'wegift-env-notification-test', variable: 'NOTIFICATION_ENV_TEST')
                 ]) {
                     bat '''
-                    copy %AUTH_ENV% services\\auth-service\\.env
-                    copy %USER_ENV% services\\user-service\\.env
-                    copy %WISHLIST_ENV% services\\wishlist-service\\.env
-                    copy %EXCHANGE_ENV% services\\exchange-service\\.env
-                    copy %NOTIFICATION_ENV% services\\notification-service\\.env
-                    copy %GATEWAY_ENV% gateway\\.env
+                    copy %AUTH_ENV% services\\auth-service\\.env.docker
+                    copy %USER_ENV% services\\user-service\\.env.docker
+                    copy %WISHLIST_ENV% services\\wishlist-service\\.env.docker
+                    copy %EXCHANGE_ENV% services\\exchange-service\\.env.docker
+                    copy %NOTIFICATION_ENV% services\\notification-service\\.env.docker
+                    copy %GATEWAY_ENV% gateway\\.env.docker
 
                     copy %AUTH_ENV_TEST% services\\auth-service\\.env.test
                     copy %USER_ENV_TEST% services\\user-service\\.env.test
@@ -100,12 +100,12 @@ pipeline {
             parallel {
                 stage('Test auth-service') {
                     steps {
-                        bat 'docker compose run --rm -e NODE_ENV=test-docker auth-service npm run test-docker'
+                        bat 'docker compose run --rm -e NODE_ENV=test auth-service npm run test'
                     }
                 }
                 stage('Test user-service') {
                     steps {
-                        bat 'docker compose run --rm -e NODE_ENV=test-docker user-service npm run test-docker'
+                        bat 'docker compose run --rm -e NODE_ENV=test user-service npm run test'
                     }
                 }
             }

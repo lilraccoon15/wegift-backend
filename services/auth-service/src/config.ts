@@ -1,54 +1,39 @@
-type EnvType = "development" | "docker" | "test-local" | "test-docker";
-
-const ENV = (process.env.NODE_ENV as EnvType) || "development";
-
-const API_URLS = {
-  development: {
-    AUTH_SERVICE: "http://localhost:3001",
-    EXCHANGE_SERVICE: "http://localhost:3002",
-    USER_SERVICE: "http://localhost:3003",
-    WISHLIST_SERVICE: "http://localhost:3004",
-    NOTIFICATION_SERVICE: "http://localhost:3005",
-  },
-  docker: {
-    AUTH_SERVICE: "http://auth-service:3001",
-    EXCHANGE_SERVICE: "http://exchange-service:3002",
-    USER_SERVICE: "http://user-service:3003",
-    WISHLIST_SERVICE: "http://wishlist-service:3004",
-    NOTIFICATION_SERVICE: "http://wishlist-service:3005",
-  },
-  "test-local": {
-    AUTH_SERVICE: "http://localhost:3001",
-    EXCHANGE_SERVICE: "http://localhost:3002",
-    USER_SERVICE: "http://localhost:3003",
-    WISHLIST_SERVICE: "http://localhost:3004",
-    NOTIFICATION_SERVICE: "http://localhost:3005",
-  },
-  "test-docker": {
-    AUTH_SERVICE: "http://auth-service:3001",
-    EXCHANGE_SERVICE: "http://exchange-service:3002",
-    USER_SERVICE: "http://user-service:3003",
-    WISHLIST_SERVICE: "http://wishlist-service:3004",
-    NOTIFICATION_SERVICE: "http://wishlist-service:3005",
-  },
+const required = (name: string): string => {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(
+            `La variable d'environnement ${name} doit être définie !`
+        );
+    }
+    return value;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("La variable d'environnement JWT_SECRET doit être définie !");
-}
+const config = {
+    env: process.env.NODE_ENV || "development",
 
-const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
-const JWT_ISSUER = process.env.JWT_ISSUER || "your-api";
-const TOKEN_EXPIRATION_MS = 60 * 60 * 1000;
+    jwtSecret: required("JWT_SECRET"),
+    jwtAudience: process.env.JWT_AUDIENCE || "wegift-users",
+    jwtIssuer: process.env.JWT_ISSUER || "wegift-auth-service",
+    tokenExpirationMs: 60 * 60 * 1000, // 1h
 
-const currentConfig = {
-  apiUrls: API_URLS[ENV] || API_URLS.development,
-  jwtSecret: JWT_SECRET,
-  jwtAudience: JWT_AUDIENCE,
-  jwtIssuer: JWT_ISSUER,
-  tokenExpirationMs: TOKEN_EXPIRATION_MS,
-  env: ENV,
+    internalApiToken: required("INTERNAL_API_TOKEN"),
+
+    googleClientId: required("GOOGLE_CLIENT_ID"),
+    googleClientSecret: required("GOOGLE_CLIENT_SECRET"),
+
+    mailtrap: {
+        host: required("MAILTRAP_HOST"),
+        port: Number(process.env.MAILTRAP_PORT) || 2525,
+        user: required("MAILTRAP_USER"),
+        pass: required("MAILTRAP_PASS"),
+    },
+
+    frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+
+    apiUrls: {
+        AUTH_SERVICE: required("AUTH_SERVICE"),
+        USER_SERVICE: required("USER_SERVICE"),
+    },
 };
 
-export default currentConfig;
+export default config;
