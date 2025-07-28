@@ -13,20 +13,12 @@ import passport from "passport";
 
 const app = express();
 
-cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-      .split(",")
-      .map((o) => o.trim());
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS: Origin not allowed"));
-    }
-  },
-  credentials: true,
-});
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 app.use(cookieParser());
 app.use(express.json());

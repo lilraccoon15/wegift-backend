@@ -31,14 +31,6 @@ const API_URLS = {
     WISHLIST_SERVICE: "http://wishlist-service:3004",
     NOTIFICATION_SERVICE: "http://wishlist-service:3005",
   },
-  production: {
-    AUTH_SERVICE: "https://auth-service-production-xxx.up.railway.app",
-    EXCHANGE_SERVICE: "https://exchange-service-production-xxx.up.railway.app",
-    USER_SERVICE: "https://user-service-production-xxx.up.railway.app",
-    WISHLIST_SERVICE: "https://wishlist-service-production-xxx.up.railway.app",
-    NOTIFICATION_SERVICE:
-      "https://notification-service-production-xxx.up.railway.app",
-  },
 };
 
 const JWT_SECRET = process.env.JWT_SECRET;
