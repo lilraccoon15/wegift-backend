@@ -3,41 +3,47 @@ type EnvType = "development" | "docker" | "test-local" | "test-docker";
 const ENV = (process.env.NODE_ENV as EnvType) || "development";
 
 const API_URLS = {
-    development: {
-        AUTH_SERVICE: "http://localhost:3001",
-        EXCHANGE_SERVICE: "http://localhost:3002",
-        USER_SERVICE: "http://localhost:3003",
-        WISHLIST_SERVICE: "http://localhost:3004",
-        NOTIFICATION_SERVICE: "http://localhost:3005",
-    },
-    docker: {
-        AUTH_SERVICE: "http://auth-service:3001",
-        EXCHANGE_SERVICE: "http://exchange-service:3002",
-        USER_SERVICE: "http://user-service:3003",
-        WISHLIST_SERVICE: "http://wishlist-service:3004",
-        NOTIFICATION_SERVICE: "http://wishlist-service:3005",
-    },
-    "test-local": {
-        AUTH_SERVICE: "http://localhost:3001",
-        EXCHANGE_SERVICE: "http://localhost:3002",
-        USER_SERVICE: "http://localhost:3003",
-        WISHLIST_SERVICE: "http://localhost:3004",
-        NOTIFICATION_SERVICE: "http://localhost:3005",
-    },
-    "test-docker": {
-        AUTH_SERVICE: "http://auth-service:3001",
-        EXCHANGE_SERVICE: "http://exchange-service:3002",
-        USER_SERVICE: "http://user-service:3003",
-        WISHLIST_SERVICE: "http://wishlist-service:3004",
-        NOTIFICATION_SERVICE: "http://wishlist-service:3005",
-    },
+  development: {
+    AUTH_SERVICE: "http://localhost:3001",
+    EXCHANGE_SERVICE: "http://localhost:3002",
+    USER_SERVICE: "http://localhost:3003",
+    WISHLIST_SERVICE: "http://localhost:3004",
+    NOTIFICATION_SERVICE: "http://localhost:3005",
+  },
+  docker: {
+    AUTH_SERVICE: "http://auth-service:3001",
+    EXCHANGE_SERVICE: "http://exchange-service:3002",
+    USER_SERVICE: "http://user-service:3003",
+    WISHLIST_SERVICE: "http://wishlist-service:3004",
+    NOTIFICATION_SERVICE: "http://wishlist-service:3005",
+  },
+  "test-local": {
+    AUTH_SERVICE: "http://localhost:3001",
+    EXCHANGE_SERVICE: "http://localhost:3002",
+    USER_SERVICE: "http://localhost:3003",
+    WISHLIST_SERVICE: "http://localhost:3004",
+    NOTIFICATION_SERVICE: "http://localhost:3005",
+  },
+  "test-docker": {
+    AUTH_SERVICE: "http://auth-service:3001",
+    EXCHANGE_SERVICE: "http://exchange-service:3002",
+    USER_SERVICE: "http://user-service:3003",
+    WISHLIST_SERVICE: "http://wishlist-service:3004",
+    NOTIFICATION_SERVICE: "http://wishlist-service:3005",
+  },
+  production: {
+    AUTH_SERVICE: "https://auth-service-production-xxx.up.railway.app",
+    EXCHANGE_SERVICE: "https://exchange-service-production-xxx.up.railway.app",
+    USER_SERVICE: "https://user-service-production-xxx.up.railway.app",
+    WISHLIST_SERVICE: "https://wishlist-service-production-xxx.up.railway.app",
+    NOTIFICATION_SERVICE:
+      "https://notification-service-production-xxx.up.railway.app",
+  },
 };
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-    throw new Error(
-        "La variable d'environnement JWT_SECRET doit être définie !"
-    );
+  throw new Error("La variable d'environnement JWT_SECRET doit être définie !");
 }
 
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "your-app";
@@ -47,14 +53,14 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 const GOOGLE_CSE_ID = process.env.GOOGLE_CSE_ID;
 
 const currentConfig = {
-    apiUrls: API_URLS[ENV] || API_URLS.development,
-    jwtSecret: JWT_SECRET,
-    jwtAudience: JWT_AUDIENCE,
-    jwtIssuer: JWT_ISSUER,
-    tokenExpirationMs: TOKEN_EXPIRATION_MS,
-    env: ENV,
-    googleApiKey: GOOGLE_API_KEY,
-    googleCseId: GOOGLE_CSE_ID,
+  apiUrls: API_URLS[ENV] || API_URLS.development,
+  jwtSecret: JWT_SECRET,
+  jwtAudience: JWT_AUDIENCE,
+  jwtIssuer: JWT_ISSUER,
+  tokenExpirationMs: TOKEN_EXPIRATION_MS,
+  env: ENV,
+  googleApiKey: GOOGLE_API_KEY,
+  googleCseId: GOOGLE_CSE_ID,
 };
 
 export default currentConfig;

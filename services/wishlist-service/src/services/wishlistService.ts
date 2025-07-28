@@ -140,7 +140,10 @@ export const getMyWishlistById = async (id: string, userId: string) => {
       "published",
       "mode",
     ],
-    include: [{ model: Collaborators, as: "collaborators" }],
+    include: [
+      { model: Collaborators, as: "collaborators" },
+      { model: Subscriber, as: "subscribers" },
+    ],
   });
 
   return wishlist;
@@ -643,7 +646,8 @@ export const subscribeToWishlistService = async (
 
 export const unsubscribeFromWishlistService = async (
   userId: string,
-  wishlistId: string
+  wishlistId: string,
+  targetUserId?: string
 ) => {
   const wishlist = await Wishlist.findByPk(wishlistId);
 
@@ -651,17 +655,32 @@ export const unsubscribeFromWishlistService = async (
     throw new NotFoundError("Wishlist non trouvée.");
   }
 
-  if (wishlist.userId === userId) {
-    throw new ValidationError("Vous êtes propriétaire de cette wishlist.");
+  // Si on essaie de désabonner quelqu’un d’autre que soi
+  const isOwnerRemovingSomeone = !!targetUserId;
+
+  if (isOwnerRemovingSomeone && wishlist.userId !== userId) {
+    throw new AuthError("Seul le propriétaire peut retirer un abonné.");
+  }
+
+  const subscriberId = targetUserId ?? userId;
+
+  if (subscriberId === wishlist.userId) {
+    throw new ValidationError("Le propriétaire ne peut pas être désabonné.");
   }
 
   const subscription = await Subscriber.findOne({
-    where: { userId, wishlistId },
+    where: { userId: subscriberId, wishlistId },
   });
 
   if (!subscription) {
-    throw new NotFoundError("Vous n'êtes pas abonné à cette wishlist.");
+    throw new NotFoundError(
+      isOwnerRemovingSomeone
+        ? "L'utilisateur ciblé n'est pas abonné à cette wishlist."
+        : "Vous n'êtes pas abonné à cette wishlist."
+    );
   }
+
+  await subscription.destroy();
 
   return { success: true };
 };

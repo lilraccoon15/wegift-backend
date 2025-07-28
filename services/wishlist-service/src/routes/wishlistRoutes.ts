@@ -27,6 +27,7 @@ import {
   reserveWish,
   cancelReserveWish,
   getMyReservedWishes,
+  removeSubscriber,
 } from "../controllers/wishlistController";
 
 const router = Router();
@@ -90,4 +91,9 @@ router.delete(
   unsubscribeFromWishlist
 );
 
+router.delete(
+  "/:wishlistId/subscriber/:subscriberId",
+  ...requireAuth,
+  removeSubscriber
+);
 export default router;

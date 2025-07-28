@@ -29,7 +29,12 @@ export const getAllMyExchanges = async (userId: string) => {
       "startDate",
       "endDate",
       [
-        Sequelize.fn("COUNT", Sequelize.col("participants.id")),
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.literal(
+            `CASE WHEN participants.acceptedAt IS NOT NULL THEN 1 END`
+          )
+        ),
         "participantsCount",
       ],
     ],
@@ -62,7 +67,12 @@ export const getAllUserExchanges = async (userId: string, userRole: string) => {
       "startDate",
       "endDate",
       [
-        Sequelize.fn("COUNT", Sequelize.col("participants.id")),
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.literal(
+            `CASE WHEN participants.acceptedAt IS NOT NULL THEN 1 END`
+          )
+        ),
         "participantsCount",
       ],
     ],
@@ -324,7 +334,9 @@ export const getExchangeById = async (
 
   if (!isAdmin && !isParticipant) return null;
 
-  exchangeJson.participantsCount = exchangeJson.participants?.length ?? 0;
+  exchangeJson.participantsCount =
+    exchangeJson.participants?.filter((p: any) => p.acceptedAt !== null)
+      .length ?? 0;
 
   return exchangeJson;
 };

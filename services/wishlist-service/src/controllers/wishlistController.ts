@@ -453,6 +453,21 @@ export const unsubscribeFromWishlist = asyncHandler(
   }
 );
 
+export const removeSubscriber = asyncHandler(
+  async (req: AuthenticatedRequest, res) => {
+    const ownerId = req.user.userId;
+    const { wishlistId, subscriberId } = req.params;
+
+    if (!wishlistId || !subscriberId) {
+      throw new ValidationError("Paramètres manquants.");
+    }
+
+    await unsubscribeFromWishlistService(ownerId, wishlistId, subscriberId);
+
+    return sendSuccess(res, "Abonné retiré avec succès.");
+  }
+);
+
 export const deleteUserWishlists = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const { userId } = req.body;

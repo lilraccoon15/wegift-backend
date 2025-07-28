@@ -15,12 +15,20 @@ const app = express();
 
 setupAssociations();
 
-app.use(
-    cors({
-        origin: "http://localhost:3000",
-        credentials: true,
-    })
-);
+cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+      .split(",")
+      .map((o) => o.trim());
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS: Origin not allowed"));
+    }
+  },
+  credentials: true,
+});
 
 app.use(cookieParser());
 app.use(express.json());
@@ -32,7 +40,7 @@ app.use("/", wishlistRoutes);
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-    res.send("Wishlist service is running!");
+  res.send("Wishlist service is running!");
 });
 
 export default app;
