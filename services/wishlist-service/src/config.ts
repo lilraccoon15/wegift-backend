@@ -18,6 +18,9 @@ const config = {
 
     internalApiToken: required("INTERNAL_API_TOKEN"),
 
+    googleApiKey: required("GOOGLE_API_KEY"),
+    googleCseId: required("GOOGLE_CSE_ID"),
+
     frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
 
     apiUrls: {
