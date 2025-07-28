@@ -44,8 +44,6 @@ RUN npm install --omit=dev
 # ✅ Copie les fichiers nécessaires à l’exécution
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/config ./config
-COPY --from=builder /app/passport ./passport
 
 # Port d’écoute
 EXPOSE 3001
