@@ -19,6 +19,14 @@ const config = {
     internalApiToken: required("INTERNAL_API_TOKEN"),
 
     frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
+
+    apiUrls: {
+        AUTH_SERVICE: required("AUTH_SERVICE"),
+        USER_SERVICE: required("USER_SERVICE"),
+        WISHLIST_SERVICE: required("WISHLIST_SERVICE"),
+        EXCHANGE_SERVICE: required("EXCHANGE_SERVICE"),
+        NOTIFICATION_SERVICE: required("NOTIFICATION_SERVICE"),
+    },
 };
 
 export default config;
