@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes";
 import errorHandler from "./middlewares/errorHandler";
 import "./passport/googleStrategy";
 import passport from "passport";
+import path from "path";
 
 const app = express();
 
@@ -25,7 +26,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(passport.initialize());
 
-app.use("/img", express.static("public/img"));
+app.use("/img", express.static(path.resolve(__dirname, "../public/img")));
 app.use("/", authRoutes);
 
 app.use(errorHandler);
