@@ -71,6 +71,8 @@ const setupProxy = (
     onError: onProxyError,
   };
 
+  console.log(`🔁 Proxy ${path} → ${target}`);
+
   // 👇 cast ici uniquement pour faire taire TypeScript sur les callbacks non typés
   app.use(path, createProxyMiddleware(proxyOptions as any));
 };
