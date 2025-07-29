@@ -26,8 +26,8 @@ const PORT = Number(process.env.PORT) || 4000;
 
 // Liste des origines autorisées
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(",")
-  .map((origin) => origin.trim().replace(/;$/, ""))
+  .split(/[;,]/)
+  .map((origin) => origin.trim())
   .filter(Boolean);
 
 // Middleware CORS
