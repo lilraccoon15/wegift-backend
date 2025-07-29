@@ -28,11 +28,9 @@ const PORT = Number(process.env.PORT) || 4000;
 
 // Liste des origines autorisées
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(/[,\n;]/) // split aussi sur les `;` en plus
-  .map((origin) =>
-    origin
-      .replace(/['"]/g, "") // enlève les guillemets
-      .trim()
+  .split(/[,\n;]/) // split sur virgule, saut de ligne, point-virgule
+  .map(
+    (origin) => origin.replace(/^['";\s]+|['";\s]+$/g, "") // enlève quotes, ;, espaces EN DÉBUT ET FIN
   )
   .filter(Boolean);
 
