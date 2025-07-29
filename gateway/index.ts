@@ -26,8 +26,10 @@ const PORT = Number(process.env.PORT) || 4000;
 
 // Liste des origines autorisées
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(/[;,]/)
-  .map((origin) => origin.trim())
+  .split(/[,\n]/) // accepte les virgules ET les retours à la ligne si tu colles dans l’UI
+  .map(
+    (origin) => origin.trim().replace(/^['"]+|['";\s]+$/g, "") // enlève les quotes, les ;, les espaces
+  )
   .filter(Boolean);
 
 console.log("✅ ALLOWED_ORIGINS (parsed):", allowedOrigins);
