@@ -111,6 +111,10 @@ setupProxy(
   "/uploads"
 );
 
+app.get("/", (_req, res) => {
+  res.send("🟢 Gateway is running");
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Gateway en écoute sur http://0.0.0.0:${PORT}`);
   console.log("🌍 ALLOWED_ORIGINS =", allowedOrigins);
