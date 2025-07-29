@@ -12,11 +12,11 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendUserActivationEmail = async (email: string, token: string) => {
-  const activationLink = `http://localhost:3000/activate?token=${token}`;
+  const activationLink = `${process.env.FRONTEND_URL}/activate?token=${token}`;
 
   try {
     await transporter.sendMail({
-      from: '"WeGift" <no-reply@wegift.com>',
+      from: '"WeGift" <contact@wegift.fr>',
       to: email,
       subject: "Activation de votre compte WeGift",
       html: `<p>Bonjour,</p>
@@ -33,11 +33,11 @@ export const sendUserPasswordResetEmail = async (
   email: string,
   token: string
 ) => {
-  const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
   try {
     await transporter.sendMail({
-      from: '"WeGift" <no-reply@wegift.com>',
+      from: '"WeGift" <contact@wegift.fr>',
       to: email,
       subject: "Réinitialisation de votre mot de passe WeGift",
       html: `<p>Bonjour,</p>
