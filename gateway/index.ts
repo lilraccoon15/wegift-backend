@@ -78,7 +78,7 @@ const setupProxy = (
 // Proxys
 setupProxy("/api/auth", config.AUTH_SERVICE, "^/api/auth");
 setupProxy("/api/exchange", config.EXCHANGE_SERVICE, "^/api/exchange");
-setupProxy("/api/users", config.USER_SERVICE, "^/api/users");
+setupProxy("/api/users", config.USER_SERVICE, "^/api/users(.*)", "$1");
 setupProxy("/api/wishlist", config.WISHLIST_SERVICE, "^/api/wishlist");
 setupProxy(
   "/api/notification",
