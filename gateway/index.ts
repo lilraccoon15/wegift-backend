@@ -1,3 +1,16 @@
+import axios from "axios";
+
+(async () => {
+  try {
+    const res = await axios.get(
+      "https://user-service-production-7bcc.up.railway.app/check-pseudo?pseudo=cam"
+    );
+    console.log("✅ Test direct vers user-service depuis gateway : ", res.data);
+  } catch (err: any) {
+    console.error("❌ Test direct vers user-service a échoué :", err.message);
+  }
+})();
+
 import dotenv from "dotenv";
 dotenv.config();
 
