@@ -54,7 +54,6 @@ app.use(
   createProxyMiddleware({
     target: config.AUTH_SERVICE,
     changeOrigin: true,
-    pathRewrite: { "^/api/auth": "" },
     onProxyRes: addCorsHeaders,
   } as any)
 );
@@ -64,7 +63,6 @@ app.use(
   createProxyMiddleware({
     target: config.EXCHANGE_SERVICE,
     changeOrigin: true,
-    pathRewrite: { "^/api/exchange": "" },
     onProxyRes: addCorsHeaders,
   } as any)
 );
@@ -84,7 +82,6 @@ app.use(
   createProxyMiddleware({
     target: config.USER_SERVICE,
     changeOrigin: true,
-    pathRewrite: { "^/api/users": "" },
     onProxyRes: addCorsHeaders,
   } as any)
 );
@@ -94,7 +91,6 @@ app.use(
   createProxyMiddleware({
     target: config.WISHLIST_SERVICE,
     changeOrigin: true,
-    pathRewrite: { "^/api/wishlist": "" },
     onProxyRes: addCorsHeaders,
   } as any)
 );
@@ -104,7 +100,6 @@ app.use(
   createProxyMiddleware({
     target: config.NOTIFICATION_SERVICE,
     changeOrigin: true,
-    pathRewrite: { "^/api/notification": "" },
     onProxyRes: addCorsHeaders,
   } as any)
 );
