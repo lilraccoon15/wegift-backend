@@ -26,12 +26,12 @@ import config from "./config";
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-// Liste des origines autorisées
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-  .split(/[,\n;]/) // split sur virgule, saut de ligne, point-virgule
-  .map(
-    (origin) => origin.replace(/^['";\s]+|['";\s]+$/g, "") // enlève quotes, ;, espaces EN DÉBUT ET FIN
-  )
+const rawOrigins = (process.env.ALLOWED_ORIGINS || "").split(/[,\n;]/);
+
+console.log("🔬 Étape intermédiaire après split :", rawOrigins);
+
+const allowedOrigins = rawOrigins
+  .map((origin) => origin.replace(/^['";\s]+|['";\s]+$/g, ""))
   .filter(Boolean);
 
 console.log("✅ ALLOWED_ORIGINS (parsed):", allowedOrigins);
