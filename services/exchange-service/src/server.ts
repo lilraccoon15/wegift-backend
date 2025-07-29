@@ -5,14 +5,14 @@ import logger from "./utils/logger";
 const PORT = Number(process.env.PORT) || 3002;
 
 (async () => {
-    try {
-        await sequelize.authenticate();
-        logger.info("Connexion DB réussie");
+  try {
+    await sequelize.authenticate();
+    logger.info("Connexion DB réussie");
 
-        app.listen(PORT, () => {
-            logger.info(`Serveur lancé sur http://localhost:${PORT}`);
-        });
-    } catch (err) {
-        logger.error("Impossible de se connecter à la DB :", err);
-    }
+    app.listen(PORT, "0.0.0.0", () => {
+      logger.info(`Serveur lancé sur http://0.0.0.0:${PORT}`);
+    });
+  } catch (err) {
+    logger.error("Impossible de se connecter à la DB :", err);
+  }
 })();
