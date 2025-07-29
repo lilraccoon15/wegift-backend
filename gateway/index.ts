@@ -14,6 +14,8 @@ import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
+console.log("🧪 RAW ALLOWED_ORIGINS =", process.env.ALLOWED_ORIGINS);
+
 import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
