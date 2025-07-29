@@ -1,17 +1,17 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import { createProxyMiddleware, Options } from "http-proxy-middleware";
 import type { IncomingMessage, ServerResponse } from "http";
 import config from "./config";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-// CORS Origins autorisés
+// Liste des origines autorisées
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
@@ -31,6 +31,8 @@ app.use(
   })
 );
 
+app.use(cookieParser());
+
 // Ajoute les headers CORS à la réponse proxy
 const addCorsHeaders = (proxyRes: IncomingMessage, req: IncomingMessage) => {
   const origin = req.headers.origin;
@@ -42,39 +44,38 @@ const addCorsHeaders = (proxyRes: IncomingMessage, req: IncomingMessage) => {
   }
 };
 
-// Gestion d'erreur proxy
+// Gestion des erreurs proxy
 const onProxyError = (
-  err: unknown,
+  err: Error,
   _req: IncomingMessage,
   res: ServerResponse<IncomingMessage>
 ) => {
-  console.error("❌ Proxy error:", err);
+  console.error("❌ Proxy error:", err.message);
   res.writeHead(502, { "Content-Type": "text/plain" });
   res.end("Bad Gateway");
 };
 
-// Utilitaire pour DRY les déclarations
+// Fonction DRY de configuration de proxy
+// 👇 Ne pas typer manuellement Options<...>
 const setupProxy = (
   path: string,
   target: string,
   rewriteRegex: string,
   rewriteTo: string = ""
 ) => {
-  app.use(
-    path,
-    createProxyMiddleware({
-      target,
-      changeOrigin: true,
-      pathRewrite: { [rewriteRegex]: rewriteTo },
-      onProxyRes: addCorsHeaders,
-      onError: onProxyError,
-    } as Parameters<typeof createProxyMiddleware>[0])
-  );
+  const proxyOptions = {
+    target,
+    changeOrigin: true,
+    pathRewrite: { [rewriteRegex]: rewriteTo },
+    onProxyRes: addCorsHeaders,
+    onError: onProxyError,
+  };
+
+  // 👇 cast ici uniquement pour faire taire TypeScript sur les callbacks non typés
+  app.use(path, createProxyMiddleware(proxyOptions as any));
 };
 
-app.use(cookieParser());
-
-// Déclaration des proxys
+// Proxys
 setupProxy("/api/auth", config.AUTH_SERVICE, "^/api/auth");
 setupProxy("/api/exchange", config.EXCHANGE_SERVICE, "^/api/exchange");
 setupProxy("/api/users", config.USER_SERVICE, "^/api/users");
@@ -93,5 +94,5 @@ setupProxy(
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Gateway en écoute sur http://0.0.0.0:${PORT}`);
-  console.log("🚀 USER_SERVICE =", config.USER_SERVICE);
+  console.log("🌍 ALLOWED_ORIGINS =", allowedOrigins);
 });
