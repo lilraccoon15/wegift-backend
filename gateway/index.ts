@@ -4,24 +4,23 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { createProxyMiddleware } from "http-proxy-middleware";
+import { createProxyMiddleware, type Options } from "http-proxy-middleware";
+import type { IncomingMessage, ServerResponse } from "http";
 import config from "./config";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
+// CORS Origins autorisés
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// Middleware CORS
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-        .split(",")
-        .map((o) => o.trim());
-
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -32,82 +31,66 @@ app.use(
   })
 );
 
-const addCorsHeaders = (proxyRes: any, req: any) => {
+// Ajoute les headers CORS à la réponse proxy
+const addCorsHeaders = (proxyRes: IncomingMessage, req: IncomingMessage) => {
   const origin = req.headers.origin;
-  console.log("🛰 CORS proxy origin reçue :", origin);
-  console.log("🌍 Gateway ALLOWED_ORIGINS :", allowedOrigins);
-  console.log("🧾 Headers INITIAUX du microservice :", proxyRes.headers);
-
   if (origin && allowedOrigins.includes(origin)) {
-    proxyRes.headers["Access-Control-Allow-Origin"] = origin;
-    proxyRes.headers["Access-Control-Allow-Credentials"] = "true";
-    proxyRes.headers["Vary"] = "Origin";
+    proxyRes.headers ??= {};
+    proxyRes.headers["access-control-allow-origin"] = origin;
+    proxyRes.headers["access-control-allow-credentials"] = "true";
+    proxyRes.headers["vary"] = "Origin";
   }
+};
 
-  console.log("📤 Headers FINAUX envoyés au client :", proxyRes.headers);
+// Gestion d'erreur proxy
+const onProxyError = (
+  err: unknown,
+  _req: IncomingMessage,
+  res: ServerResponse<IncomingMessage>
+) => {
+  console.error("❌ Proxy error:", err);
+  res.writeHead(502, { "Content-Type": "text/plain" });
+  res.end("Bad Gateway");
+};
+
+// Utilitaire pour DRY les déclarations
+const setupProxy = (
+  path: string,
+  target: string,
+  rewriteRegex: string,
+  rewriteTo: string = ""
+) => {
+  app.use(
+    path,
+    createProxyMiddleware({
+      target,
+      changeOrigin: true,
+      pathRewrite: { [rewriteRegex]: rewriteTo },
+      onProxyRes: addCorsHeaders,
+      onError: onProxyError,
+    } as Options)
+  );
 };
 
 app.use(cookieParser());
 
-app.use(
-  "/api/auth",
-  createProxyMiddleware({
-    target: config.AUTH_SERVICE,
-    changeOrigin: true,
-    pathRewrite: { "^/api/auth": "" },
-    onProxyRes: addCorsHeaders,
-  } as any)
-);
-
-app.use(
-  "/api/exchange",
-  createProxyMiddleware({
-    target: config.EXCHANGE_SERVICE,
-    changeOrigin: true,
-    pathRewrite: { "^/api/exchange": "" },
-    onProxyRes: addCorsHeaders,
-  } as any)
-);
-
-app.use(
-  "/uploads/users",
-  createProxyMiddleware({
-    target: config.USER_SERVICE,
-    changeOrigin: true,
-    pathRewrite: { "^/uploads/users": "/uploads" },
-    onProxyRes: addCorsHeaders,
-  } as any)
-);
-
-app.use(
-  "/api/users",
-  createProxyMiddleware({
-    target: config.USER_SERVICE,
-    changeOrigin: true,
-    onProxyRes: addCorsHeaders,
-  } as any)
-);
-
-app.use(
-  "/api/wishlist",
-  createProxyMiddleware({
-    target: config.WISHLIST_SERVICE,
-    changeOrigin: true,
-    pathRewrite: { "^/api/wishlist": "" },
-    onProxyRes: addCorsHeaders,
-  } as any)
-);
-
-app.use(
+// Déclaration des proxys
+setupProxy("/api/auth", config.AUTH_SERVICE, "^/api/auth");
+setupProxy("/api/exchange", config.EXCHANGE_SERVICE, "^/api/exchange");
+setupProxy("/api/users", config.USER_SERVICE, "^/api/users");
+setupProxy("/api/wishlist", config.WISHLIST_SERVICE, "^/api/wishlist");
+setupProxy(
   "/api/notification",
-  createProxyMiddleware({
-    target: config.NOTIFICATION_SERVICE,
-    changeOrigin: true,
-    pathRewrite: { "^/api/notification": "" },
-    onProxyRes: addCorsHeaders,
-  } as any)
+  config.NOTIFICATION_SERVICE,
+  "^/api/notification"
+);
+setupProxy(
+  "/uploads/users",
+  config.USER_SERVICE,
+  "^/uploads/users",
+  "/uploads"
 );
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`API Gateway en écoute sur http://0.0.0.0:${PORT}`);
+  console.log(`🚀 Gateway en écoute sur http://0.0.0.0:${PORT}`);
 });
