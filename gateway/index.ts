@@ -30,6 +30,8 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+console.log("✅ ALLOWED_ORIGINS (parsed):", allowedOrigins);
+
 // Middleware CORS
 app.use(
   cors({
