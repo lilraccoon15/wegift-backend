@@ -1,45 +1,27 @@
-import axios from "axios";
-
-(async () => {
-  try {
-    const res = await axios.get(
-      "https://user-service-production-7bcc.up.railway.app/check-pseudo?pseudo=cam"
-    );
-    console.log("✅ Test direct vers user-service depuis gateway : ", res.data);
-  } catch (err: any) {
-    console.error("❌ Test direct vers user-service a échoué :", err.message);
-  }
-})();
-
 import dotenv from "dotenv";
 dotenv.config();
 
-console.log("🧪 RAW ALLOWED_ORIGINS =", process.env.ALLOWED_ORIGINS);
-
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { createProxyMiddleware, Options } from "http-proxy-middleware";
-import type { IncomingMessage, ServerResponse } from "http";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import config from "./config";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-const rawOrigins = (process.env.ALLOWED_ORIGINS || "").split(/[,\n;]/);
-
-console.log("🔬 Étape intermédiaire après split :", rawOrigins);
-
-const allowedOrigins = rawOrigins
-  .map((origin) => origin.replace(/^['";\s]+|['";\s]+$/g, ""))
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
   .filter(Boolean);
 
-console.log("✅ ALLOWED_ORIGINS (parsed):", allowedOrigins);
-
-// Middleware CORS
 app.use(
   cors({
     origin: (origin, callback) => {
+      const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+        .split(",")
+        .map((o) => o.trim());
+
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -50,74 +32,83 @@ app.use(
   })
 );
 
+const addCorsHeaders = (proxyRes: any, req: any) => {
+  const origin = req.headers.origin;
+  console.log("🛰 CORS proxy origin reçue :", origin);
+  console.log("🌍 Gateway ALLOWED_ORIGINS :", allowedOrigins);
+  console.log("🧾 Headers INITIAUX du microservice :", proxyRes.headers);
+
+  if (origin && allowedOrigins.includes(origin)) {
+    proxyRes.headers["Access-Control-Allow-Origin"] = origin;
+    proxyRes.headers["Access-Control-Allow-Credentials"] = "true";
+    proxyRes.headers["Vary"] = "Origin";
+  }
+
+  console.log("📤 Headers FINAUX envoyés au client :", proxyRes.headers);
+};
+
 app.use(cookieParser());
 
-// Ajoute les headers CORS à la réponse proxy
-const addCorsHeaders = (proxyRes: IncomingMessage, req: IncomingMessage) => {
-  const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
-    proxyRes.headers ??= {};
-    proxyRes.headers["access-control-allow-origin"] = origin;
-    proxyRes.headers["access-control-allow-credentials"] = "true";
-    proxyRes.headers["vary"] = "Origin";
-  }
-};
-
-// Gestion des erreurs proxy
-const onProxyError = (
-  err: Error,
-  _req: IncomingMessage,
-  res: ServerResponse<IncomingMessage>
-) => {
-  console.error("❌ Proxy error:", err.message);
-  res.writeHead(502, { "Content-Type": "text/plain" });
-  res.end("Bad Gateway");
-};
-
-// Fonction DRY de configuration de proxy
-// 👇 Ne pas typer manuellement Options<...>
-const setupProxy = (
-  path: string,
-  target: string,
-  rewriteRegex: string,
-  rewriteTo: string = ""
-) => {
-  const proxyOptions = {
-    target,
+app.use(
+  "/api/auth",
+  createProxyMiddleware({
+    target: config.AUTH_SERVICE,
     changeOrigin: true,
-    pathRewrite: { [rewriteRegex]: rewriteTo },
+    pathRewrite: { "^/api/auth": "" },
     onProxyRes: addCorsHeaders,
-    onError: onProxyError,
-  };
-
-  console.log(`🔁 Proxy ${path} → ${target}`);
-
-  // 👇 cast ici uniquement pour faire taire TypeScript sur les callbacks non typés
-  app.use(path, createProxyMiddleware(proxyOptions as any));
-};
-
-// Proxys
-setupProxy("/api/auth", config.AUTH_SERVICE, "^/api/auth");
-setupProxy("/api/exchange", config.EXCHANGE_SERVICE, "^/api/exchange");
-setupProxy("/api/users", config.USER_SERVICE, "^/api/users(.*)", "$1");
-setupProxy("/api/wishlist", config.WISHLIST_SERVICE, "^/api/wishlist");
-setupProxy(
-  "/api/notification",
-  config.NOTIFICATION_SERVICE,
-  "^/api/notification"
+  } as any)
 );
-setupProxy(
+
+app.use(
+  "/api/exchange",
+  createProxyMiddleware({
+    target: config.EXCHANGE_SERVICE,
+    changeOrigin: true,
+    pathRewrite: { "^/api/exchange": "" },
+    onProxyRes: addCorsHeaders,
+  } as any)
+);
+
+app.use(
   "/uploads/users",
-  config.USER_SERVICE,
-  "^/uploads/users",
-  "/uploads"
+  createProxyMiddleware({
+    target: config.USER_SERVICE,
+    changeOrigin: true,
+    pathRewrite: { "^/uploads/users": "/uploads" },
+    onProxyRes: addCorsHeaders,
+  } as any)
 );
 
-app.get("/", (_req, res) => {
-  res.send("🟢 Gateway is running");
-});
+app.use(
+  "/api/users",
+  createProxyMiddleware({
+    target: config.USER_SERVICE,
+    changeOrigin: true,
+    pathRewrite: { "^/api/users": "" },
+    onProxyRes: addCorsHeaders,
+  } as any)
+);
+
+app.use(
+  "/api/wishlist",
+  createProxyMiddleware({
+    target: config.WISHLIST_SERVICE,
+    changeOrigin: true,
+    pathRewrite: { "^/api/wishlist": "" },
+    onProxyRes: addCorsHeaders,
+  } as any)
+);
+
+app.use(
+  "/api/notification",
+  createProxyMiddleware({
+    target: config.NOTIFICATION_SERVICE,
+    changeOrigin: true,
+    pathRewrite: { "^/api/notification": "" },
+    onProxyRes: addCorsHeaders,
+  } as any)
+);
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Gateway en écoute sur http://0.0.0.0:${PORT}`);
-  console.log("🌍 ALLOWED_ORIGINS =", allowedOrigins);
+  console.log(`API Gateway en écoute sur http://0.0.0.0:${PORT}`);
 });
