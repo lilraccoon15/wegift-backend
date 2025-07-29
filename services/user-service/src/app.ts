@@ -32,7 +32,7 @@ app.use(
   express.static(path.resolve(__dirname, "../public/uploads"))
 );
 app.use("/api/internal", internalRoutes);
-app.use("/", userRoutes);
+app.use("/api/users", userRoutes);
 
 app.use(errorHandler);
 
