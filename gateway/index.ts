@@ -4,7 +4,7 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { createProxyMiddleware, type Options } from "http-proxy-middleware";
+import { createProxyMiddleware } from "http-proxy-middleware";
 import type { IncomingMessage, ServerResponse } from "http";
 import config from "./config";
 
@@ -68,7 +68,7 @@ const setupProxy = (
       pathRewrite: { [rewriteRegex]: rewriteTo },
       onProxyRes: addCorsHeaders,
       onError: onProxyError,
-    } as Options)
+    } as Parameters<typeof createProxyMiddleware>[0])
   );
 };
 
@@ -93,4 +93,5 @@ setupProxy(
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Gateway en écoute sur http://0.0.0.0:${PORT}`);
+  console.log("🚀 USER_SERVICE =", config.USER_SERVICE);
 });
