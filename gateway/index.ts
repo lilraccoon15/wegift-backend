@@ -84,9 +84,9 @@ app.use(
   createProxyMiddleware({
     target: config.USER_SERVICE,
     changeOrigin: true,
-    pathRewrite: (path) => {
+    pathRewrite: (path: string, _req: Request) => {
       console.log("🔁 PATH REWRITE INITIAL :", path);
-      return path.replace("^/api/users", "");
+      return path.replace(/^\/api\/users/, "");
     },
     onProxyRes: addCorsHeaders,
   } as any)
