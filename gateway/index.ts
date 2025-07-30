@@ -55,6 +55,14 @@ const addCorsHeaders = (proxyRes: any, req: any) => {
 app.use(cookieParser());
 
 app.use(
+  "/",
+  createProxyMiddleware({
+    target: process.env.FRONTEND_SERVICE,
+    changeOrigin: true,
+  })
+);
+
+app.use(
   "/api/auth",
   createProxyMiddleware({
     target: config.AUTH_SERVICE,
