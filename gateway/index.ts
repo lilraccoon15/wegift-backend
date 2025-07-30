@@ -44,6 +44,11 @@ const addCorsHeaders = (proxyRes: any, req: any) => {
     proxyRes.headers["Vary"] = "Origin";
   }
 
+  proxyRes.headers["Cache-Control"] =
+    "no-store, no-cache, must-revalidate, proxy-revalidate";
+  proxyRes.headers["Pragma"] = "no-cache";
+  proxyRes.headers["Expires"] = "0";
+
   console.log("📤 Headers FINAUX envoyés au client :", proxyRes.headers);
 };
 
