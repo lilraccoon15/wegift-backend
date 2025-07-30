@@ -11,7 +11,6 @@ import {
 const router = Router();
 const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-// === Notifications utilisateur ===
 router.get("/notifications", ...requireAuth, getNotificationsForUser);
 router.put("/mark-as-read", ...requireAuth, markAllUserNotificationsAsRead);
 

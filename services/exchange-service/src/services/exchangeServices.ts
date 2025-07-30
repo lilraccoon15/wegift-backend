@@ -452,7 +452,6 @@ export const drawExchangeService = async (
     throw new ConflictError("Seul le créateur peut lancer le tirage.");
   }
 
-  // Ne garder que les règles activables : no_repeat, no_mutual_assign
   const rulesAssoc = await ExchangeRulesAssoc.findAll({
     where: { exchangeId },
     include: [{ model: Rules, as: "rule" }],

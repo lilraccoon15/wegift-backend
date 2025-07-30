@@ -33,7 +33,6 @@ import {
 const router = Router();
 const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-// === Wishlists ===
 router.get("/my-wishlists", ...requireAuth, getMyWishlists);
 router.get("/wishlists/:userId", ...requireAuth, getWishlists);
 router.post(
@@ -52,7 +51,6 @@ router.put(
 );
 router.delete("/delete-wishlist/:id", ...requireAuth, deleteWishlist);
 
-// === Wishes ===
 router.get("/my-wishes", ...requireAuth, getMyWishesFromWishlist);
 router.get("/wishes", ...requireAuth, getWishesFromWishlist);
 router.post(
@@ -75,10 +73,8 @@ router.put(
 router.delete("/delete-wish/:id", ...requireAuth, deleteWish);
 router.delete("/cancel-reserve/:id", ...requireAuth, cancelReserveWish);
 
-// === Recherche ===
 router.get("/search", ...requireAuth, searchWishlist);
 
-// === Souscriptions aux wishlists ===
 router.get(
   "/subscription-status/:wishlistId",
   ...requireAuth,

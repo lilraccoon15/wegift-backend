@@ -23,7 +23,6 @@ import {
 const router = Router();
 const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-// === Profil utilisateur ===
 router.get("/my-profile", ...requireAuth, getMyProfile);
 router.put(
   "/update-profile",
@@ -37,7 +36,6 @@ router.get("/profile/:userId", ...requireAuth, getUserProfileById);
 router.get("/check-pseudo", checkPseudoAvailability);
 router.get("/search", ...requireAuth, searchUser);
 
-// === Amitié ===
 router.get("/friendship-status", ...requireAuth, getFriendshipStatus);
 router.post("/ask-friend", ...requireAuth, sendFriendRequest);
 router.patch(

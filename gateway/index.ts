@@ -34,9 +34,6 @@ app.use(
 
 const addCorsHeaders = (proxyRes: any, req: any) => {
   const origin = req.headers.origin;
-  console.log("🛰 CORS proxy origin reçue :", origin);
-  console.log("🌍 Gateway ALLOWED_ORIGINS :", allowedOrigins);
-  console.log("🧾 Headers INITIAUX du microservice :", proxyRes.headers);
 
   if (origin && allowedOrigins.includes(origin)) {
     proxyRes.headers["Access-Control-Allow-Origin"] = origin;
@@ -48,8 +45,6 @@ const addCorsHeaders = (proxyRes: any, req: any) => {
     "no-store, no-cache, must-revalidate, proxy-revalidate";
   proxyRes.headers["Pragma"] = "no-cache";
   proxyRes.headers["Expires"] = "0";
-
-  console.log("📤 Headers FINAUX envoyés au client :", proxyRes.headers);
 };
 
 app.use(cookieParser());

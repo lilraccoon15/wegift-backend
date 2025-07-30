@@ -22,16 +22,13 @@ import {
 const router = Router();
 const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 
-// === Récupération / affichage ===
 router.get("/my-exchanges", ...requireAuth, getMyExchanges);
 router.get("/exchanges/:userId", ...requireAuth, getExchanges);
 router.get("/get-rules", ...requireAuth, getExchangeRules);
 router.get("/my-exchange/:id", ...requireAuth, getMyExchange);
 router.get("/exchange/:id", ...requireAuth, getExchange);
-
 router.get("/search", ...requireAuth, searchExchange);
 
-// === Création / modification ===
 router.post(
   "/create-exchange",
   ...requireAuth,
@@ -45,10 +42,8 @@ router.put(
   updateExchange
 );
 
-// === Suppression ===
 router.delete("/delete-exchange/:id", ...requireAuth, deleteExchange);
 
-// === Invitations / tirage au sort ===
 router.patch(
   "/exchange/:requesterId/respond",
   ...requireAuth,

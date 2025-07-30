@@ -655,7 +655,6 @@ export const unsubscribeFromWishlistService = async (
     throw new NotFoundError("Wishlist non trouvée.");
   }
 
-  // Si on essaie de désabonner quelqu’un d’autre que soi
   const isOwnerRemovingSomeone = !!targetUserId;
 
   if (isOwnerRemovingSomeone && wishlist.userId !== userId) {

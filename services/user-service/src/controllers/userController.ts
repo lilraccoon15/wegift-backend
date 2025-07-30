@@ -75,13 +75,6 @@ export const createUserProfile = asyncHandler(
 );
 
 export const checkPseudoAvailability = asyncHandler(async (req, res, next) => {
-  res.setHeader(
-    "Cache-Control",
-    "no-store, no-cache, must-revalidate, proxy-revalidate"
-  );
-  res.setHeader("Pragma", "no-cache");
-  res.setHeader("Expires", "0");
-
   const { pseudo } = getPseudoCheckSchema.parse(req.query);
   const existingUser = await UserProfile.findOne({ where: { pseudo } });
 
