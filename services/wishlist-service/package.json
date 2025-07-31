@@ -13,9 +13,9 @@
     "test:functional": "cross-env NODE_ENV=test jest tests/functional",
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
     "sequelize": "sequelize-cli",
-    "migrate": "cross-env NODE_ENV=development node -r ts-node/register ./node_modules/sequelize-cli/lib/sequelize db:migrate --config src/sequelize.config.ts",
+    "migrate": "cross-env NODE_ENV=development node -r ts-node/register ./node_modules/sequelize-cli/lib/sequelize db:migrate --config src/sequelize.config.js",
     "migration:generate": "cross-env NODE_OPTIONS=--require ts-node/register sequelize-cli migration:generate --migrations-path src/migrations",
-    "migrate:undo": "cross-env NODE_OPTIONS=--require ts-node/register sequelize db:migrate:undo --config src/sequelize.config.ts"
+    "migrate:undo": "cross-env NODE_OPTIONS=--require ts-node/register sequelize db:migrate:undo --config src/sequelize.config.js"
   },
   "keywords": [],
   "author": "",
