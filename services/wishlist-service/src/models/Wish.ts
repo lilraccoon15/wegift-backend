@@ -40,7 +40,7 @@ Wish.init(
       allowNull: true,
     },
     price: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.FLOAT,
       allowNull: true,
     },
     status: {

@@ -4,7 +4,10 @@ export const pseudoSchema = z
   .string()
   .min(3, "Le pseudo doit contenir au moins 3 caractères")
   .max(20, "Le pseudo ne doit pas dépasser 20 caractères")
-  .regex(/^[a-zA-Z0-9_-]+$/, "Le pseudo contient des caractères invalides");
+  .regex(
+    /^[a-z0-9_-]+$/,
+    "Le pseudo ne doit contenir que des minuscules, chiffres, tirets et underscores"
+  );
 
 export const birthDateSchema = z.string().refine(
   (val) => {
