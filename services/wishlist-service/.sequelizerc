@@ -1,10 +1,22 @@
 const path = require("path");
 
-require("ts-node/register");
+const isProduction = process.env.NODE_ENV === "production";
 
 module.exports = {
-  config: path.resolve(__dirname, "src/sequelize.config.ts"),
-  "models-path": path.resolve(__dirname, "src/models"),
-  "seeders-path": path.resolve(__dirname, "src/seeders"),
-  "migrations-path": path.resolve(__dirname, "src/migrations"),
+  config: path.resolve(
+    __dirname,
+    isProduction ? "dist/sequelize.config.js" : "src/sequelize.config.ts"
+  ),
+  "models-path": path.resolve(
+    __dirname,
+    isProduction ? "dist/models" : "src/models"
+  ),
+  "seeders-path": path.resolve(
+    __dirname,
+    isProduction ? "dist/seeders" : "src/seeders"
+  ),
+  "migrations-path": path.resolve(
+    __dirname,
+    isProduction ? "dist/migrations" : "src/migrations"
+  ),
 };
