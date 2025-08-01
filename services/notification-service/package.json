@@ -14,7 +14,10 @@
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
     "migrate": "cross-env NODE_ENV=production node ./node_modules/sequelize-cli/lib/sequelize db:migrate --config dist/sequelize.config.js --migrations-path dist/migrations --models-path dist/models --seeders-path dist/seeders",
     "migration:generate": "NODE_OPTIONS=--require=ts-node/register npx sequelize-cli migration:generate --migrations-path src/migrations",
-    "migrate:undo": "sequelize-cli db:migrate:undo --require ts-node/register"
+    "migrate:undo": "sequelize-cli db:migrate:undo --require ts-node/register",
+    "seed:generate": "NODE_OPTIONS=--require=ts-node/register npx sequelize-cli seed:generate --seeders-path src/seeders",
+    "seed": "cross-env NODE_ENV=production node ./node_modules/sequelize-cli/lib/sequelize db:seed:all --config dist/sequelize.config.js --seeders-path dist/seeders",
+    "seed:undo": "cross-env NODE_ENV=production node ./node_modules/sequelize-cli/lib/sequelize db:seed:undo:all --config dist/sequelize.config.js --seeders-path dist/seeders"
   },
   "keywords": [],
   "author": "",
