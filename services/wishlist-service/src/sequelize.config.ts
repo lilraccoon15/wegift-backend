@@ -33,5 +33,7 @@ module.exports = {
     port: Number(process.env.DB_PORT) || 3306,
     dialect: "mariadb",
     ...commonConfig,
+    migrationStorageTableName: "SequelizeMeta",
+    seederStorageTableName: "sequelize_data",
   },
 };
