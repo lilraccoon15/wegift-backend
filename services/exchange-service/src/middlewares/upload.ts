@@ -2,7 +2,7 @@ import multer, { StorageEngine } from "multer";
 import path from "path";
 import fs from "fs";
 import { Request } from "express";
-import { UUIDV4 } from "sequelize";
+import { v4 as uuidv4 } from "uuid";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -44,7 +44,7 @@ if (isProduction) {
     cloudinary,
     params: (req: Request) => {
       const { folder, prefix } = getConfig(req);
-      const publicId = `${prefix}_${UUIDV4()}`;
+      const publicId = `${prefix}_${uuidv4()}`;
 
       return {
         folder,
@@ -78,7 +78,7 @@ if (isProduction) {
       );
 
       const prefix = config?.prefix || "file";
-      const uniqueName = UUIDV4();
+      const uniqueName = uuidv4();
       const ext = path.extname(file.originalname);
 
       cb(null, `${prefix}_${uniqueName}${ext}`);
