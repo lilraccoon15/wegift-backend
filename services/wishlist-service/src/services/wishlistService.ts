@@ -9,8 +9,8 @@ import axios from "axios";
 import config from "../config";
 import { Op, Sequelize } from "sequelize";
 import Collaborators from "../models/Collaborators";
-import { tryDeleteLocalImage } from "../utils/files";
 import WishReservation from "../models/WishReservation";
+import { deleteImage } from "../utils/deleteImage";
 
 interface SearchResult {
   title: string;
@@ -355,13 +355,16 @@ export const deleteWishlistById = async (id: string, userId: string) => {
 
   const wishes = await Wish.findAll({ where: { wishlistId: wishlist.id } });
 
-  if (wishlist.picture && !wishlist.picture.startsWith("http")) {
-    tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
+  if (wishlist.picture) {
+    await deleteImage(wishlist.picture);
   }
 
   for (const wish of wishes) {
-    tryDeleteLocalImage(wish.picture, "wishPictures");
+    if (wish.picture) {
+      await deleteImage(wish.picture);
+    }
   }
+
   await wishlist.destroy();
 };
 
@@ -471,8 +474,8 @@ export const deleteWishById = async (id: string, userId: string) => {
 
   if (!wishlist) throw new AuthError("Accès non autorisé à ce souhait");
 
-  if (wish.picture && !wish.picture.startsWith("http")) {
-    tryDeleteLocalImage(wish.picture, "wishPictures");
+  if (wish.picture) {
+    await deleteImage(wish.picture);
   }
 
   await wish.destroy();
@@ -701,8 +704,9 @@ export const deleteWishlistsByUserId = async (userId: string) => {
   const allWishes: Wish[] = [];
 
   for (const wishlist of wishlists) {
-    tryDeleteLocalImage(wishlist.picture, "wishlistPictures");
-
+    if (wishlist.picture) {
+      await deleteImage(wishlist.picture);
+    }
     const wishes = await Wish.findAll({
       where: { wishlistId: wishlist.id },
     });
@@ -710,7 +714,9 @@ export const deleteWishlistsByUserId = async (userId: string) => {
   }
 
   for (const wish of allWishes) {
-    tryDeleteLocalImage(wish.picture, "wishPictures");
+    if (wish.picture) {
+      await deleteImage(wish.picture);
+    }
   }
 
   await Promise.all(wishlists.map((wishlist) => wishlist.destroy()));

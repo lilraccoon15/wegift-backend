@@ -46,8 +46,8 @@ import {
   updateWishlistSchema,
   updateWishSchema,
 } from "../schemas/wishlistSchema";
-import { deleteFileIfExists } from "../utils/files";
 import Subscriber from "../models/Subscribers";
+import { deleteImage } from "../utils/deleteImage";
 
 export const getMyWishlists = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
@@ -84,7 +84,9 @@ export const createWishlist = asyncHandler(
       createWishlistSchema.parse(req.body);
 
     const picture = req.file
-      ? `/uploads/wishlistPictures/${req.file.filename}`
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/wishlistPictures/${req.file.filename}`
       : undefined;
 
     const wishlist = await createNewWishlist(
@@ -176,17 +178,14 @@ export const updateWishlist = asyncHandler(
         new AuthError("Vous n’êtes pas autorisé à modifier cette wishlist.")
       );
     }
-
-    if (file) {
-      let picture = wishlist.picture;
-      if (picture) {
-        const oldPath = path.join(__dirname, "../../public", picture);
-        deleteFileIfExists(oldPath);
-      }
+    if (file && wishlist.picture) {
+      await deleteImage(wishlist.picture);
     }
 
     const picture = req.file
-      ? `/uploads/wishlistPictures/${req.file.filename}`
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/wishlistPictures/${req.file.filename}`
       : undefined;
 
     const updatedWishlist = await modifyWishlistById(
@@ -239,7 +238,9 @@ export const createWish = asyncHandler(
       return next(new AuthError("Accès interdit à cette wishlist."));
 
     const picture = req.file
-      ? `/uploads/wishPictures/${req.file.filename}`
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/wishPictures/${req.file.filename}`
       : undefined;
 
     const wish = await addNewWishToWishlist(
@@ -304,19 +305,14 @@ export const updateWish = asyncHandler(
     if (!wishlist)
       return next(new AuthError("Accès interdit à cette wishlist."));
 
-    if (file) {
-      let picture = wish.picture;
-
-      if (picture) {
-        const oldPath = path.join(__dirname, "../../public", picture);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
+    if (file && wish.picture) {
+      await deleteImage(wish.picture);
     }
 
     const picture = req.file
-      ? `/uploads/wishPictures/${req.file.filename}`
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/wishPictures/${req.file.filename}`
       : undefined;
 
     const updatedWish = await modifyWishById(
