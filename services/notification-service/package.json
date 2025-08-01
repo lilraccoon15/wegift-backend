@@ -12,7 +12,8 @@
     "test:unit": "cross-env NODE_ENV=test jest tests/unit",
     "test:functional": "cross-env NODE_ENV=test jest tests/functional",
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
-    "migrate": "sequelize-cli db:migrate --require ts-node/register",
+    "migrate": "cross-env NODE_ENV=production node ./node_modules/sequelize-cli/lib/sequelize db:migrate --config dist/sequelize.config.js --migrations-path dist/migrations --models-path dist/models --seeders-path dist/seeders",
+    "migration:generate": "NODE_OPTIONS=--require=ts-node/register npx sequelize-cli migration:generate --migrations-path src/migrations",
     "migrate:undo": "sequelize-cli db:migrate:undo --require ts-node/register"
   },
   "keywords": [],
@@ -46,7 +47,9 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.16.0",
     "@types/supertest": "^6.0.3",
+    "cross-env": "^10.0.0",
     "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   },
