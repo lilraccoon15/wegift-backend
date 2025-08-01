@@ -47,6 +47,6 @@ router.get("/my-friends", ...requireAuth, getMyFriendList);
 router.get("/my-pending-friends", ...requireAuth, getMyPendingFriendList);
 router.get("/friends/:userId", ...requireAuth, getFriendList);
 router.delete("/delete-friend/:friendId", ...requireAuth, deleteFriend);
-router.delete("/delete-friend-request", ...requireAuth, deleteFriendRequest);
+router.delete("/friendship/:addresseeId", ...requireAuth, deleteFriendRequest);
 
 export default router;
