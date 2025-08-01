@@ -1,8 +1,7 @@
 import { QueryInterface } from "sequelize";
 
 const tableName = "notifications_types";
-const enumColumnName = "type";
-const enumName = "enum_notifications_types_type";
+const columnName = "type";
 
 const newEnumValues = [
   "friendship",
@@ -18,25 +17,16 @@ const newEnumValues = [
 
 module.exports = {
   async up(queryInterface: QueryInterface) {
-    // Changer temporairement en VARCHAR
+    // Étape 1 : Changer le type en VARCHAR pour pouvoir modifier le ENUM
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      MODIFY COLUMN ${enumColumnName} VARCHAR(255);
+      MODIFY COLUMN ${columnName} VARCHAR(255) NOT NULL;
     `);
 
-    // Supprimer l'ancien ENUM (si existant)
-    await queryInterface.sequelize
-      .query(
-        `
-      DROP TYPE IF EXISTS ${enumName};
-    `
-      )
-      .catch(() => {}); // ignore erreur si non supporté
-
-    // Créer le nouvel ENUM
+    // Étape 2 : Remettre le ENUM avec les nouvelles valeurs
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      MODIFY COLUMN ${enumColumnName} ENUM(${newEnumValues
+      MODIFY COLUMN ${columnName} ENUM(${newEnumValues
       .map((val) => `'${val}'`)
       .join(", ")}) NOT NULL;
     `);
@@ -47,12 +37,12 @@ module.exports = {
 
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      MODIFY COLUMN ${enumColumnName} VARCHAR(255);
+      MODIFY COLUMN ${columnName} VARCHAR(255) NOT NULL;
     `);
 
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      MODIFY COLUMN ${enumColumnName} ENUM(${oldEnumValues
+      MODIFY COLUMN ${columnName} ENUM(${oldEnumValues
       .map((val) => `'${val}'`)
       .join(", ")}) NOT NULL;
     `);
