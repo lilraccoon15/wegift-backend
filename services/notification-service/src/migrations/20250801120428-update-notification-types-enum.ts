@@ -18,27 +18,27 @@ const newEnumValues = [
 
 module.exports = {
   async up(queryInterface: QueryInterface) {
+    // Changer temporairement en VARCHAR
     await queryInterface.sequelize.query(`
-      ALTER TABLE ${tableName} 
-      ALTER COLUMN ${enumColumnName} 
-      TYPE VARCHAR(255);
+      ALTER TABLE ${tableName}
+      MODIFY COLUMN ${enumColumnName} VARCHAR(255);
     `);
 
-    await queryInterface.sequelize.query(`
+    // Supprimer l'ancien ENUM (si existant)
+    await queryInterface.sequelize
+      .query(
+        `
       DROP TYPE IF EXISTS ${enumName};
-    `);
+    `
+      )
+      .catch(() => {}); // ignore erreur si non supporté
 
+    // Créer le nouvel ENUM
     await queryInterface.sequelize.query(`
-      CREATE TYPE ${enumName} AS ENUM (${newEnumValues
+      ALTER TABLE ${tableName}
+      MODIFY COLUMN ${enumColumnName} ENUM(${newEnumValues
       .map((val) => `'${val}'`)
-      .join(", ")});
-    `);
-
-    await queryInterface.sequelize.query(`
-      ALTER TABLE ${tableName} 
-      ALTER COLUMN ${enumColumnName} 
-      TYPE ${enumName} 
-      USING (${enumColumnName}::text::${enumName});
+      .join(", ")}) NOT NULL;
     `);
   },
 
@@ -47,25 +47,14 @@ module.exports = {
 
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      ALTER COLUMN ${enumColumnName}
-      TYPE VARCHAR(255);
-    `);
-
-    await queryInterface.sequelize.query(`
-      DROP TYPE IF EXISTS ${enumName};
-    `);
-
-    await queryInterface.sequelize.query(`
-      CREATE TYPE ${enumName} AS ENUM (${oldEnumValues
-      .map((val) => `'${val}'`)
-      .join(", ")});
+      MODIFY COLUMN ${enumColumnName} VARCHAR(255);
     `);
 
     await queryInterface.sequelize.query(`
       ALTER TABLE ${tableName}
-      ALTER COLUMN ${enumColumnName}
-      TYPE ${enumName}
-      USING (${enumColumnName}::text::${enumName});
+      MODIFY COLUMN ${enumColumnName} ENUM(${oldEnumValues
+      .map((val) => `'${val}'`)
+      .join(", ")}) NOT NULL;
     `);
   },
 };
