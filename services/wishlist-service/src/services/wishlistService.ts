@@ -82,6 +82,7 @@ export const getAllUserWishlists = async (
         required: false,
       },
     ],
+    order: [["updatedAt", "DESC"]],
   });
 
   return wishlists.map((w) => {
@@ -120,6 +121,7 @@ export const getAllMyWishlists = async (userId: string) => {
       },
     ],
     group: ["Wishlist.id", "collaborators.userId"],
+    order: [["updatedAt", "DESC"]],
   });
   return wishlists;
 };
@@ -195,6 +197,7 @@ export const getMyWishesByWishlistId = async (
   const wishes = await Wish.findAll({
     where: { wishlistId },
     attributes: ["id", "title", "picture"],
+    order: [["updatedAt", "DESC"]],
   });
   return wishes;
 };
