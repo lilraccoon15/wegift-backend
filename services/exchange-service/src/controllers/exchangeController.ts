@@ -27,7 +27,7 @@ import {
   searchExchangeSchema,
   updateExchangeSchema,
 } from "../schemas/exchangeSchema";
-import { getUploadedPicturePath } from "../utils/files";
+import { deleteImage } from "src/utils/deleteImage";
 
 export const getMyExchanges = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
@@ -72,7 +72,11 @@ export const createExchange = asyncHandler(
       rules,
     } = createExchangeSchema.parse(req.body);
 
-    const picture = getUploadedPicturePath(req.file, "exchangesPictures");
+    const picture = req.file
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/exchangePictures/${req.file.filename}`
+      : undefined;
 
     const exchange = await createNewExchange(
       userId,
@@ -96,6 +100,8 @@ export const updateExchange = asyncHandler(
     const userId = req.user.userId;
     const userRole = req.user.role;
 
+    const file = req.file;
+
     const {
       title,
       description,
@@ -106,7 +112,18 @@ export const updateExchange = asyncHandler(
       rules,
     } = updateExchangeSchema.parse(req.body);
 
-    const picture = getUploadedPicturePath(req.file, "exchangesPictures");
+    const exchange = await getExchangeById(exchangeId, userId, userRole);
+    if (!exchange) return next(new NotFoundError("Échange non trouvé"));
+
+    if (file && exchange.picture) {
+      await deleteImage(exchange.picture);
+    }
+
+    const picture = req.file
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/exchangePictures/${req.file.filename}`
+      : undefined;
 
     const updatedExchange = await updateExchangeById(
       exchangeId,

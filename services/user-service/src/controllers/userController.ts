@@ -39,7 +39,7 @@ import {
   userIdParamSchema,
   userSearchQuerySchema,
 } from "../schemas/userSchema";
-import { getUploadFolderPath } from "../utils/files";
+import { deleteImage } from "../utils/deleteImage";
 
 export const getMyProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
@@ -106,26 +106,20 @@ export const updateUserProfile = asyncHandler(
     const { pseudo, birthDate, description, picture } =
       updateProfileSchema.parse(req.body);
 
+    const file = req.file;
+
     const profile = await fetchMyProfile(userId);
     if (!profile) return next(new NotFoundError("Profil introuvable"));
 
-    if (req.file) {
-      const uploadDir = getUploadFolderPath("profilePictures");
-      const files = fs.readdirSync(uploadDir);
-      // todo vérifier la suppression de l'ancienne photo
-      files.forEach((fileInDir) => {
-        if (
-          fileInDir.startsWith(`profile_${userId}_pp`) &&
-          fileInDir !== req.file!.filename
-        ) {
-          fs.unlinkSync(path.join(uploadDir, fileInDir));
-        }
-      });
+    if (file && profile.picture) {
+      await deleteImage(profile.picture);
     }
 
     const finalPicture = req.file
-      ? `/uploads/profilePictures/${req.file.filename}`
-      : picture ?? undefined;
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/profilePictures/${req.file.filename}`
+      : undefined;
 
     const updatedProfile = await updateProfileDetails(
       userId,

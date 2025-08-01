@@ -7,7 +7,7 @@ import {
 import { Op, Sequelize } from "sequelize";
 import axios from "axios";
 import config from "../config";
-import { tryDeleteLocalImage } from "../utils/files";
+import { deleteImage } from "../utils/deleteImage";
 
 class ValidationError extends Error {
   statusCode: number;
@@ -100,7 +100,7 @@ export const removeUserProfileByUserId = async (userId: string) => {
   }
 
   if (profile.picture && !profile.picture.startsWith("http")) {
-    tryDeleteLocalImage(profile.picture, "profilePictures");
+    await deleteImage(profile.picture);
   }
 
   await profile.destroy();
