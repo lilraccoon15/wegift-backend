@@ -27,7 +27,7 @@ import {
   searchExchangeSchema,
   updateExchangeSchema,
 } from "../schemas/exchangeSchema";
-import { deleteImage } from "src/utils/deleteImage";
+import { deleteImage } from "../utils/deleteImage";
 
 export const getMyExchanges = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {

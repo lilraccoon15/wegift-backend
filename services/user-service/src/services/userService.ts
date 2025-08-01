@@ -174,6 +174,7 @@ export async function createFriendshipRequest(
     status: "pending",
   });
 
+  // todo : check la création de notification car elle est kc
   try {
     await axios.post(
       `${config.apiUrls.NOTIFICATION_SERVICE}/api/internal/send-notification`,
