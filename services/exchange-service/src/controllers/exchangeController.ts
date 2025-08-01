@@ -1,93 +1,262 @@
-import multer, { StorageEngine } from "multer";
-import path from "path";
-import fs from "fs";
-import { Request } from "express";
-import { v4 as uuidv4 } from "uuid";
+import {
+  cancelDrawExchangeService,
+  createNewExchange,
+  deleteExchangeById,
+  deleteExchangesByUserId,
+  drawExchangeService,
+  getAllExchangeRules,
+  getAllMyExchanges,
+  getAllUserExchanges,
+  getExchangeById,
+  respondToExchange,
+  searchExchangeByTitle,
+  updateExchangeById,
+} from "../services/exchangeServices";
+import { asyncHandler } from "../middlewares/asyncHandler";
+import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
+import sendSuccess from "../utils/sendSuccess";
+import {
+  AppError,
+  AuthError,
+  NotFoundError,
+  ValidationError,
+} from "../errors/CustomErrors";
+import {
+  createExchangeSchema,
+  respondToExchangeSchema,
+  searchExchangeSchema,
+  updateExchangeSchema,
+} from "../schemas/exchangeSchema";
+import { deleteImage } from "src/utils/deleteImage";
 
-const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+export const getMyExchanges = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user.userId;
 
-const fileFilter = (
-  req: Request,
-  file: Express.Multer.File,
-  cb: multer.FileFilterCallback
-) => {
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error("Format d’image non supporté"));
+    const exchanges = await getAllMyExchanges(userId);
+
+    sendSuccess(res, "Echanges trouvés", { exchanges }, 200);
   }
-};
+);
 
-const uploadConfig = [
-  {
-    match: ["/create-exchange", "/update-exchange"],
-    folder: "exchangePictures",
-    prefix: "exchange_picture",
-  },
-];
+export const getExchanges = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.params.userId;
+    const userRole = req.params.role;
 
-const isProduction = process.env.NODE_ENV === "production";
+    const exchanges = await getAllUserExchanges(userId, userRole);
 
-let storage: StorageEngine;
+    sendSuccess(res, "Exchanges trouvés", { exchanges });
+  }
+);
 
-if (isProduction) {
-  // Cloudinary en production
-  const { CloudinaryStorage } = require("multer-storage-cloudinary");
-  const cloudinary = require("../config/cloudinary").default;
+export const getExchangeRules = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const rules = await getAllExchangeRules();
 
-  const getConfig = (req: Request) =>
-    uploadConfig.find((c) =>
-      c.match.some((m) => req.originalUrl.includes(m))
-    ) ?? { folder: "misc", prefix: "file" };
+    sendSuccess(res, "Echanges trouvés", { rules }, 200);
+  }
+);
 
-  storage = new CloudinaryStorage({
-    cloudinary,
-    params: (req: Request) => {
-      const { folder, prefix } = getConfig(req);
-      const publicId = `${prefix}_${uuidv4()}`;
+export const createExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user.userId;
 
-      return {
-        folder,
-        public_id: publicId,
-        allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
-      };
-    },
-  });
-} else {
-  // Stockage local en développement
-  storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      const url = req.originalUrl;
+    const {
+      title,
+      description,
+      budget,
+      endDate,
+      startDate,
+      participantIds,
+      rules,
+    } = createExchangeSchema.parse(req.body);
 
-      const config = uploadConfig.find((c) =>
-        c.match.some((m) => url.includes(m))
-      );
+    const picture = req.file
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/exchangePictures/${req.file.filename}`
+      : undefined;
 
-      const folder = `public/uploads/${config?.folder || "others"}/`;
+    const exchange = await createNewExchange(
+      userId,
+      title,
+      endDate,
+      startDate,
+      description,
+      picture,
+      budget ?? undefined,
+      participantIds,
+      rules
+    );
 
-      if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder, { recursive: true });
-      }
+    return sendSuccess(res, "Echange créé", { exchange });
+  }
+);
 
-      cb(null, folder);
-    },
-    filename: function (req, file, cb) {
-      const url = req.originalUrl;
-      const config = uploadConfig.find((c) =>
-        c.match.some((m) => url.includes(m))
-      );
+export const updateExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { exchangeId } = req.params;
+    const userId = req.user.userId;
+    const userRole = req.user.role;
 
-      const prefix = config?.prefix || "file";
-      const uniqueName = uuidv4();
-      const ext = path.extname(file.originalname);
+    const file = req.file;
 
-      cb(null, `${prefix}_${uniqueName}${ext}`);
-    },
-  });
-}
+    const {
+      title,
+      description,
+      budget,
+      endDate,
+      startDate,
+      participantIds,
+      rules,
+    } = updateExchangeSchema.parse(req.body);
 
-export const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
+    const exchange = await getExchangeById(exchangeId, userId, userRole);
+    if (!exchange) return next(new NotFoundError("Échange non trouvé"));
+
+    if (file && exchange.picture) {
+      await deleteImage(exchange.picture);
+    }
+
+    const picture = req.file
+      ? process.env.NODE_ENV === "production"
+        ? req.file.path
+        : `/uploads/exchangePictures/${req.file.filename}`
+      : undefined;
+
+    const updatedExchange = await updateExchangeById(
+      exchangeId,
+      userId,
+      title,
+      endDate,
+      startDate,
+      description,
+      picture,
+      budget ?? undefined,
+      participantIds,
+      rules,
+      userRole
+    );
+
+    return sendSuccess(res, "Échange mis à jour", {
+      exchange: updatedExchange,
+    });
+  }
+);
+
+export const deleteExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { exchangeId } = req.params;
+    const userId = req.user.userId;
+
+    if (!exchangeId)
+      return next(new AppError("exchangeId manquant dans la requête", 400));
+
+    await deleteExchangeById(exchangeId, userId);
+    return sendSuccess(res, "Echange supprimé", {}, 200);
+  }
+);
+
+export const searchExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { query } = searchExchangeSchema.parse(req.query);
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+
+    const results = await searchExchangeByTitle(query, userId, userRole);
+
+    return sendSuccess(res, "Résultats trouvés", { exchanges: results });
+  }
+);
+
+export const getMyExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user.userId;
+    const { id } = req.params;
+
+    if (!id) return next(new ValidationError("L'ID de l'échange est requis"));
+
+    const exchange = await getExchangeById(id, userId);
+
+    if (!exchange) return next(new NotFoundError("Echange non trouvée"));
+
+    sendSuccess(res, "Echange trouvée", { exchange });
+  }
+);
+
+export const getExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user.userId;
+    const { id } = req.params;
+    const userRole = req.user.role;
+
+    if (!id) return next(new ValidationError("L'ID de l'échange est requis"));
+
+    const exchange = await getExchangeById(id, userId, userRole);
+
+    if (!exchange) return next(new NotFoundError("Echange non trouvée"));
+
+    sendSuccess(res, "Echange trouvée", { exchange });
+  }
+);
+
+export const respondToExchangeInvitation = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { action } = respondToExchangeSchema.parse(req.body);
+
+    const userId = req.user.userId;
+    const { exchangeId } = req.params;
+
+    await respondToExchange(userId, exchangeId, action);
+
+    sendSuccess(
+      res,
+      `Invitation ${action === "accept" ? "acceptée" : "refusée"} avec succès`,
+      {},
+      200
+    );
+  }
+);
+
+export const drawExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const userId = req.user.userId;
+    const { exchangeId } = req.params;
+
+    await drawExchangeService(userId, exchangeId);
+
+    sendSuccess(res, "Tirage au sort effectué avec succès.", {}, 200);
+  }
+);
+
+export const deleteUserExchanges = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { userId } = req.body;
+
+    if (!userId)
+      return next(new ValidationError("L'ID utilisateur est requis."));
+
+    await deleteExchangesByUserId(userId);
+    return sendSuccess(res, "Echange supprimé", {}, 200);
+  }
+);
+
+export const cancelDrawExchange = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const exchangeId = req.params.exchangeId;
+    const userId = req.user?.userId;
+
+    if (!exchangeId || !userId) {
+      throw new NotFoundError("Paramètres manquants");
+    }
+
+    const cancelled = await cancelDrawExchangeService(exchangeId, userId);
+
+    if (!cancelled) {
+      throw new AuthError("Vous n'êtes pas autorisé à annuler ce tirage");
+    }
+
+    return sendSuccess(res, "Tirage annulé avec succès");
+  }
+);
