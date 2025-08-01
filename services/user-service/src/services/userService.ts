@@ -206,6 +206,13 @@ export async function deleteFriendshipRequest(
     throw new ValidationError("Action non autorisée.");
   }
 
+  console.log(
+    "🔎 Recherche demande : requesterId =",
+    requesterId,
+    "addresseeId =",
+    addresseeId
+  );
+
   const existingRequest = await Friendship.findOne({
     where: {
       requesterId,
@@ -213,6 +220,7 @@ export async function deleteFriendshipRequest(
       status: "pending",
     },
   });
+  console.log("📌 Demande trouvée ?", existingRequest);
 
   if (!existingRequest) {
     throw new NotFoundError("Aucune demande à annuler.");
