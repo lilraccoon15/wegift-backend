@@ -40,6 +40,7 @@ import {
   userSearchQuerySchema,
 } from "../schemas/userSchema";
 import { deleteImage } from "../utils/deleteImage";
+import { z } from "zod";
 
 export const getMyProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
@@ -281,7 +282,10 @@ export const deleteFriendRequest = asyncHandler(
     const userId = req.user.userId;
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
-    const { addresseeId } = friendRequestSchema.parse(req.body);
+    const { addresseeId } = z
+      .object({ addresseeId: z.string().uuid() })
+      .parse(req.params);
+
     const token = req.cookies.token;
 
     if (!token) return next(new AppError("Token manquant", 401));
