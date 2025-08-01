@@ -76,7 +76,7 @@ export const updateProfileDetails = async (
 
   if (!profile) throw new NotFoundError("Profil utilisateur non trouvé.");
 
-  if (profile.userId !== userId) {
+  if (profile.id !== userId) {
     throw new AuthError("Vous n’êtes pas autorisé à modifier ce profil.");
   }
 
