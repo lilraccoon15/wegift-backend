@@ -266,7 +266,7 @@ export const findWishById = async (id: string, userId: string) => {
                 as: "reservation",
                 where: { userId },
                 required: false,
-                attributes: ["id", "isAnonymous", "userId"], // ou tous
+                attributes: ["id", "isAnonymous", "userId"],
             },
         ],
     });
@@ -808,7 +808,7 @@ export const getReservedWishesByUser = async (userId: string) => {
     });
 
     return reservations
-        .filter((r) => r.wish) // sécurité au cas où
+        .filter((r) => r.wish)
         .map((r) => ({
             wish: r.wish,
             reservation: {

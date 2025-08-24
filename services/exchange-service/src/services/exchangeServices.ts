@@ -514,7 +514,6 @@ export const drawExchangeService = async (
             const giver = shuffled[i];
             const receiver = shuffled[(i + 1) % shuffled.length];
 
-            // Règles de base (toujours actives)
             if (giver.userId === receiver.userId) {
                 success = false;
                 break;
@@ -525,7 +524,6 @@ export const drawExchangeService = async (
                 break;
             }
 
-            // Règle : pas la même personne que l'année précédente
             if (activeRules.includes("no_repeat")) {
                 const previous = await Assigned.findOne({
                     where: { userId: giver.userId },
@@ -538,7 +536,6 @@ export const drawExchangeService = async (
                 }
             }
 
-            // Règle : pas d’attribution mutuelle
             if (activeRules.includes("no_mutual_assign")) {
                 const reverse = tempAssignments.find(
                     (a) =>
