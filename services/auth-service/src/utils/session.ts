@@ -32,7 +32,7 @@ export async function createSessionAndSetCookies(
 
   // Créer une session en base
   const session = await Session.create({
-    userId,
+    userId: id,
     refreshHash: hashedRefresh,
     ua: res.req.headers["user-agent"] || null,
     ip: res.req.ip || null,
