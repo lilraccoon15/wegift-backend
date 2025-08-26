@@ -13,6 +13,7 @@
     "test:functional": "cross-env NODE_ENV=test jest tests/functional",
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
     "migrate": "sequelize-cli db:migrate --require ts-node/register",
+    "migration:generate": "NODE_OPTIONS=--require=ts-node/register npx sequelize-cli migration:generate --migrations-path src/migrations",
     "migrate:undo": "sequelize-cli db:migrate:undo --require ts-node/register"
   },
   "keywords": [],
