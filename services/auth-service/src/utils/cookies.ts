@@ -26,7 +26,7 @@ export const setRefreshCookie = (
   res.cookie("refreshToken", raw, {
     ...base,
     ...domainOpt,
-    path: "/auth",
+    path: "/",
     ...(remember ? { maxAge: maxAgeMs } : {}),
   });
 
@@ -46,6 +46,6 @@ export const setSidCookie = (
 export const clearAuthCookies = (res: Response) => {
   const opts = { ...base, ...domainOpt, path: "/" };
   res.clearCookie("accessToken", opts);
-  res.clearCookie("refreshToken", { ...opts, path: "/auth" });
-  res.clearCookie("sid", { ...opts, path: "/auth" });
+  res.clearCookie("refreshToken", opts);
+  res.clearCookie("sid", opts);
 };
