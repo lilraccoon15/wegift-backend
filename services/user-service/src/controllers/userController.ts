@@ -183,7 +183,7 @@ export const sendFriendRequest = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const requesterUserId = req.user.userId;
     const { addresseeId } = friendRequestSchema.parse(req.body);
-    const token = req.cookies.token;
+    const token = req.cookies.accessToken;
 
     if (!token) {
       return next(new AppError("Token manquant", 401));
@@ -286,7 +286,7 @@ export const deleteFriendRequest = asyncHandler(
       .object({ addresseeId: z.string().uuid() })
       .parse(req.params);
 
-    const token = req.cookies.token;
+    const token = req.cookies.accessToken;
 
     if (!token) return next(new AppError("Token manquant", 401));
 
