@@ -1,41 +1,39 @@
-import { Dialect } from "sequelize";
-import * as dotenv from "dotenv";
-dotenv.config();
+const path = require("path");
+require("dotenv").config();
 
-interface SequelizeConfig {
-    username: string;
-    password: string | null;
-    database: string;
-    host: string;
-    port?: number;
-    dialect: Dialect;
-}
-
-const config: { [env: string]: SequelizeConfig } = {
-    development: {
-        username: process.env.DB_USER || "root",
-        password: process.env.DB_PASSWORD || null,
-        database: process.env.DB_NAME || "wegift_auth_dev",
-        host: process.env.DB_HOST || "localhost",
-        port: Number(process.env.DB_PORT) || 3306,
-        dialect: "mariadb",
-    },
-    test: {
-        username: process.env.DB_USER || "root",
-        password: process.env.DB_PASSWORD || null,
-        database: process.env.DB_NAME || "wegift_auth_test",
-        host: process.env.DB_HOST || "localhost",
-        port: Number(process.env.DB_PORT) || 3306,
-        dialect: "mariadb",
-    },
-    production: {
-        username: process.env.DB_USER || "root",
-        password: process.env.DB_PASSWORD || null,
-        database: process.env.DB_NAME || "wegift_auth",
-        host: process.env.DB_HOST || "localhost",
-        port: Number(process.env.DB_PORT) || 3306,
-        dialect: "mariadb",
-    },
+const commonConfig = {
+  migrationStorageTableName: "sequelize_meta",
+  seederStorageTableName: "sequelize_data",
 };
 
-export default config;
+module.exports = {
+  development: {
+    username: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || null,
+    database: process.env.DB_NAME || "wegift_auth_dev",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT) || 3306,
+    dialect: "mariadb",
+    ...commonConfig,
+  },
+  test: {
+    username: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || null,
+    database: process.env.DB_NAME || "wegift_auth_test",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT) || 3306,
+    dialect: "mariadb",
+    ...commonConfig,
+  },
+  production: {
+    username: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || null,
+    database: process.env.DB_NAME || "wegift_auth",
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT) || 3306,
+    dialect: "mariadb",
+    ...commonConfig,
+    migrationStorageTableName: "SequelizeMeta",
+    seederStorageTableName: "sequelize_data",
+  },
+};
