@@ -442,6 +442,9 @@ export const removeUser = async (userId: number, password: string) => {
 };
 
 export const unlinkGoogle = async (user: User) => {
+  console.log("DEBUG unlinkGoogle -> user.id:", user.id);
+  console.log("DEBUG unlinkGoogle -> user.password:", user.password);
+
   if (!user.password || user.password.length < 20) {
     throw new AppError(
       "Vous devez d'abord définir un mot de passe avant de dissocier Google."
