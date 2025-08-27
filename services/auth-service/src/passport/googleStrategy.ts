@@ -7,6 +7,9 @@ import User from "../models/User";
 import currentConfig from "../config";
 import bcrypt from "bcrypt";
 
+console.log("DEBUG apiUrls:", currentConfig.apiUrls);
+console.log("DEBUG USER_SERVICE:", currentConfig.apiUrls.USER_SERVICE);
+
 const DISABLED_PASSWORD = bcrypt.hashSync("google-only", 10);
 
 passport.use(

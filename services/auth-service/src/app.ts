@@ -15,8 +15,6 @@ import path from "path";
 const app = express();
 app.set("trust proxy", 1);
 
-console.log("USER_SERVICE =", process.env.USER_SERVICE);
-
 const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 app.use(
   cors({
