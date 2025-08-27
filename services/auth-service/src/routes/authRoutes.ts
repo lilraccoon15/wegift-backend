@@ -92,7 +92,10 @@ router.post(
 );
 router.get(
   "/oauth/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state: "link",
+  })
 );
 router.get(
   "/oauth/google/callback",

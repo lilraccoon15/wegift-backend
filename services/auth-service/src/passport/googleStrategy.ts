@@ -32,6 +32,7 @@ passport.use(
       try {
         const googleId = profile.id;
         const email = profile.emails?.[0].value;
+        const state = req.query.state;
 
         if (!email) {
           return done(new Error("L'email Google est requis"));
@@ -39,7 +40,7 @@ passport.use(
 
         console.log("DEBUG req.query:", req.query);
 
-        if (req.query.link === "true" && req.user) {
+        if (state === "link" && req.user) {
           const currentUser = await User.findByPk((req.user as User).id);
           if (!currentUser) return done(new Error("Utilisateur introuvable"));
 
