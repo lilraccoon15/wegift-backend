@@ -50,12 +50,18 @@ import { createSessionAndSetCookies } from "../utils/session";
 import { clearAuthCookies } from "../utils/cookies";
 
 export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
+  console.log("DEBUG handleGoogleCallback req.user:", req.user);
+
   const user = req.user as User;
-  if (!user) return next(new AuthError("Authentification échouée"));
+  if (!user) {
+    console.error("DEBUG handleGoogleCallback: user is null");
+    return next(new AuthError("Authentification échouée"));
+  }
 
   const remember = true;
 
   const userProfileId = await fetchUserProfileId(String(user.id));
+  console.log("DEBUG handleGoogleCallback userProfileId:", userProfileId);
 
   await createSessionAndSetCookies(
     res,
@@ -64,6 +70,7 @@ export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
     remember
   );
 
+  console.log("DEBUG handleGoogleCallback: session created, redirecting...");
   return res.redirect(`${process.env.FRONTEND_URL}/oauth/success`);
 });
 
