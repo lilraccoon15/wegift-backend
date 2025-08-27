@@ -40,25 +40,18 @@ passport.use(
 
         console.log("DEBUG req.query:", req.query);
 
-        if (state === "link") {
-          console.log("DEBUG: state=link détecté");
-          console.log("DEBUG req.user dans state=link:", req.user);
+        if (typeof state === "string" && state.startsWith("link:")) {
+          const userId = state.split(":")[1];
+          console.log("DEBUG: state=link détecté pour l'user", userId);
 
-          if (!req.user) {
-            console.error("DEBUG: req.user est vide dans le flux de lien !");
+          const currentUser = await User.findByPk(userId);
+          if (!currentUser) {
+            console.error(`DEBUG: Aucun utilisateur trouvé pour ${userId}`);
             return done(
-              new Error("Utilisateur non authentifié pour le lien Google")
+              new Error("Utilisateur introuvable pour le lien Google")
             );
           }
 
-          const currentUser = await User.findByPk((req.user as User).id);
-          if (!currentUser) {
-            return done(new Error("Utilisateur introuvable"));
-          }
-
-          console.log("DEBUG currentUser trouvé:", currentUser?.toJSON());
-
-          // On remplace le mot de passe par le "désactivé"
           currentUser.googleId = googleId;
           currentUser.password = DISABLED_PASSWORD;
           await currentUser.save();

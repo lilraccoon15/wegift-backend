@@ -94,7 +94,6 @@ router.get(
   "/oauth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-    state: "link",
   })
 );
 router.get(
