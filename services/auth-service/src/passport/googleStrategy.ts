@@ -5,6 +5,9 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import User from "../models/User";
 import currentConfig from "../config";
+import bcrypt from "bcrypt";
+
+const DISABLED_PASSWORD = bcrypt.hashSync("google-only", 10);
 
 passport.use(
   new GoogleStrategy(
@@ -35,8 +38,11 @@ passport.use(
         }
 
         if (req.query.link === "true" && req.user) {
-          const currentUser = req.user as User;
+          const currentUser = await User.findByPk((req.user as User).id);
+          if (!currentUser) return done(new Error("Utilisateur introuvable"));
+
           currentUser.googleId = googleId;
+          currentUser.password = DISABLED_PASSWORD;
           await currentUser.save();
 
           let userProfileId: string | null = null;
@@ -113,7 +119,7 @@ passport.use(
 
         const newUser = await User.create({
           email,
-          password: uuidv4(),
+          password: DISABLED_PASSWORD,
           acceptedTerms: true,
           newsletter: false,
           isActive: true,
