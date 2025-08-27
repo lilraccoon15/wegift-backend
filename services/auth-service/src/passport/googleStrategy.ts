@@ -49,6 +49,11 @@ passport.use(
           await currentUser.save();
 
           let userProfileId: string | null = null;
+          console.log(
+            "DEBUG URL avant appel:",
+            `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${currentUser?.id}`
+          );
+
           try {
             const response = await axios.get(
               `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${currentUser.id}`,
@@ -148,6 +153,11 @@ passport.use(
         );
 
         let userProfileId: string | null = null;
+        console.log(
+          "DEBUG URL avant appel:",
+          `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${newUser?.id}`
+        );
+
         try {
           const response = await axios.get(
             `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${newUser.id}`,
