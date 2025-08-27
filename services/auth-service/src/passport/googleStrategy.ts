@@ -38,12 +38,8 @@ passport.use(
           return done(new Error("L'email Google est requis"));
         }
 
-        console.log("DEBUG req.query:", req.query);
-        console.log("DEBUG state reçu:", state);
-
         if (typeof state === "string" && state.startsWith("link:")) {
           const userId = state.split(":")[1];
-          console.log("DEBUG: state=link détecté pour l'user", userId);
 
           const currentUser = await User.findByPk(userId);
           if (!currentUser) {
@@ -56,8 +52,6 @@ passport.use(
           currentUser.googleId = googleId;
           currentUser.password = DISABLED_PASSWORD;
           await currentUser.save();
-
-          console.log("DEBUG: Mot de passe remplacé pour user", currentUser.id);
 
           let userProfileId: string | null = null;
 

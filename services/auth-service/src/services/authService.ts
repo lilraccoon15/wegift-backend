@@ -441,8 +441,6 @@ export const removeUser = async (userId: number, password: string) => {
   await user.destroy();
 };
 
-// todo : quand compte lié c'est encore possible de se co avec mdp alors que ça devrait pas
-
 export const unlinkGoogle = async (user: User) => {
   const fullUser = await User.findByPk(user.id);
 
