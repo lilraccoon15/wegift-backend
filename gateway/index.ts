@@ -8,6 +8,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 import config from "./config";
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT) || 4000;
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")

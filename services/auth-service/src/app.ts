@@ -13,13 +13,16 @@ import passport from "passport";
 import path from "path";
 
 const app = express();
+app.set("trust proxy", 1);
+
+console.log("USER_SERVICE =", process.env.USER_SERVICE);
 
 const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:3000";
 app.use(
-    cors({
-        origin: allowedOrigin,
-        credentials: true,
-    })
+  cors({
+    origin: allowedOrigin,
+    credentials: true,
+  })
 );
 
 app.use(cookieParser());
@@ -32,7 +35,7 @@ app.use("/", authRoutes);
 app.use(errorHandler);
 
 app.get("/", (_req, res) => {
-    res.send("Auth service is running!");
+  res.send("Auth service is running!");
 });
 
 export default app;

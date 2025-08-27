@@ -13,6 +13,7 @@ import internalRoutes from "./routes/internalRoutes";
 import path from "path";
 
 const app = express();
+app.set("trust proxy", 1);
 
 setupAssociations();
 
