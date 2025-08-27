@@ -529,7 +529,7 @@ export async function fetchUserProfileId(
 ): Promise<string | null> {
   try {
     const response = await axios.get(
-      `${process.env.USER_SERVICE_URL}/api/internal/find-by-auth/${authUserId}`,
+      `${config.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${authUserId}`,
       {
         headers: {
           "x-internal-token": process.env.INTERNAL_API_TOKEN,
