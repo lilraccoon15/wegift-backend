@@ -39,6 +39,7 @@ passport.use(
         }
 
         console.log("DEBUG req.query:", req.query);
+        console.log("DEBUG state reçu:", state);
 
         if (typeof state === "string" && state.startsWith("link:")) {
           const userId = state.split(":")[1];
