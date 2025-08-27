@@ -453,7 +453,7 @@ export const unlinkGoogle = async (user: User) => {
   }
 
   fullUser.googleId = null;
-  await user.save();
+  await fullUser.save();
 };
 
 export const createPasswordService = async (
