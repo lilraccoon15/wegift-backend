@@ -92,6 +92,10 @@ router.post(
 );
 router.get(
   "/oauth/google",
+  (req, res, next) => {
+    console.log("DEBUG /oauth/google req.query:", req.query);
+    next();
+  },
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
 router.get(
