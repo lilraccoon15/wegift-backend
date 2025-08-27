@@ -90,12 +90,13 @@ router.post(
   validateBody(createPasswordSchema),
   createPasswordForUser
 );
-router.get(
-  "/oauth/google",
+router.get("/oauth/google", (req, res, next) => {
+  const state = req.query.state as string; // récupéré de l'URL frontend
   passport.authenticate("google", {
     scope: ["profile", "email"],
-  })
-);
+    state,
+  })(req, res, next);
+});
 router.get(
   "/oauth/google/callback",
   passport.authenticate("google", {
