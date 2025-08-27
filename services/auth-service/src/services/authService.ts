@@ -441,17 +441,18 @@ export const removeUser = async (userId: number, password: string) => {
   await user.destroy();
 };
 
-export const unlinkGoogle = async (user: User) => {
-  console.log("DEBUG unlinkGoogle -> user.id:", user.id);
-  console.log("DEBUG unlinkGoogle -> user.password:", user.password);
+// todo : quand compte lié c'est encore possible de se co avec mdp alors que ça devrait pas
 
-  if (!user.password || user.password.length < 20) {
+export const unlinkGoogle = async (user: User) => {
+  const fullUser = await User.findByPk(user.id);
+
+  if (!fullUser || !fullUser.password || fullUser.password.length < 20) {
     throw new AppError(
       "Vous devez d'abord définir un mot de passe avant de dissocier Google."
     );
   }
 
-  user.googleId = null;
+  fullUser.googleId = null;
   await user.save();
 };
 
