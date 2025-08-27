@@ -7,9 +7,6 @@ import User from "../models/User";
 import currentConfig from "../config";
 import bcrypt from "bcrypt";
 
-console.log("DEBUG apiUrls:", currentConfig.apiUrls);
-console.log("DEBUG USER_SERVICE:", currentConfig.apiUrls.USER_SERVICE);
-
 const DISABLED_PASSWORD = bcrypt.hashSync("google-only", 10);
 
 passport.use(
@@ -40,6 +37,8 @@ passport.use(
           return done(new Error("L'email Google est requis"));
         }
 
+        console.log("DEBUG req.query:", req.query);
+
         if (req.query.link === "true" && req.user) {
           const currentUser = await User.findByPk((req.user as User).id);
           if (!currentUser) return done(new Error("Utilisateur introuvable"));
@@ -49,10 +48,6 @@ passport.use(
           await currentUser.save();
 
           let userProfileId: string | null = null;
-          console.log(
-            "DEBUG URL avant appel:",
-            `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${currentUser?.id}`
-          );
 
           try {
             const response = await axios.get(
@@ -153,10 +148,6 @@ passport.use(
         );
 
         let userProfileId: string | null = null;
-        console.log(
-          "DEBUG URL avant appel:",
-          `${currentConfig.apiUrls.USER_SERVICE}/api/internal/find-by-auth/${newUser?.id}`
-        );
 
         try {
           const response = await axios.get(
