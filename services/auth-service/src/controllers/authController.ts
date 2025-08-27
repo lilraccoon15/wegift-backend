@@ -50,7 +50,9 @@ import { createSessionAndSetCookies } from "../utils/session";
 import { clearAuthCookies } from "../utils/cookies";
 
 export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
-  console.log("DEBUG handleGoogleCallback req.user:", req.user);
+  console.log("DEBUG handleGoogleCallback - START");
+  console.log("DEBUG req.user:", req.user);
+  console.log("DEBUG cookies avant création:", req.cookies);
 
   const user = req.user as User;
   if (!user) {
@@ -70,8 +72,16 @@ export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
     remember
   );
 
+  console.log(
+    "DEBUG handleGoogleCallback: cookies après création:",
+    res.getHeaders()["set-cookie"]
+  );
   console.log("DEBUG handleGoogleCallback: session created, redirecting...");
-  return res.redirect(`${process.env.FRONTEND_URL}/oauth/success`);
+
+  const redirectUrl = `${process.env.FRONTEND_URL}/oauth/success`;
+  console.log("DEBUG redirect URL:", redirectUrl);
+
+  return res.redirect(redirectUrl);
 });
 
 export const registerUser = asyncHandler(async (req, res, next) => {
