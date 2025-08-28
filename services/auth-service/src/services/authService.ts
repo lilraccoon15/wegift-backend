@@ -42,7 +42,7 @@ type LoginResponse =
   | { error: string };
 
 import { Session } from "../models/Session";
-import { hashRefresh, signAccess, ACCESS_TTL_SEC } from "../utils/tokens";
+import { signAccess, ACCESS_TTL_SEC } from "../utils/tokens";
 
 interface RefreshResult {
   accessToken: string;
@@ -57,8 +57,8 @@ export const refreshService = async (
     throw new Error("Session invalide ou expirée");
   }
 
-  const validHash = await hashRefresh(refreshToken);
-  if (session.refreshHash !== validHash) {
+  const isValid = await bcrypt.compare(refreshToken, session.refreshHash);
+  if (!isValid) {
     throw new Error("Refresh token invalide");
   }
 
