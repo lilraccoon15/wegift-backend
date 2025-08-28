@@ -50,6 +50,8 @@ export async function createSessionAndSetCookies(
     lastUsedAt: new Date(),
   });
 
+  console.log("Creating token with:", { id, userId });
+
   // Définir les cookies
   setAccessCookie(res, accessToken, accessMaxAge);
   setRefreshCookie(res, rawRefresh, remember, refreshMaxAge);
