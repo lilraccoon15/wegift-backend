@@ -67,8 +67,14 @@ export const refreshService = async (
     throw new Error("Refresh token invalide");
   }
 
+  const profileId = await fetchUserProfileId(session.userId);
+
+  if (!profileId) {
+    throw new Error(`Aucun profil trouvé pour l'utilisateur ${session.userId}`);
+  }
+
   const newAccessToken = signAccess(
-    { id: session.userId, userId: session.userId },
+    { id: session.userId, userId: profileId },
     ACCESS_TTL_SEC
   );
 
