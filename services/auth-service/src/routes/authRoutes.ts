@@ -39,6 +39,7 @@ import {
   handleGoogleCallback,
   unlinkGoogleAccount,
   createPasswordForUser,
+  refreshSession,
 } from "../controllers/authController";
 
 import User from "../models/User";
@@ -47,6 +48,8 @@ import { NotFoundError, ValidationError } from "../errors/CustomErrors";
 
 const router = Router();
 const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
+
+router.post("/refresh", refreshSession);
 
 router.post(
   "/register",

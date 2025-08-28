@@ -14,7 +14,6 @@ import {
   changeUserPassword,
   changeNewsletterSubscription,
   removeUser,
-  generateJWTForUser,
   unlinkGoogle,
   createPasswordService,
   deleteUserProfile,
@@ -22,6 +21,7 @@ import {
   deleteUserExchanges,
   deleteUserNotifications,
   fetchUserProfileId,
+  refreshService,
 } from "../services/authService";
 import User from "../models/User";
 import sendSuccess from "../utils/sendSuccess";
@@ -44,10 +44,24 @@ import {
   resetPasswordSchema,
   validate2FASchema,
 } from "../schemas/authSchema";
-import { clearAuthCookie, setAuthCookie } from "../utils/auth";
 import { Session } from "../models/Session";
 import { createSessionAndSetCookies } from "../utils/session";
-import { clearAuthCookies } from "../utils/cookies";
+import { clearAuthCookies, setAccessCookie } from "../utils/cookies";
+
+export const refreshSession = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
+  const sid = req.cookies?.sid;
+
+  if (!refreshToken || !sid) {
+    throw new AuthError("Token de rafraîchissement manquant");
+  }
+
+  const { accessToken } = await refreshService(sid, refreshToken);
+
+  setAccessCookie(res, accessToken, 1000 * 60 * 30);
+
+  sendSuccess(res, "Token rafraîchi avec succès");
+});
 
 export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
   const user = req.user as User;

@@ -41,6 +41,35 @@ type LoginResponse =
   | { requires2FA: true; tempToken: string; userId: string }
   | { error: string };
 
+import { Session } from "../models/Session";
+import { hashRefresh, signAccess, ACCESS_TTL_SEC } from "../utils/tokens";
+
+interface RefreshResult {
+  accessToken: string;
+}
+
+export const refreshService = async (
+  sid: string,
+  refreshToken: string
+): Promise<RefreshResult> => {
+  const session = await Session.findByPk(sid);
+  if (!session || session.revokedAt || new Date() > session.expiresAt) {
+    throw new Error("Session invalide ou expirée");
+  }
+
+  const validHash = await hashRefresh(refreshToken);
+  if (session.refreshHash !== validHash) {
+    throw new Error("Refresh token invalide");
+  }
+
+  const newAccessToken = signAccess(
+    { id: session.userId, userId: session.userId },
+    ACCESS_TTL_SEC
+  );
+
+  return { accessToken: newAccessToken };
+};
+
 export function generateJWTForUser(user: User): string {
   const payload = {
     id: user.id,
