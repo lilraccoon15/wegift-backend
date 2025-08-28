@@ -46,6 +46,8 @@ export const getMyProfile = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
     const userId = req.user.userId;
 
+    console.log(userId);
+
     if (!userId) return next(new ValidationError("ID utilisateur manquant"));
 
     const profile = await fetchMyProfile(userId);
