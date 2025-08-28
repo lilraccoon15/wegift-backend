@@ -21,6 +21,8 @@ export async function createSessionAndSetCookies(
   const accessMaxAge = accessTtl * 1000;
   const refreshMaxAge = refreshTtl * 1000;
 
+  await Session.update({ revokedAt: new Date() }, { where: { userId: id } });
+
   // Créer le token d'accès
   const accessToken = signAccess({ id, userId }, accessTtl);
 
