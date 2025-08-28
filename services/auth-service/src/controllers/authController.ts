@@ -73,6 +73,13 @@ export const handleGoogleCallback = asyncHandler(async (req, res, next) => {
 
   const userProfileId = await fetchUserProfileId(String(user.id));
 
+  console.log(
+    "handleGoogleCallback -> user.id (compte):",
+    user.id,
+    "| userProfileId (profil):",
+    userProfileId
+  );
+
   await createSessionAndSetCookies(
     res,
     String(user.id),
@@ -118,6 +125,13 @@ export const loginUser = asyncHandler(async (req, res, next) => {
       },
       200
     );
+
+  console.log(
+    "loginUser -> result.id (compte):",
+    result.id,
+    "| result.userId (profil):",
+    result.userId
+  );
 
   await createSessionAndSetCookies(
     res,
@@ -206,6 +220,13 @@ export const verify2FACode = asyncHandler(
     }
 
     const remember = req.body.remember ?? false;
+
+    console.log(
+      "verify2FACode -> req.user.id (compte):",
+      userId,
+      "| req.user.userId (profil):",
+      req.user.userId
+    );
 
     await createSessionAndSetCookies(res, userId, req.user.userId, remember);
 
