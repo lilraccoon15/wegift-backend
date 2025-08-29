@@ -147,13 +147,13 @@ export const updateExchange = asyncHandler(
 
 export const deleteExchange = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const { exchangeId } = req.params;
+    const { id } = req.params;
     const userId = req.user.userId;
 
-    if (!exchangeId)
+    if (!id)
       return next(new AppError("exchangeId manquant dans la requête", 400));
 
-    await deleteExchangeById(exchangeId, userId);
+    await deleteExchangeById(id, userId);
     return sendSuccess(res, "Echange supprimé", {}, 200);
   }
 );
