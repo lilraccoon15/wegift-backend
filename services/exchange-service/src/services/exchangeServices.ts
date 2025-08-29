@@ -130,6 +130,7 @@ export const createNewExchange = async (
     const participantsData = validUserIds.map((participantId) => ({
       userId: participantId,
       exchangeId: exchange.id,
+      invitedAt: new Date(),
     }));
 
     await Participants.bulkCreate(participantsData);
