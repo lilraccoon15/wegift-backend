@@ -28,28 +28,18 @@ export const getAllMyExchanges = async (userId: string) => {
       "description",
       "startDate",
       "endDate",
-      [
-        Sequelize.fn(
-          "COUNT",
-          Sequelize.literal(
-            `CASE WHEN participants.acceptedAt IS NOT NULL THEN 1 END`
-          )
-        ),
-        "participantsCount",
-      ],
     ],
     include: [
       {
         model: Participants,
         as: "participants",
-        attributes: [],
+        attributes: ["id", "userId", "acceptedAt"], // on ramène les infos de base
         required: false,
       },
     ],
     where: {
       [Op.or]: [{ userId }, { "$participants.userId$": userId }],
     },
-    group: ["Exchange.id"],
   });
 
   return exchanges;
@@ -80,7 +70,7 @@ export const getAllUserExchanges = async (userId: string, userRole: string) => {
       {
         model: Participants,
         as: "participants",
-        attributes: ["userId"],
+        attributes: [],
         required: false,
       },
     ],
@@ -384,7 +374,7 @@ export const searchExchangeByTitle = async (
       {
         model: Participants,
         as: "participants",
-        attributes: ["userId"],
+        attributes: [],
         required: false,
       },
     ],
