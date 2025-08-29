@@ -396,6 +396,8 @@ export const respondToExchange = async (
     exchangeId: string,
     action: "accept" | "reject"
 ) => {
+    console.log("Searching participant with:", { userId, exchangeId });
+
     const participant = await Participants.findOne({
         where: {
             userId,
