@@ -16,7 +16,7 @@ export const validateParticipants = async (
 
   try {
     const response = await axios.post(
-      `${config.apiUrls.USER_SERVICE}/validate-ids`,
+      `${config.apiUrls.USER_SERVICE}/api/internal/validate-ids`,
       { userIds: uniqueParticipantIds },
       {
         headers: {
