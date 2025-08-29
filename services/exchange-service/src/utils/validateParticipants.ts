@@ -8,6 +8,14 @@ export const validateParticipants = async (
 ): Promise<string[]> => {
   const uniqueParticipantIds = [...new Set(participantIds)];
 
+  console.log("[validateParticipants] INPUT", {
+    userId,
+    participantIds,
+    uniqueParticipantIds,
+    url: `${config.apiUrls.USER_SERVICE}/api/internal/validate-ids`,
+    token: process.env.INTERNAL_API_TOKEN,
+  });
+
   if (uniqueParticipantIds.includes(userId)) {
     throw new ValidationError(
       "Vous ne pouvez pas vous ajouter vous-même comme participant."
@@ -25,6 +33,8 @@ export const validateParticipants = async (
       }
     );
 
+    console.log("[validateParticipants] RESPONSE", response.data);
+
     const validUserIds: string[] = response.data.validUserIds;
 
     console.log(validUserIds);
@@ -36,7 +46,12 @@ export const validateParticipants = async (
     }
 
     return validUserIds;
-  } catch (error) {
+  } catch (error: any) {
+    console.error("[validateParticipants] ERROR", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
     throw new ValidationError(
       "Erreur lors de la vérification des utilisateurs."
     );
