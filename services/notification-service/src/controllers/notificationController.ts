@@ -8,7 +8,8 @@ import {
   sendNotificationToUser,
 } from "../services/notificationServices";
 import { sendNotificationSchema } from "../schemas/notificationSchema";
-import { ValidationError } from "../errors/CustomErrors";
+import { NotFoundError, ValidationError } from "../errors/CustomErrors";
+import NotificationModel from "../models/Notification";
 
 export const getNotificationsForUser = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
@@ -59,5 +60,33 @@ export const deleteUserNotifications = asyncHandler(
 
     await deleteNotificationsByUserId(userId);
     return sendSuccess(res, "Notifications supprimées", {}, 200);
+  }
+);
+
+export const deleteSpecificNotification = asyncHandler(
+  async (req: AuthenticatedRequest, res, next) => {
+    const { userId, type, data } = req.body;
+
+    if (!userId || !type) {
+      return next(
+        new ValidationError("Les champs userId et type sont obligatoires.")
+      );
+    }
+
+    const where: any = { userId, type };
+
+    if (data && Object.keys(data).length > 0) {
+      where.data = { ...data };
+    }
+
+    const notification = await NotificationModel.findOne({ where });
+
+    if (!notification) {
+      throw new NotFoundError("Notification non trouvée.");
+    }
+
+    await notification.destroy();
+
+    return sendSuccess(res, "Notification supprimée", {}, 200);
   }
 );

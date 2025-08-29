@@ -401,6 +401,7 @@ export const addNewWishToWishlist = async (
               data: {
                 wishlistId,
                 wishTitle: title,
+                wishPicture: picture,
               },
               // todo : ajouter le userid, la wishlist picture et le wish picture
               read: false,
