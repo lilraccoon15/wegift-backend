@@ -207,6 +207,11 @@ export const getExchange = asyncHandler(
 
 export const respondToExchangeInvitation = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
+        console.log("=== ENTER respondToExchangeInvitation ===", {
+            userId: req.user?.userId,
+            params: req.params,
+            body: req.body,
+        });
         const { action } = respondToExchangeSchema.parse(req.body);
 
         const userId = req.user.userId;
