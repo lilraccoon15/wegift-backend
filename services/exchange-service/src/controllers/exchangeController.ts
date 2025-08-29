@@ -96,7 +96,7 @@ export const createExchange = asyncHandler(
 
 export const updateExchange = asyncHandler(
   async (req: AuthenticatedRequest, res, next) => {
-    const { exchangeId } = req.params;
+    const { id: exchangeId } = req.params;
     const userId = req.user.userId;
     const userRole = req.user.role;
 
