@@ -418,7 +418,7 @@ export const respondToFriendRequestService = async (
       {
         userId: requesterId,
         type: "friendship-accept",
-        data: { from: userId },
+        data: { requesterId: userId },
         read: false,
       },
       {
