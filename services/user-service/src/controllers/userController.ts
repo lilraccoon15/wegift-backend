@@ -15,6 +15,7 @@ import {
   fetchUserProfileByAuthId,
   fetchPendingFriendsByProfileId,
   deleteFriendshipRequest,
+  validateUserIdsService,
 } from "../services/userService";
 import { AuthenticatedRequest } from "../middlewares/verifyTokenMiddleware";
 
@@ -317,3 +318,15 @@ export const respondToFriendRequest = asyncHandler(
     );
   }
 );
+
+export const validateIds = asyncHandler(async (req, res, next) => {
+  const { userIds } = req.body;
+
+  if (!Array.isArray(userIds) || userIds.length === 0) {
+    throw new ValidationError("Le tableau userIds est requis.");
+  }
+
+  const validUserIds = await validateUserIdsService(userIds);
+
+  return sendSuccess(res, "IDs validés", { validUserIds }, 200);
+});

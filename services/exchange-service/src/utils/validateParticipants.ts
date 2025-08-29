@@ -19,8 +19,11 @@ export const validateParticipants = async (
   try {
     const response = await axios.post(
       `${config.apiUrls.USER_SERVICE}/validate-ids`,
+      { userIds: uniqueParticipantIds },
       {
-        userIds: uniqueParticipantIds,
+        headers: {
+          "x-internal-token": process.env.INTERNAL_API_TOKEN!,
+        },
       }
     );
 

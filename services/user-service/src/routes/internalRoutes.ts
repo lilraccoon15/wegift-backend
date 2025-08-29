@@ -8,6 +8,7 @@ import {
   createUserProfile,
   deleteUserProfile,
   getUserProfileByAuthId,
+  validateIds,
 } from "../controllers/userController";
 import { createProfileSchema } from "../schemas/userSchema";
 
@@ -25,6 +26,8 @@ router.get(
   internalAuthMiddleware,
   getUserProfileByAuthId
 );
+
+router.get("/validate-ids", internalAuthMiddleware, validateIds);
 
 router.delete(
   "/delete-profile",

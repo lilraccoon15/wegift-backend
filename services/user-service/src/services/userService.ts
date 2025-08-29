@@ -433,3 +433,14 @@ export const respondToFriendRequestService = async (
 
   return friendship;
 };
+
+export const validateUserIdsService = async (
+  userIds: string[]
+): Promise<string[]> => {
+  const users = await UserProfile.findAll({
+    where: { id: userIds },
+    attributes: ["id"],
+  });
+
+  return users.map((u) => u.id);
+};
