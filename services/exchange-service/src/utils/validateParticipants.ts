@@ -8,8 +8,6 @@ export const validateParticipants = async (
 ): Promise<string[]> => {
   const uniqueParticipantIds = [...new Set(participantIds)];
 
-  console.log(uniqueParticipantIds);
-
   if (uniqueParticipantIds.includes(userId)) {
     throw new ValidationError(
       "Vous ne pouvez pas vous ajouter vous-même comme participant."
