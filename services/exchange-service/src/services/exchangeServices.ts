@@ -124,8 +124,6 @@ export const createNewExchange = async (
     budget,
   });
 
-  console.log(participantIds);
-
   if (participantIds.length > 0) {
     const validUserIds = await validateParticipants(userId, participantIds);
 

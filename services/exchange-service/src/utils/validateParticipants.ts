@@ -6,7 +6,6 @@ export const validateParticipants = async (
   userId: string,
   participantIds: string[]
 ): Promise<string[]> => {
-  console.log(participantIds);
   const uniqueParticipantIds = [...new Set(participantIds)];
 
   console.log(uniqueParticipantIds);
