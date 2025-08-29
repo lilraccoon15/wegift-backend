@@ -27,7 +27,7 @@ router.get(
   getUserProfileByAuthId
 );
 
-router.get("/validate-ids", internalAuthMiddleware, validateIds);
+router.post("/validate-ids", internalAuthMiddleware, validateIds);
 
 router.delete(
   "/delete-profile",
