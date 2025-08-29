@@ -42,7 +42,7 @@ export const getAllMyExchanges = async (userId: string) => {
       {
         model: Participants,
         as: "participants",
-        attributes: ["userId"],
+        attributes: [],
         required: false,
       },
     ],
