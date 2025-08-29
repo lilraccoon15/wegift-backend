@@ -42,7 +42,7 @@ export const getAllMyExchanges = async (userId: string) => {
       {
         model: Participants,
         as: "participants",
-        attributes: [],
+        attributes: ["userId"],
         required: false,
       },
     ],
@@ -80,7 +80,7 @@ export const getAllUserExchanges = async (userId: string, userRole: string) => {
       {
         model: Participants,
         as: "participants",
-        attributes: [],
+        attributes: ["userId"],
         required: false,
       },
     ],
@@ -384,7 +384,7 @@ export const searchExchangeByTitle = async (
       {
         model: Participants,
         as: "participants",
-        attributes: [],
+        attributes: ["userId"],
         required: false,
       },
     ],
