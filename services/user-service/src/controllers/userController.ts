@@ -321,7 +321,6 @@ export const respondToFriendRequest = asyncHandler(
 
 export const validateIds = asyncHandler(async (req, res, next) => {
   const { userIds } = req.body;
-  console.log(userIds);
 
   if (!Array.isArray(userIds) || userIds.length === 0) {
     throw new ValidationError("Le tableau userIds est requis.");

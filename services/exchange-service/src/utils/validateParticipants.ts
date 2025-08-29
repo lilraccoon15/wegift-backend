@@ -35,7 +35,7 @@ export const validateParticipants = async (
 
     console.log("[validateParticipants] RESPONSE", response.data);
 
-    const validUserIds: string[] = response.data.validUserIds;
+    const validUserIds: string[] = response.data.data.validUserIds;
 
     console.log(validUserIds);
 
