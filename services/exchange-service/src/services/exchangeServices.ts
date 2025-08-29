@@ -432,10 +432,8 @@ export const respondToExchange = async (
                 userId: exchange.userId,
                 type: notificationType,
                 data: {
-                    from: userId,
+                    requesterId: userId,
                     exchangeId: exchange.id,
-                    exchangePicture: exchange.picture,
-                    exchangeTitle: exchange.title,
                 },
                 read: false,
             },
