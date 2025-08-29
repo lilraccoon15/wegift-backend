@@ -32,7 +32,6 @@ export const verifyTokenMiddleware = (
       );
 
     const decoded = jwt.verify(token, secret);
-    console.log("Decoded token:", decoded);
     req.user = decoded;
 
     next();

@@ -54,10 +54,6 @@ export const refreshService = async (
 ): Promise<RefreshResult> => {
   const session = await Session.findByPk(sid);
 
-  console.log("Refreshing token for session:", sid, "->", {
-    id: session?.userId,
-  });
-
   if (!session || session.revokedAt || new Date() > session.expiresAt) {
     throw new Error("Session invalide ou expirée");
   }

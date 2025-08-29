@@ -16,13 +16,6 @@ export async function createSessionAndSetCookies(
   userId: string,
   remember: boolean
 ) {
-  console.log(
-    "createSessionAndSetCookies -> id (compte):",
-    id,
-    "| userId (profil):",
-    userId
-  );
-
   const accessTtl = ACCESS_TTL_SEC; // 30 min
   const refreshTtl = REFRESH_TTL_SEC(remember); // 1 jour ou 30 jours
   const accessMaxAge = accessTtl * 1000;
@@ -49,8 +42,6 @@ export async function createSessionAndSetCookies(
     expiresAt,
     lastUsedAt: new Date(),
   });
-
-  console.log("Creating token with:", { id, userId });
 
   // Définir les cookies
   setAccessCookie(res, accessToken, accessMaxAge);
