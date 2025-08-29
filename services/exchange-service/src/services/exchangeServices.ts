@@ -33,7 +33,7 @@ export const getAllMyExchanges = async (userId: string) => {
       {
         model: Participants,
         as: "participants",
-        attributes: ["id", "userId", "acceptedAt"], // on ramène les infos de base
+        attributes: ["id", "userId", "acceptedAt"], // Récupère les infos utiles
         required: false,
       },
     ],
@@ -42,11 +42,17 @@ export const getAllMyExchanges = async (userId: string) => {
     },
   });
 
-  return exchanges;
+  return exchanges.map((exchange) => {
+    const json = exchange.toJSON();
+    json.participantsCount =
+      json.participants?.filter((p: any) => p.acceptedAt)?.length || 0;
+    return json;
+  });
 };
 
 export const getAllUserExchanges = async (userId: string, userRole: string) => {
   const isAdmin = userRole === "admin";
+
   const exchanges = await Exchange.findAll({
     attributes: [
       "id",
@@ -56,21 +62,12 @@ export const getAllUserExchanges = async (userId: string, userRole: string) => {
       "description",
       "startDate",
       "endDate",
-      [
-        Sequelize.fn(
-          "COUNT",
-          Sequelize.literal(
-            `CASE WHEN participants.acceptedAt IS NOT NULL THEN 1 END`
-          )
-        ),
-        "participantsCount",
-      ],
     ],
     include: [
       {
         model: Participants,
         as: "participants",
-        attributes: [],
+        attributes: ["id", "userId", "acceptedAt"],
         required: false,
       },
     ],
@@ -79,10 +76,14 @@ export const getAllUserExchanges = async (userId: string, userRole: string) => {
       : {
           [Op.or]: [{ userId }, { "$participants.userId$": userId }],
         },
-    group: ["Exchange.id"],
   });
 
-  return exchanges;
+  return exchanges.map((exchange) => {
+    const json = exchange.toJSON();
+    json.participantsCount =
+      json.participants?.filter((p: any) => p.acceptedAt)?.length || 0;
+    return json;
+  });
 };
 
 export const getAllExchangeRules = async () => {
