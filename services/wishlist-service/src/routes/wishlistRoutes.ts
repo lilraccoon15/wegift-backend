@@ -51,7 +51,7 @@ router.put(
     updateWishlist
 );
 router.delete("/delete-wishlist/:id", ...requireAuth, deleteWishlist);
-router.post("/wishlists/:wishlistId/leave", requireAuth, leaveWishlist);
+router.post("/:wishlistId/leave", requireAuth, leaveWishlist);
 
 router.get("/my-wishes", ...requireAuth, getMyWishesFromWishlist);
 router.get("/wishes", ...requireAuth, getWishesFromWishlist);
