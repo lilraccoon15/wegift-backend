@@ -658,8 +658,7 @@ export const subscribeToWishlistService = async (
                 type: "wishlist-sub",
                 data: {
                     requesterId: userId,
-                    wishlistTitle: wishlist.title,
-                    wishlistPicture: wishlist.picture,
+                    wishlistId: wishlist.id,
                 },
                 read: false,
             },
