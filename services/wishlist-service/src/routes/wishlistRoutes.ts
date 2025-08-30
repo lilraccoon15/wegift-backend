@@ -5,29 +5,30 @@ import { ensureAuthenticated } from "../middlewares/ensureAuthenticated";
 import { upload } from "../middlewares/upload";
 
 import {
-  createWish,
-  createWishlist,
-  deleteWish,
-  deleteWishlist,
-  getMyWish,
-  getWish,
-  getMyWishlist,
-  getWishlist,
-  getMyWishlists,
-  getWishlists,
-  getMyWishesFromWishlist,
-  getWishesFromWishlist,
-  updateWish,
-  updateWishlist,
-  searchWishlist,
-  subscribeToWishlist,
-  unsubscribeFromWishlist,
-  scrapAndCreateWish,
-  getSubscriptionStatus,
-  reserveWish,
-  cancelReserveWish,
-  getMyReservedWishes,
-  removeSubscriber,
+    createWish,
+    createWishlist,
+    deleteWish,
+    deleteWishlist,
+    getMyWish,
+    getWish,
+    getMyWishlist,
+    getWishlist,
+    getMyWishlists,
+    getWishlists,
+    getMyWishesFromWishlist,
+    getWishesFromWishlist,
+    updateWish,
+    updateWishlist,
+    searchWishlist,
+    subscribeToWishlist,
+    unsubscribeFromWishlist,
+    scrapAndCreateWish,
+    getSubscriptionStatus,
+    reserveWish,
+    cancelReserveWish,
+    getMyReservedWishes,
+    removeSubscriber,
+    leaveWishlist,
 } from "../controllers/wishlistController";
 
 const router = Router();
@@ -36,28 +37,29 @@ const requireAuth = [verifyTokenMiddleware, ensureAuthenticated];
 router.get("/my-wishlists", ...requireAuth, getMyWishlists);
 router.get("/wishlists/:userId", ...requireAuth, getWishlists);
 router.post(
-  "/create-wishlist",
-  ...requireAuth,
-  upload.single("picture"),
-  createWishlist
+    "/create-wishlist",
+    ...requireAuth,
+    upload.single("picture"),
+    createWishlist
 );
 router.get("/my-wishlist/:id", ...requireAuth, getMyWishlist);
 router.get("/wishlist/:id", ...requireAuth, getWishlist);
 router.put(
-  "/update-wishlist/:id",
-  ...requireAuth,
-  upload.single("picture"),
-  updateWishlist
+    "/update-wishlist/:id",
+    ...requireAuth,
+    upload.single("picture"),
+    updateWishlist
 );
 router.delete("/delete-wishlist/:id", ...requireAuth, deleteWishlist);
+router.post("/wishlists/:wishlistId/leave", requireAuth, leaveWishlist);
 
 router.get("/my-wishes", ...requireAuth, getMyWishesFromWishlist);
 router.get("/wishes", ...requireAuth, getWishesFromWishlist);
 router.post(
-  "/create-wish",
-  ...requireAuth,
-  upload.single("picture"),
-  createWish
+    "/create-wish",
+    ...requireAuth,
+    upload.single("picture"),
+    createWish
 );
 router.post("/scrap-wish", ...requireAuth, scrapAndCreateWish);
 router.post("/reserve/:id", ...requireAuth, reserveWish);
@@ -65,10 +67,10 @@ router.get("/my-wish/:id", ...requireAuth, getMyWish);
 router.get("/wish/:id", ...requireAuth, getWish);
 router.get("/my-reserved-wishes", ...requireAuth, getMyReservedWishes);
 router.put(
-  "/update-wish/:id",
-  ...requireAuth,
-  upload.single("picture"),
-  updateWish
+    "/update-wish/:id",
+    ...requireAuth,
+    upload.single("picture"),
+    updateWish
 );
 router.delete("/delete-wish/:id", ...requireAuth, deleteWish);
 router.delete("/cancel-reserve/:id", ...requireAuth, cancelReserveWish);
@@ -76,20 +78,20 @@ router.delete("/cancel-reserve/:id", ...requireAuth, cancelReserveWish);
 router.get("/search", ...requireAuth, searchWishlist);
 
 router.get(
-  "/subscription-status/:wishlistId",
-  ...requireAuth,
-  getSubscriptionStatus
+    "/subscription-status/:wishlistId",
+    ...requireAuth,
+    getSubscriptionStatus
 );
 router.post("/subscribe/:wishlistId", ...requireAuth, subscribeToWishlist);
 router.delete(
-  "/unsubscribe/:wishlistId",
-  ...requireAuth,
-  unsubscribeFromWishlist
+    "/unsubscribe/:wishlistId",
+    ...requireAuth,
+    unsubscribeFromWishlist
 );
 
 router.delete(
-  "/:wishlistId/subscriber/:subscriberId",
-  ...requireAuth,
-  removeSubscriber
+    "/:wishlistId/subscriber/:subscriberId",
+    ...requireAuth,
+    removeSubscriber
 );
 export default router;

@@ -639,7 +639,6 @@ export const subscribeToWishlistService = async (
           wishlistTitle: wishlist.title,
           wishlistPicture: wishlist.picture,
         },
-        // todo : ajouter la wishlist picture, la wishlist title
         read: false,
       },
       {
