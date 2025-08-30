@@ -48,7 +48,7 @@ import {
 } from "../schemas/wishlistSchema";
 import Subscriber from "../models/Subscribers";
 import { deleteImage } from "../utils/deleteImage";
-import Collaborators from "src/models/Collaborators";
+import Collaborators from "../models/Collaborators";
 
 export const getMyWishlists = asyncHandler(
     async (req: AuthenticatedRequest, res, next) => {
